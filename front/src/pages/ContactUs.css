@@ -1,0 +1,516 @@
+.contact-us-first-container {
+    background-image: url('../assets/images/Contact/contact.png');
+    background-repeat: no-repeat;
+    background-attachment: center;
+    background-size: cover;
+    height: 65vh;
+    margin-top: 55px;
+    display: flex;
+    align-items: center;
+    font-family: "Helvetica";
+  }
+  
+  .contact-us {
+    padding-left: 4rem;
+    font-family: "New Spirit";
+    font-size: 2rem;
+    color: #ffffff;
+  }
+  
+  .contact-us-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .contact-us-left,
+  .contact-us-right {
+    width: 50%;
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .contact-us-right {
+    gap: 20px;
+  }
+  
+  .contact-us-left {
+    border-right: 1px solid rgba(218, 232, 232, 1);
+    gap: 10px;
+  }
+  
+  .contact-us-touch {
+    font-family: "New Spirit";
+    font-size: 2rem;
+    color: var(--primary-color);
+  }
+  
+  .contact-us-description {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #4c5767;
+  }
+  
+  .contact-us-icon {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .contact-us-icon-size {
+    width: 15px;
+    height: 15px;
+  }
+  
+  .contact-us-arrow-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-left: 10px;
+  }
+  
+  .contact-us-icon-round {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+  }
+  
+  .contact-us-form-row {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+  }
+  
+  .contact-us-form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .contact-us-input-field {
+    width: 235px;
+    height: 35px;
+    color: var(--secondary-color);
+    border-radius: 50px;
+    border: 1px solid rgba(218, 232, 232, 1);
+  }
+  
+  .contact-us-label-field {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+  }
+  
+  .contact-us-textarea {
+    width: 100%;
+    border: 1px solid rgba(218, 232, 232, 1);
+    color: var(--secondary-color);
+  }
+  
+  .contact-us-submit {
+    margin-top: 15px;
+    padding: 10px 30px;
+    border: none;
+    border-radius: 50px;
+    color: #ffffff;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .contact-us-info {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-top: 25px;
+    color: #4c5767;
+  }
+  
+  .contact-us-questionairre {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  }
+  
+  .contact-us-box {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 30px 15px;
+    background: rgba(230, 244, 242, 1);
+    border: 1px solid rgba(218, 232, 232, 1);
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .contact-us-textbox {
+    font-family: "New Spirit";
+    font-size: 1.2rem;
+    color: var(--secondary-color);
+  }
+  
+  .contact-us-green {
+    color: var(--primary-color);
+  }
+  .contact-us-textbox-desc{
+    color: #4c5767;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+@media (max-width: 767.98px) {
+  .contact-us-first-container {
+    height: 40vh;
+    margin-top: 40px;
+  }
+
+  .contact-us {
+    padding-left: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .contact-us-container {
+    flex-direction: column;
+  }
+
+  .contact-us-left,
+  .contact-us-right {
+    width: 100%;
+    padding: 3rem 1rem;
+  }
+
+  .contact-us-left {
+    border-right: none;
+    border-bottom: 1px solid rgba(218, 232, 232, 1);
+    gap: 10px;
+  }
+
+  .contact-us-right {
+    gap: 25px;
+  }
+
+  .contact-us-touch {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .contact-us-description {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .contact-us-icon {
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .contact-us-icon-size {
+    width: 14px;
+    height: 14px;
+  }
+
+  .contact-us-icon-round {
+    width: 25px;
+    height: 25px;
+    padding: 3px;
+  }
+
+  .contact-us-form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .contact-us-form-column {
+    gap: 10px;
+  }
+
+  .contact-us-input-field {
+    width: 100%;
+    height: 40px;
+  }
+
+  .contact-us-label-field {
+    font-size: 1rem;
+  }
+
+  .contact-us-textarea {
+    width: 100%;
+  }
+
+  .contact-us-submit {
+    padding: 8px 25px;
+    font-size: 1rem;
+    margin-top: 5px;
+  }
+
+  .contact-us-arrow-icon {
+    width: 15px;
+    height: 15px;
+    margin-left: 8px;
+  }
+
+  .contact-us-info {
+    font-size: 0.85rem;
+    margin-top: 20px;
+  }
+
+  .contact-us-questionairre {
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .contact-us-box {
+    width: 100%;
+    padding: 20px 10px;
+  }
+
+  .contact-us-textbox {
+    font-size: 1rem;
+  }
+
+  .contact-us-textbox-desc {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .contact-us-first-container {
+    height: 50vh;
+  }
+
+  .contact-us {
+    padding-left: 2rem;
+    font-size: 1.5rem;
+  }
+
+  .contact-us-left,
+  .contact-us-right {
+    padding: 2rem;
+  }
+
+  .contact-us-left {
+    gap: 8px;
+  }
+
+  .contact-us-right {
+    gap: 15px;
+  }
+
+  .contact-us-touch {
+    font-size: 1.5rem;
+  }
+
+  .contact-us-description {
+    font-size: 0.85rem;
+  }
+
+  .contact-us-icon {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .contact-us-form-row {
+    gap: 20px;
+  }
+
+  .contact-us-form-column {
+    gap: 8px;
+  }
+
+  .contact-us-input-field {
+    width: 200px;
+    height: 35px;
+  }
+
+  .contact-us-label-field {
+    font-size: 0.85rem;
+  }
+
+  .contact-us-submit {
+    padding: 9px 25px;
+  }
+
+  .contact-us-info {
+    font-size: 0.85rem;
+    margin-top: 20px;
+  }
+
+  .contact-us-questionairre {
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .contact-us-box {
+    padding: 25px 12px;
+  }
+
+  .contact-us-textbox {
+    font-size: 1.2rem;
+  }
+
+  .contact-us-textbox-desc {
+    font-size: 0.85rem;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .contact-us-first-container {
+    height: 55vh;
+  }
+
+  .contact-us {
+    padding-left: 3rem;
+    font-size: 1.9rem;
+  }
+
+  .contact-us-left,
+  .contact-us-right {
+    padding: 3rem;
+  }
+
+  .contact-us-left {
+    gap: 9px;
+  }
+
+  .contact-us-right {
+    gap: 18px;
+  }
+
+  .contact-us-touch {
+    font-size: 1.9rem;
+  }
+
+  .contact-us-description {
+    font-size: 0.84rem;
+  }
+
+  .contact-us-form-row {
+    gap: 25px;
+  }
+
+  .contact-us-input-field {
+    width: 220px;
+  }
+
+  .contact-us-label-field {
+    font-size: 0.88rem;
+  }
+
+  .contact-us-info {
+    font-size: 0.84rem;
+  }
+
+  .contact-us-box {
+    padding: 25px 12px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .contact-us-first-container {
+    height: 70vh;
+  }
+
+  .contact-us {
+    padding-left: 5rem;
+    font-size: 2.5rem;
+  }
+
+  .contact-us-left,
+  .contact-us-right {
+    padding: 5rem;
+  }
+
+  .contact-us-left {
+    gap: 12px;
+  }
+
+  .contact-us-right {
+    gap: 25px;
+  }
+
+  .contact-us-touch {
+    font-size: 2.5rem;
+  }
+
+  .contact-us-description {
+    font-size: 1.3rem;
+    line-height: 1.6;
+  }
+
+  .contact-us-icon {
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .contact-us-icon-size {
+    width: 18px;
+    height: 18px;
+  }
+
+  .contact-us-icon-round {
+    width: 35px;
+    height: 35px;
+    padding: 5px;
+  }
+
+  .contact-us-form-row {
+    gap: 35px;
+  }
+
+  .contact-us-form-column {
+    gap: 12px;
+  }
+
+  .contact-us-input-field {
+    width: 305px;
+    height: 50px;
+  }
+
+  .contact-us-label-field {
+    font-size: 1.2rem;
+  }
+
+  .contact-us-submit {
+    padding: 12px 35px;
+    font-size: 1.2rem;
+  }
+
+  .contact-us-arrow-icon {
+    width: 25px;
+    height: 25px;
+    margin-left: 12px;
+  }
+
+  .contact-us-info {
+    font-size: 1rem;
+    margin-top: 30px;
+  }
+
+  .contact-us-questionairre {
+    gap: 25px;
+    margin-top: 30px;
+  }
+
+  .contact-us-box {
+    padding: 35px 20px;
+  }
+
+  .contact-us-textbox {
+    font-size: 1.4rem;
+  }
+
+  .contact-us-textbox-desc {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+}

@@ -1,0 +1,324 @@
+.process-wrapper {
+  padding: 4rem 2rem;
+  background-color: #f5fffe;
+  font-family: "Helvetica";
+}
+
+.process-heading {
+  font-size: 2rem;
+  text-align: center;
+  font-family: "New Spirit";
+  color: var(--secondary-color);
+  padding-bottom: 0.5rem;
+}
+
+.process-highlight {
+  color: var(--primary-color);
+}
+
+.process-subtext {
+  text-align: center;
+  color: #4c5767;
+  max-width: 700px;
+  margin: 0 auto 3rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.process-steps {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6rem;
+  align-items: center;
+  min-height: 1200px;
+}
+
+.process-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: absolute;
+  width: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.process-step.step1 {
+  top: 60px;
+}
+
+.process-step.step2 {
+  top: 280px;
+}
+
+.process-step.step3 {
+  top: 500px;
+}
+
+.process-step.step4 {
+  top: 710px;
+}
+
+.process-step.step5 {
+  top: 950px;
+}
+
+.process-content {
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  max-width: 850px;
+  width: 100%;
+  z-index: 1;
+  gap: 4rem;
+}
+
+.process-step.reverse .process-content {
+  flex-direction: row-reverse;
+}
+
+.process-text {
+  flex: 1;
+}
+
+.process-step.reverse {
+  text-align: right;
+}
+
+.step-label {
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.process-text h3 {
+  font-size: 1.2rem;
+  font-family: "New Spirit";
+  margin-bottom: 0.5rem;
+  color: #202936;
+}
+
+.process-text p {
+  font-size: 0.95rem;
+  color: #4c5767;
+  line-height: 1.5;
+}
+
+.process-image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.process-image-step1 {
+  max-width: 150px;
+}
+
+.process-image-step2 {
+  max-width: 120px;
+}
+
+.process-image-step3,
+.process-image-step4,
+.process-image-step5 {
+  max-width: 180px;
+}
+
+.process-steps svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+@media (max-width: 767.98px) {
+  .process-wrapper {
+    padding: 2rem 1rem 4rem;
+  }
+  .process-heading {
+    font-size: 1.5rem;
+    padding-bottom: 0.5rem;
+    text-align: left;
+  }
+  .process-subtext {
+    font-size: 0.85rem;
+    max-width: 100%;
+    margin-bottom: 2rem;
+    text-align: left;
+  }
+  .process-steps {
+    gap: 3rem;
+    min-height: auto;
+  }
+  .process-step {
+    position: static;
+    transform: none;
+    width: 100%;
+  }
+  .process-content {
+    flex-direction: column;
+    padding: 0;
+    gap: 2rem;
+  }
+  .process-step.reverse .process-content {
+    flex-direction: column;
+  }
+  /* .process-step.reverse {
+    text-align: left;
+  }
+  .process-text {
+    text-align: left;
+  } */
+  .step-label {
+    font-size: 0.8rem;
+  }
+  .process-text h3 {
+    font-size: 1.2rem;
+  }
+  .process-text p {
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .process-text p br{
+    display: none;
+  }
+  .process-image-step1 {
+    max-width: 150px;
+  }
+  .process-image-step2 {
+    max-width: 150px;
+  }
+  .process-image-step3,
+  .process-image-step4,
+  .process-image-step5 {
+    max-width: 170px;
+  }
+  .process-steps svg {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .process-wrapper {
+    padding: 3rem 1.5rem;
+  }
+  .process-heading {
+    font-size: 1.8rem;
+    padding-bottom: 0.4rem;
+  }
+  .process-subtext {
+    font-size: 0.85rem;
+    max-width: 90%;
+    margin-bottom: 2.5rem;
+  }
+  .process-steps {
+    gap: 5rem;
+    min-height: 1100px;
+  }
+  .process-step {
+    width: 100%;
+  }
+  .process-content {
+    padding: 1.5rem;
+    gap: 2rem;
+    max-width: 700px;
+  }
+  .process-step.reverse .process-content {
+    flex-direction: row-reverse;
+  }
+  .step-label {
+    font-size: 0.8rem;
+  }
+  .process-text h3 {
+    font-size: 1.1rem;
+  }
+  .process-text p {
+    font-size: 0.9rem;
+  }
+  .process-image-step1 {
+    max-width: 120px;
+  }
+  .process-image-step2 {
+    max-width: 100px;
+  }
+  .process-image-step3,
+  .process-image-step4,
+  .process-image-step5 {
+    max-width: 150px;
+  }
+  .process-steps svg {
+   display: none;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .process-wrapper {
+    padding: 3.5rem 2rem;
+  }
+  .process-heading {
+    font-size: 1.9rem;
+    padding-bottom: 0.4rem;
+  }
+  .process-subtext {
+    font-size: 0.85rem;
+    max-width: 600px;
+    margin-bottom: 2.5rem;
+  }
+  .process-steps {
+    gap: 5.5rem;
+    min-height: 1100px;
+  }
+  .process-step {
+    width: 100%;
+  }
+  .process-content {
+    padding: 1.8rem;
+    gap: 3rem;
+    max-width: 750px;
+  }
+  .process-step.reverse .process-content {
+    flex-direction: row-reverse;
+  }
+  .step-label {
+    font-size: 0.8rem;
+  }
+  .process-text h3 {
+    font-size: 1.15rem;
+  }
+  .process-text p {
+    font-size: 0.9rem;
+  }
+  .process-image-step1 {
+    max-width: 130px;
+  }
+  .process-image-step2 {
+    max-width: 110px;
+  }
+  .process-image-step3,
+  .process-image-step4,
+  .process-image-step5 {
+    max-width: 160px;
+  }
+  .process-steps svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (min-width: 1600px) { 
+  .process-heading {
+    font-size: 2.5rem;
+    padding-bottom: 0.6rem;
+  }
+  .process-subtext {
+    font-size: 1.3rem;
+    max-width: 800px;
+    margin-bottom: 4rem;
+  }
+}

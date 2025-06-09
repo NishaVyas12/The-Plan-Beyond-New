@@ -1,0 +1,28 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: white;
+}
+
+:root {
+  --primary-color: #007c6a;
+  --secondary-color: #1f1f2a;
+  --tertiary-color: #6b7483;
+  --blue-color: #dceafd;
+  --green-color: #ddfce8;
+  --purple-color: #f3e8f3;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 400;
+}
+
+/* * {
+  outline: 1px solid rgba(255, 0, 0, 0.2);
+} */

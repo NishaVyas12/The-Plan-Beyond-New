@@ -1,0 +1,199 @@
+.about_help-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    background-color: #f5fffe;
+    padding: 1rem 4rem 2rem;
+    font-family: "Helvetica";
+}
+
+.about_help-title {
+    font-size: 2rem;
+    font-family: "New Spirit";
+    color: var(--secondary-color);
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.about_help-content {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+}
+
+.about_help-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 33.33%;
+    text-align: center;
+}
+
+.about_help-image {
+    width: 100%;
+    max-width: 180px;
+    height: 180px; 
+    object-fit: cover; 
+    margin-bottom: 2rem;
+}
+
+.about_help-subtitle {
+    font-size: 1.3rem;
+    font-family: "New Spirit";
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem; 
+}
+
+.about_help-description {
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: #4C5767;
+    max-width: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+@media (max-width: 767.98px) {
+  .about_help-container {
+    padding: 1rem;
+  }
+
+  .about_help-title {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .about_help-content {
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .about_help-item {
+    width: 100%;
+  }
+
+  .about_help-image {
+    max-width: 140px;
+    height: 140px;
+    margin-bottom: 1.5rem;
+  }
+
+  .about_help-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .about_help-description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .about_help-container {
+    padding: 1rem 2rem 1.5rem;
+  }
+
+  .about_help-title {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .about_help-content {
+    gap: 1.5rem;
+  }
+
+  .about_help-item {
+    width: 33.33%;
+  }
+
+  .about_help-image {
+    max-width: 150px;
+    height: 150px;
+    margin-bottom: 1.5rem;
+  }
+
+  .about_help-subtitle {
+    font-size: 1rem;
+  }
+
+  .about_help-description {
+    font-size: 0.75rem;
+    max-width: 200px;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .about_help-container {
+    padding: 1rem 3rem 1.5rem;
+  }
+
+  .about_help-title {
+    font-size: 1.8rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .about_help-content {
+    gap: 1.8rem;
+  }
+
+  .about_help-item {
+    width: 33.33%;
+  }
+
+  .about_help-image {
+    max-width: 160px;
+    height: 160px;
+    margin-bottom: 1.5rem;
+  }
+
+  .about_help-subtitle {
+    font-size: 1.25rem;
+  }
+
+  .about_help-description {
+    font-size: 0.8rem;
+    max-width: 220px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .about_help-container {
+    padding: 2rem 5rem 3rem;
+  }
+
+  .about_help-title {
+    font-size: 2.5rem;
+    margin-bottom: 3.5rem;
+  }
+
+  .about_help-content {
+    gap: 3rem;
+  }
+
+  .about_help-item {
+    width: 33.33%;
+  }
+
+  .about_help-image {
+    max-width: 200px;
+    height: 200px;
+    margin-bottom: 2.5rem;
+  }
+
+  .about_help-subtitle {
+    font-size: 1.5rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .about_help-description {
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 400px;
+  }
+}

@@ -1,0 +1,1292 @@
+.dash-main-content {
+    margin-top: 55px;
+}
+
+.dash-content {
+    padding: 20px;
+    margin-left: 250px;
+}
+
+.dash-welcome {
+    margin-bottom: 20px;
+}
+
+.subscription-remaining {
+    margin-top: 65px;
+    font-size: 10px;
+    color: rgba(107, 116, 131, 1);
+    margin-left: 70px;
+    text-align: right;
+}
+
+.dash-welcome-text {
+    font-family: "New Spirit";
+    margin: 0;
+    font-weight: 600;
+    color: var(--secondary-color);
+    font-size: 25px;
+}
+
+.dash-alerts {
+    color: var(--tertiary-color);
+    margin-top: 5px;
+    font-size: 0.8rem;
+}
+
+.dash-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: space-between;
+}
+
+.dash-tab {
+    height: 100px;
+    width: 100%;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    position: relative;
+    font-size: 0.85rem;
+}
+
+.dash-tab-content {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+    gap: 0;
+}
+
+.dash-tab-head {
+    color: var(--tertiary-color);
+    margin-bottom: 5px;
+}
+
+.dash-tab-nominees {
+    background: #e6f2ff;
+}
+
+.dash-tab-contacts {
+    background: transparent;
+    border: 1px solid rgba(235, 235, 235, 1);
+}
+
+.dash-tab-messages {
+    background: transparent;
+    border: 1px solid rgba(235, 235, 235, 1);
+}
+
+.dash-tab-subscription {
+
+    background: transparent;
+    border: 1px solid rgba(235, 235, 235, 1);
+}
+
+.dash-tab-count {
+    color: var(--secondary-color);
+}
+
+.dash-details {
+    display: flex;
+    width: 100%;
+    gap: 2%;
+    margin-bottom: 20px;
+}
+
+.dash-personal-info {
+    flex: 0 0 66.6%;
+    border-radius: 4px;
+    padding: 10px 0;
+}
+
+.seperate-ambassador {
+    border: 1px solid rgba(218, 232, 232, 1);
+    border-radius: 12px;
+    padding: 5px;
+}
+
+.dash-ambassadors {
+    flex: 0 0 31.4%;
+    border-radius: 4px;
+    padding: 10px 0;
+}
+
+.dash-personal-header,
+.dash-ambassador-header {
+    width: 200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0px;
+}
+
+.dash-separator {
+    border: 0;
+    border-top: 1px solid rgba(218, 232, 232, 1);
+    width: 100%;
+    margin: 10px 0;
+}
+
+.dash-separator-bottom {
+    border: 0;
+}
+
+.dash-section-title {
+    color: var(--secondary-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.dash-edit-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    padding: 5px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dash-edit-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.dash-profile-card {
+    display: flex;
+    gap: 20px;
+    border: 1px solid rgba(218, 232, 232, 1);
+    border-radius: 12px;
+    margin: 0;
+    padding: 15px;
+}
+
+.dash-avatar {
+    width: 100px;
+    height: 110px;
+    background: #e9f4ee;
+    border-radius: 8px;
+}
+
+.dash-info {
+    flex: 1;
+}
+
+.dash-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    font-size: 0.85rem;
+}
+
+.dash-info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-info-item-head {
+    color: var(--tertiary-color);
+}
+
+.dash-info-item p {
+    color: var(--secondary-color);
+    margin-top: 8px;
+    font-size: 0.8rem;
+}
+
+.dash-ambassadors {
+    box-sizing: border-box;
+}
+
+.storage-widget {
+    border: 1px solid rgba(218, 232, 232, 1);
+    border-radius: 12px;
+    display: flex;
+    height: 150px;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.storage-progress {
+    width: 80px;
+    height: 80px;
+    position: relative;
+}
+
+.progress-ring {
+    width: 120px;
+    height: 120px;
+}
+
+.progress-ring-bg,
+.progress-ring-bar {
+    transition: stroke-dashoffset 0.5s;
+    stroke-linecap: round;
+}
+
+.storage-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+}
+
+.storage-amount {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--secondary-color);
+}
+
+.storage-label {
+    font-size: 0.75rem;
+    color: var(--tertiary-color);
+}
+
+.usage-label {
+    font-size: .90rem;
+    color: var(--tertiary-color);
+}
+
+
+.dash-ambassador-avatar {
+    width: 40px;
+    height: 40px;
+    background: #e9f4ee;
+    border-radius: 50%;
+}
+
+.dash-ambassador-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-ambassador-info p {
+    margin: 0;
+    color: var(--secondary-color);
+}
+
+.dash-ambassador-role {
+    color: var(--tertiary-color);
+    font-size: 0.8rem;
+}
+
+.dash-right-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dash-right-row {
+    display: flex;
+    gap: 2%;
+}
+
+.dash-plan-beyond {
+    flex: 0 0 75%;
+}
+
+.dash-quick-actions {
+    flex: 0 0 23%;
+    border: 1px solid rgba(218, 232, 232, 1);
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.dash-quick-actions-content {
+    padding-top: 10px;
+}
+
+.dash-action-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 4px;
+    color: var(--secondary-color);
+    cursor: pointer;
+    font-size: 0.8rem;
+    background: transparent;
+    gap: 10px;
+}
+
+.dash-categories {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px 10px;
+    font-size: 0.8rem;
+}
+
+.dash-slider-section {
+    margin-top: 40px;
+}
+
+.dash-slider {
+    display: flex;
+    gap: 20px;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    padding: 10px 0;
+}
+
+.dash-category {
+    flex: 0 0 280px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    background: white;
+    box-sizing: border-box;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.slider-btn {
+    background: #fff;
+    border: 1px solid #ccc;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 1;
+    border-radius: 50%;
+}
+
+.dash-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.dash-slider-controls img {
+    width: 18px;
+    height: 18px;
+    margin-left: 8px;
+    cursor: pointer;
+}
+
+.dash-slider-controls {
+    display: flex;
+    align-items: center;
+}
+
+.dash-category {
+    padding: 20px 10px;
+    border: 1px solid rgba(218, 232, 232, 1);
+    border-radius: 5px;
+    color: var(--secondary-color);
+    width: 20rem;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.quick-links-container {
+    margin-top: 24px;
+}
+
+.quick-links-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f1f1f;
+    margin-bottom: 16px;
+}
+
+.quick-links-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.quick-link-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    text-decoration: none;
+    width: 229px;
+    height: 95px;
+}
+
+.quick-link-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.quick-link-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.slider-category {
+    padding: 20px 10px;
+    border: 1px solid rgba(218, 232, 232, 1);
+    border-radius: 5px;
+    color: var(--secondary-color);
+    min-width: calc(95% / 3);
+    height: 150px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    position: relative;
+}
+
+.guide-section {
+    margin-top: 40px;
+}
+
+.guide-section-title {
+    color: #000;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.guide-cards-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.guide-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    padding: 12px;
+    width: 100%;
+    max-width: 470px;
+}
+
+.guide-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.guide-content {
+    padding: 16px;
+}
+
+.guide-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1f2937;
+}
+
+.guide-description {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.video-card .video-wrapper {
+    position: relative;
+}
+
+.play-button {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+}
+
+.dash-category-name {
+    font-weight: 600;
+}
+
+.dash-action-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    bottom: 10px;
+    position: absolute;
+    margin: 2px;
+}
+
+.dash-action-inline img {
+    height: 18px;
+}
+
+.dash-action-inline p {
+    margin: 0;
+    color: rgba(0, 124, 106, 1);
+    padding: 0;
+    font-size: 14px;
+}
+
+.dash-user-bg {
+    height: 35px;
+    position: absolute;
+    top: 10px;
+    width: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(235, 235, 235, 1);
+    border-radius: 24px;
+}
+
+.slider-content-div {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+}
+
+.slider-content-div span {
+    color: rgba(31, 31, 42, 1);
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.slider-content-div p {
+    color: rgba(107, 116, 131, 1);
+    font-size: 12px;
+}
+
+.dash-user-bg img {
+    max-width: 50%;
+    max-height: 50%;
+    object-fit: contain;
+}
+
+
+.dash-user-bg img {
+    justify-content: center;
+}
+
+.dash-category-content {
+    position: absolute;
+    bottom: 70px;
+    flex: 1;
+    margin-left: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-category span {
+    color: var(--secondary-color);
+}
+
+.dash-category-desc {
+    color: var(--tertiary-color);
+    font-size: 0.75rem;
+    margin: 3px 0 0 0;
+}
+
+.dash-arrow-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    margin-left: 10px;
+}
+
+.dash-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    background: rgba(212, 238, 234, 1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dash-icon-plan-beyond {
+    background: #e6f4f2;
+    border: 1px solid rgba(218, 232, 232, 1);
+}
+
+.dash-icon-video {
+    background: #F3E8FE;
+}
+
+.dash-icon-photo {
+    background: var(--green-color);
+}
+
+.dash-icon-audio {
+    background: #DCEAFD;
+}
+
+.dash-tab-icon,
+.dash-category-icon,
+.dash-action-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+@media (max-width: 767.98px) {
+    .dash-main-content {
+        margin-top: 60px;
+    }
+
+    .quick-link-card {
+        width: 100%;
+    }
+
+    .dash-content {
+        padding: 1rem;
+        margin-left: 0;
+    }
+
+    .dash-welcome-text {
+        font-size: 1.2rem;
+    }
+
+    .dash-alerts {
+        font-size: 0.9rem;
+    }
+
+    .dash-tabs {
+        flex-direction: column;
+        gap: 13px;
+    }
+
+    .dash-tab {
+        padding: 10px;
+        font-size: 1rem;
+    }
+
+    .dash-tab-content {
+        margin-left: 8px;
+    }
+
+    .dash-tab-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .dash-details {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .dash-personal-info,
+    .dash-ambassadors {
+        flex: 1;
+        padding: 8px 0;
+    }
+
+    .dash-personal-header,
+    .dash-ambassador-header {
+        padding: 0 8px;
+    }
+
+    .dash-section-title {
+        font-size: 1rem;
+        line-height: 1.4;
+        margin: 0.5rem 0 1rem 0;
+    }
+
+    .dash-edit-btn {
+        font-size: 0.85rem;
+        padding: 4px 8px;
+    }
+
+    .dash-edit-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .dash-profile-card {
+        flex-direction: column;
+        padding: 0.7rem;
+        gap: 2rem;
+    }
+
+    .dash-avatar {
+        width: 100%;
+        height: auto;
+    }
+
+    .dash-info-grid {
+        display: grid;
+        grid-template-columns: 2fr 2fr;
+        gap: 20px;
+        grid-template-areas:
+            "full-name email"
+            "dob address"
+            "phone id";
+    }
+
+    .dash-info-item:nth-child(1) {
+        grid-area: full-name;
+    }
+
+    .dash-info-item:nth-child(2) {
+        grid-area: email;
+    }
+
+    .dash-info-item:nth-child(3) {
+        grid-area: address;
+    }
+
+    .dash-info-item:nth-child(4) {
+        grid-area: dob;
+    }
+
+    .dash-info-item:nth-child(5) {
+        grid-area: phone;
+    }
+
+    .dash-info-item:nth-child(6) {
+        grid-area: id;
+    }
+
+    .dash-info-item {
+        font-size: 0.9rem;
+    }
+
+    .dash-info-item p {
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .dash-ambassador {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+
+    .dash-ambassador-avatar {
+        width: 30px;
+        height: 30px;
+    }
+
+    .dash-ambassador-role {
+        font-size: 0.85rem;
+    }
+
+    .dash-right-row {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .dash-plan-beyond,
+    .dash-quick-actions {
+        flex: 1;
+    }
+
+    .dash-categories {
+        grid-template-columns: 1fr;
+        gap: 13px;
+    }
+
+    .dash-category {
+        padding: 15px 8px;
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    .dash-ambassador-info p {
+        font-size: 1rem;
+    }
+
+    .dash-category-icon,
+    .dash-action-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .dash-icon-wrapper {
+        width: 40px;
+        height: 40px;
+    }
+
+    .dash-category-desc {
+        font-size: 0.9rem;
+    }
+
+    .dash-quick-actions {
+        padding: 8px;
+    }
+
+    .dash-action-btn {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .dash-separator {
+        margin: 8px 0;
+    }
+
+    .dash-slider {
+        display: flex;
+        gap: 16px;
+        scroll-behavior: smooth;
+        transition: transform 0.3s ease;
+    }
+
+    .dash-category {
+        flex: 0 0 280px;
+    }
+
+    .subscription-remaining {
+        margin-left: 1rem;
+        text-align: left;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .dash-main-content {
+        margin-top: 60px;
+    }
+
+    .dash-content {
+        padding: 15px;
+        margin-left: 0;
+    }
+
+    .dash-welcome-text {
+        font-size: 1.1rem;
+    }
+
+    .dash-alerts {
+        font-size: 0.75rem;
+    }
+
+    .dash-tabs {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .dash-tab {
+        width: calc(50% - 4px);
+        padding: 12px;
+        font-size: 0.8rem;
+    }
+
+    .dash-tab-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .dash-details {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .dash-personal-info,
+    .dash-ambassadors {
+        flex: 1;
+        padding: 10px 0;
+    }
+
+    .dash-personal-header,
+    .dash-ambassador-header {
+        padding: 0 10px;
+    }
+
+    .dash-section-title {
+        font-size: 0.85rem;
+    }
+
+    .dash-edit-btn {
+        font-size: 0.75rem;
+    }
+
+    .dash-edit-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .dash-profile-card {
+        padding: 12px;
+        gap: 15px;
+    }
+
+    .dash-avatar {
+        width: 90px;
+        height: 100px;
+    }
+
+    .dash-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .dash-info-item {
+        font-size: 0.8rem;
+    }
+
+    .dash-info-item p {
+        font-size: 0.75rem;
+    }
+
+    .dash-ambassador {
+        padding: 10px;
+        font-size: 0.8rem;
+    }
+
+    .dash-ambassador-avatar {
+        width: 35px;
+        height: 35px;
+    }
+
+    .dash-right-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .dash-plan-beyond,
+    .dash-quick-actions {
+        flex: 1;
+    }
+
+    .dash-categories {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .dash-category {
+        padding: 15px 10px;
+        font-size: 0.8rem;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .dash-category-icon,
+    .dash-action-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .dash-icon-wrapper {
+        width: 35px;
+        height: 35px;
+    }
+
+    .dash-quick-actions {
+        padding: 10px;
+    }
+
+    .dash-action-btn {
+        padding: 10px;
+        font-size: 0.8rem;
+    }
+
+    .dash-slider-wrapper {
+        max-width: 580px;
+    }
+
+    .dash-slider {
+        gap: 20px;
+    }
+
+    .dash-category {
+        flex: 0 0 280px;
+    }
+
+    .subscription-remaining {
+        margin-left: 1rem;
+        text-align: right;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .dash-content {
+        padding: 15px;
+        margin-left: 230px;
+    }
+
+    .dash-welcome-text {
+        font-size: 1.1rem;
+    }
+
+    .dash-alerts {
+        font-size: 0.75rem;
+    }
+
+    .dash-tab {
+        padding: 12px;
+        font-size: 0.8rem;
+    }
+
+    .dash-tab-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .dash-personal-info {
+        flex: 0 0 73%;
+    }
+
+    .dash-ambassadors {
+        flex: 0 0 25%;
+    }
+
+    .dash-section-title {
+        font-size: 0.85rem;
+    }
+
+    .dash-edit-btn {
+        font-size: 0.75rem;
+    }
+
+    .dash-edit-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .dash-profile-card {
+        padding: 12px;
+    }
+
+    .dash-avatar {
+        width: 90px;
+        height: 100px;
+    }
+
+    .dash-info-grid {
+        gap: 20px;
+    }
+
+    .dash-info-item {
+        font-size: 0.8rem;
+    }
+
+    .dash-info-item p {
+        font-size: 0.75rem;
+    }
+
+    .dash-ambassador {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+
+    .dash-plan-beyond {
+        flex: 0 0 73%;
+    }
+
+    .dash-quick-actions {
+        flex: 0 0 25%;
+        padding: 8px;
+    }
+
+    .dash-categories {
+        gap: 15px 8px;
+    }
+
+    .dash-category {
+        padding: 15px 8px;
+        font-size: 0.75rem;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .dash-category-icon,
+    .dash-action-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .dash-icon-wrapper {
+        width: 35px;
+        height: 35px;
+    }
+
+    .dash-slider-wrapper {
+        max-width: 900px;
+    }
+
+    .dash-slider {
+        gap: 20px;
+    }
+
+    .dash-category {
+        flex: 0 0 280px;
+    }
+
+    .subscription-remaining {
+        margin-left: 1rem;
+        text-align: right;
+    }
+}
+
+@media (min-width: 1600px) {
+    .dash-content {
+        padding: 30px;
+        margin-left: 280px;
+    }
+
+    .dash-welcome-text {
+        font-size: 1.7rem;
+    }
+
+    .dash-alerts {
+        font-size: 1.1rem;
+    }
+
+    .dash-tabs {
+        gap: 15px;
+    }
+
+    .dash-tab {
+        padding: 20px;
+        font-size: 1.2rem;
+    }
+
+    .dash-tab-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .dash-details {
+        gap: 2%;
+    }
+
+    .dash-personal-info {
+        flex: 0 0 75%;
+    }
+
+    .dash-ambassadors {
+        flex: 0 0 23%;
+    }
+
+    .dash-personal-header,
+    .dash-ambassador-header {
+        padding: 0 15px;
+    }
+
+    .dash-section-title {
+        font-size: 1.2rem;
+    }
+
+    .dash-edit-btn {
+        font-size: 1rem;
+        padding: 6px 12px;
+    }
+
+    .dash-edit-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .dash-profile-card {
+        padding: 20px;
+        gap: 25px;
+    }
+
+    .dash-avatar {
+        width: 150px;
+        height: 150px;
+    }
+
+    .dash-info-grid {
+        gap: 40px;
+    }
+
+    .dash-info-item {
+        font-size: 1.2rem;
+    }
+
+    .dash-info-item p {
+        font-size: 1rem;
+    }
+
+    .dash-ambassador {
+        padding: 12px;
+        font-size: 1.2rem;
+    }
+
+    .dash-ambassador-avatar {
+        width: 50px;
+        height: 50px;
+    }
+
+    .dash-ambassador-role {
+        font-size: 1rem;
+    }
+
+    .dash-right-row {
+        gap: 2%;
+    }
+
+    .dash-plan-beyond {
+        flex: 0 0 75%;
+    }
+
+    .dash-quick-actions {
+        flex: 0 0 23%;
+        padding: 15px;
+    }
+
+    .dash-categories {
+        gap: 25px 15px;
+    }
+
+    .dash-category {
+        padding: 25px 15px;
+        font-size: 1.2rem;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .dash-category-icon,
+    .dash-action-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .dash-icon-wrapper {
+        width: 50px;
+        height: 50px;
+    }
+
+    .dash-category-desc {
+        font-size: 1rem;
+    }
+
+    .dash-action-btn {
+        padding: 12px;
+        font-size: 1rem;
+    }
+
+    .dash-separator {
+        margin: 12px 0;
+    }
+
+    .dash-slider-wrapper {
+        max-width: 900px;
+    }
+
+    .dash-slider {
+        gap: 20px;
+    }
+
+    .dash-category {
+        flex: 0 0 280px;
+    }
+
+    .subscription-remaining {
+        margin-left: 1rem;
+        text-align: right;
+    }
+}

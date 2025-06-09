@@ -1,0 +1,154 @@
+.about_who_we_are-container {
+    display: flex;
+    width: 100%;
+    background-color: #f5fffe;
+    padding: 0 4rem 2rem 4rem;
+    font-family: "Helvetica";
+    gap: 7rem; 
+}
+
+.about_who_we_are-text-section {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.about_who_we_are-title {
+    font-size: 2rem;
+    font-family: "New Spirit";
+    color: var(--secondary-color);
+    margin-bottom: 20px;
+}
+
+.about_who_we_are-description {
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: #4c5767;
+    margin-bottom: 20px;
+}
+
+.about_who_we_are-image-section {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.about_who_we_are-image {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+@media (max-width: 767.98px) {
+  .about_who_we_are-container {
+    flex-direction: column;
+    padding: 0 1rem 1rem;
+    gap: 2rem;
+  }
+
+  .about_who_we_are-text-section {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .about_who_we_are-title {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+
+  .about_who_we_are-description {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 15px;
+  }
+
+  .about_who_we_are-image-section {
+    width: 100%;
+  }
+
+  .about_who_we_are-image {
+    border-radius: 8px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .about_who_we_are-container {
+    padding: 0 2rem 1.5rem 2rem;
+    gap: 4rem;
+  }
+
+  .about_who_we_are-text-section {
+    width: 50%;
+  }
+
+  .about_who_we_are-title {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+
+  .about_who_we_are-description {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+  }
+
+  .about_who_we_are-image-section {
+    width: 50%;
+  }
+
+  .about_who_we_are-image {
+    border-radius: 8px;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .about_who_we_are-container {
+    padding: 0 3rem 1.5rem 3rem;
+    gap: 5rem;
+  }
+
+  .about_who_we_are-text-section {
+    width: 50%;
+  }
+
+  .about_who_we_are-title {
+    font-size: 1.8rem;
+    margin-bottom: 18px;
+  }
+
+  .about_who_we_are-description {
+    font-size: 0.85rem;
+    margin-bottom: 18px;
+  }
+
+  .about_who_we_are-image-section {
+    width: 50%;
+  }
+}
+
+@media (min-width: 1600px){
+  .about_who_we_are-container {
+    padding: 0 5rem 2.5rem 5rem;
+    gap: 7rem;
+  }
+
+  .about_who_we_are-text-section {
+    width: 50%;
+  }
+
+  .about_who_we_are-title {
+    font-size: 2.5rem;
+    margin-bottom: 25px;
+  }
+
+  .about_who_we_are-description {
+    font-size: 1.3rem;
+    line-height: 1.7;
+    margin-bottom: 25px;
+  }
+
+  .about_who_we_are-image-section {
+    width: 50%;
+  }
+}

@@ -1,0 +1,31 @@
+@font-face {
+    font-family: "Helvetica";
+    src: local("Helvetica"),
+    url("./assets/fonts/Helvetica.ttf") format("truetype");
+}
+
+/* @font-face {
+    font-family: "New Spirit";
+    src: local("NeueHaasDisplay"),
+    url("./assets/fonts/NeueHaasDisplayMediu.ttf") format("truetype");
+    font-weight: 600;
+} */
+@font-face {
+    font-family: "New Spirit";
+    src: local("New Spirit"),
+    url("./assets/fonts/fonnts.com-New-Spirit-Medium.otf") format("opentype");
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: "Helvetica_reg";
+    src: local("Helvetica_reg"), url("./assets/fonts/Helvetica/HelveticaNeueLTStd-Lt.otf") format("opentype");
+    font-weight: 100;
+}
+  
+  
+body{
+    background: #fff;
+    color: white;
+    font-family: "Inter", sans-serif;
+}

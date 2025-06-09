@@ -1,0 +1,202 @@
+.additional_feature-container {
+  padding: 3rem 4rem 1rem;
+  text-align: center;
+  font-family: "Helvetica";
+  background-color: #f5fffe;
+}
+
+.additional_feature-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  font-family: "New Spirit";
+}
+
+.additional_feature-title-black {
+  color: var(--secondary-color);
+}
+
+.additional_feature-title-blue {
+  color: var(--primary-color);
+}
+
+.additional_feature-subtitle {
+  font-size: 0.85rem;
+  color: #4C5767;
+  margin-bottom: 4rem;
+}
+
+.additional_feature-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4rem;
+}
+
+.additional_feature-icon-wrapper {
+  background-color: white;
+  border-radius: 10px;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 1rem;
+  box-shadow: 3px 4px 6px 0px rgba(228, 255, 251, 1);
+  border: 1px solid #dae8e8;
+}
+
+.additional_feature-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-bottom: 0;
+}
+
+.additional_feature-heading {
+  font-family: "New Spirit";
+  font-size: 1.2rem;
+  color: var(--secondary-color);
+  margin-bottom: 1rem;
+}
+
+.additional_feature-description {
+  font-size: 0.8rem;
+  color: #4C5767;
+  line-height: 1.5;
+}
+
+@media (max-width: 767.98px) {
+  .additional_feature-container {
+    padding: 3rem 1rem 1rem;
+  }
+  .additional_feature-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: left;
+  }
+  .additional_feature-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+    text-align: left;
+  }
+  .additional_feature-features {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  .additional_feature-icon-wrapper {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .additional_feature-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .additional_feature-heading {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
+  .additional_feature-description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .additional_feature-container {
+    padding: 2.5rem 2rem 0.75rem;
+  }
+  .additional_feature-title {
+    font-size: 1.8rem;
+    margin-bottom: 0.9rem;
+  }
+  .additional_feature-subtitle {
+    font-size: 0.8rem;
+    margin-bottom: 3rem;
+  }
+  .additional_feature-features {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  .additional_feature-icon-wrapper {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+  .additional_feature-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  .additional_feature-heading {
+    font-size: 1.1rem;
+    margin-bottom: 0.9rem;
+  }
+  .additional_feature-description {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .additional_feature-container {
+    padding: 2.5rem 3rem 1rem;
+  }
+  .additional_feature-title {
+    font-size: 1.9rem;
+    margin-bottom: 0.9rem;
+  }
+  .additional_feature-subtitle {
+    font-size: 0.8rem;
+    margin-bottom: 3.5rem;
+  }
+  .additional_feature-features {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+  }
+  .additional_feature-icon-wrapper {
+    width: 2.3rem;
+    height: 2.3rem;
+  }
+  .additional_feature-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+  .additional_feature-heading {
+    font-size: 1.15rem;
+    margin-bottom: 0.9rem;
+  }
+  .additional_feature-description {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 1600px) {
+  .additional_feature-container {
+    padding: 4rem 5rem 1.5rem;
+  }
+  .additional_feature-title {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .additional_feature-subtitle {
+    font-size: 1.3rem;
+    margin-bottom: 5rem;
+  }
+  .additional_feature-features {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5rem;
+  }
+  .additional_feature-icon-wrapper {
+    width: 3rem;
+    height: 3rem;
+  }
+  .additional_feature-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+  .additional_feature-heading {
+    font-size: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+  .additional_feature-description {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+}

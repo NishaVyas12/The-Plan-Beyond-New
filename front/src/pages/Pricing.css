@@ -1,0 +1,511 @@
+.pricing-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    font-family: "Helvetica";
+    background-color: #f5fffe;
+    margin-top: 55px;
+    padding: 4rem 4rem 0;
+}
+
+.pricing-detail__header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.pricing-detail__title {
+    font-size: 2rem;
+    color: var(--secondary-color);
+    font-family: "New Spirit";
+    margin-bottom: 0.5rem;
+}
+
+.pricing-detail__description {
+    font-size: 0.85rem;
+    color: #4c5767;
+    line-height: 1.5;
+}
+
+.pricing-detail__cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    width: 100%;
+}
+
+.pricing-detail__card {
+    background: rgba(0, 46, 44, 1);
+    border-radius: 20px;
+    padding: 2rem 1rem 1.5rem;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 200px;
+}
+
+.pricing-detail__card--free {
+    background: rgba(0, 124, 106, 1);
+}
+
+.pricing-detail__card-content {
+    text-align: left;
+}
+
+.pricing-detail__card-title {
+    font-size: 1.2rem;
+    font-family: "New Spirit";
+    margin-bottom: 0.5rem;
+}
+
+.pricing-detail__card-price {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.pricing-detail__card-billing {
+    font-size: 0.8rem;
+    color: #b0b0b0;
+}
+
+.pricing-detail__card-button {
+    background: rgba(0, 124, 106, 1);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 0.7rem 1rem;
+    font-size: 0.85rem;
+    width: 100%;
+    cursor: pointer;
+    font-family: "Helvetica";
+    margin-top: 9rem;
+}
+
+.pricing-detail__card-button--dark {
+    background: rgba(0, 46, 44, 1);
+}
+
+.pricing-detail__card-underline {
+    width: 100%;
+    border: 1px solid rgba(2, 152, 131, 1);
+    margin-top: 1rem;
+    margin-bottom: 3rem;
+}
+
+.pricing-detail__feature-comparison {
+    width: 100%;
+    margin-top: 4rem;
+}
+
+.pricing-detail__feature-title {
+    font-size: 2rem;
+    font-family: "New Spirit";
+    text-align: center;
+    margin-bottom: 3rem;
+    color: var(--secondary-color);
+}
+
+.pricing-detail__feature-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--secondary-color);
+    table-layout: fixed;
+}
+
+.pricing-detail__feature-table th,
+.pricing-detail__feature-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #DAE8E8;
+    color: #4c5767;
+}
+
+.pricing-detail__feature-table th {
+    border-bottom: none;
+    color: var(--secondary-color);
+    width: 20%;
+}
+
+.pricing-detail__feature-table th:nth-child(1) {
+    width: 40%;
+}
+
+.pricing-detail__feature-table td {
+    width: 20%;
+}
+
+.pricing-detail__feature-table td:nth-child(1) {
+    width: 40%;
+}
+
+.pricing-detail__feature-table tr:last-child td {
+    border-bottom: none;
+}
+
+.pricing-detail__feature-table tbody tr:nth-child(1) td {
+    border-top: none;
+}
+
+.pricing-detail__feature-table tbody tr:nth-child(5) td {
+    border-bottom: none;
+}
+
+.pricing-detail__feature-table tbody tr:nth-child(12) td {
+    border-top: 1px solid #DAE8E8;
+    border-bottom: none;
+}
+
+.pricing-detail__feature-category--section {
+    padding-top: 2rem;
+    border-bottom: none;
+}
+
+.pricing-detail__feature-category--features {
+    padding-top: 2rem !important;
+    color: var(--secondary-color) !important;
+    font-weight: 700;
+}
+
+.pricing-detail__feature-category--security {
+    padding-top: 2rem !important;
+    color: var(--secondary-color) !important;
+    font-weight: 700;
+}
+
+.pricing-detail__feature-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.pricing-detail__feature-icon--check {
+    border: 1.5px solid rgba(0, 124, 106, 1);
+}
+
+.pricing-detail__feature-icon--cross {
+    border: 1.5px solid rgba(244, 91, 91, 1);
+    padding: 2px;
+}
+
+@media (max-width: 767.98px) {
+  .pricing-detail {
+    padding: 1.5rem 1rem;
+    margin-top: 50px;
+  }
+
+  .pricing-detail__header {
+    margin-bottom: 1.5rem;
+  }
+
+  .pricing-detail__title {
+    padding: 2rem 0 0.5rem;
+    text-align: left;
+    font-size: 1.5rem;
+  }
+
+  .pricing-detail__description {
+    font-size: 0.85rem;
+    text-align: left;
+    margin-bottom: 1rem;
+  }
+
+  .pricing-detail__cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .pricing-detail__card {
+    padding: 1.5rem 1rem;
+    min-height: 220px;
+  }
+
+  .pricing-detail__card-title {
+    font-size: 1.3rem;
+  }
+
+  .pricing-detail__card-price {
+    font-size: 1.2rem;
+  }
+
+  .pricing-detail__card-billing {
+    font-size: 0.75rem;
+  }
+
+  .pricing-detail__card-button {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .pricing-detail__card-underline {
+    margin-bottom: 1rem;
+  }
+
+  .pricing-detail__feature-comparison {
+    margin-top: 2rem;
+  }
+
+  .pricing-detail__feature-title {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .pricing-detail__feature-table th,
+  .pricing-detail__feature-table td {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .pricing-detail__feature-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .pricing-detail__feature-category--section {
+    padding-top: 1rem;
+  }
+
+  .pricing-detail__feature-category--features,
+  .pricing-detail__feature-category--security {
+    padding-top: 1rem !important;
+  }
+  .pricing-detail__feature-table th:nth-child(1) {
+    width: 25%;
+}
+
+.pricing-detail__feature-table td {
+    width: 50%;
+}
+
+.pricing-detail__feature-table td:nth-child(1) {
+    width: 25%;
+}
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .pricing-detail {
+    padding: 2rem;
+    margin-top: 60px;
+  }
+
+  .pricing-detail__header {
+    margin-bottom: 2rem;
+  }
+
+  .pricing-detail__title {
+    font-size: 1.8rem;
+  }
+
+  .pricing-detail__description {
+    font-size: 0.8rem;
+  }
+
+  .pricing-detail__cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
+  }
+
+  .pricing-detail__card {
+    padding: 1.8rem 0.9rem;
+    min-height: 190px;
+  }
+
+  .pricing-detail__card-title {
+    font-size: 1.1rem;
+  }
+
+  .pricing-detail__card-price {
+    font-size: 1.3rem;
+  }
+
+  .pricing-detail__card-billing {
+    font-size: 0.75rem;
+  }
+
+  .pricing-detail__card-button {
+    padding: 0.65rem 0.9rem;
+    font-size: 0.8rem;
+    margin-top: 3rem;
+  }
+
+  .pricing-detail__card-underline {
+    margin-bottom: 1.5rem;
+  }
+
+  .pricing-detail__feature-comparison {
+    margin-top: 3rem;
+  }
+
+  .pricing-detail__feature-title {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
+
+  .pricing-detail__feature-table th,
+  .pricing-detail__feature-table td {
+    padding: 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .pricing-detail__feature-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .pricing-detail__feature-category--section {
+    padding-top: 1.5rem;
+  }
+
+  .pricing-detail__feature-category--features,
+  .pricing-detail__feature-category--security {
+    padding-top: 1.5rem !important;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .pricing-detail {
+    padding: 3rem;
+  }
+
+  .pricing-detail__header {
+    margin-bottom: 2.5rem;
+  }
+
+  .pricing-detail__title {
+    font-size: 1.9rem;
+  }
+
+  .pricing-detail__description {
+    font-size: 0.85rem;
+  }
+
+  .pricing-detail__cards {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.9rem;
+  }
+
+  .pricing-detail__card {
+    padding: 1.8rem 0.9rem;
+  }
+
+  .pricing-detail__card-title {
+    font-size: 1.15rem;
+  }
+
+  .pricing-detail__card-price {
+    font-size: 1.4rem;
+  }
+
+  .pricing-detail__card-billing {
+    font-size: 0.8rem;
+  }
+
+  .pricing-detail__card-button {
+    padding: 0.65rem 0.9rem;
+    font-size: 0.85rem;
+    margin-top: 5rem;
+  }
+
+  .pricing-detail__card-underline {
+    margin-bottom: 2rem;
+  }
+
+  .pricing-detail__feature-comparison {
+    margin-top: 3.5rem;
+  }
+
+  .pricing-detail__feature-title {
+    font-size: 1.9rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .pricing-detail__feature-table th,
+  .pricing-detail__feature-table td {
+    padding: 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .pricing-detail__feature-icon {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .pricing-detail {
+    padding: 5rem;
+  }
+
+  .pricing-detail__header {
+    margin-bottom: 4rem;
+  }
+
+  .pricing-detail__title {
+    font-size: 2.5rem;
+  }
+
+  .pricing-detail__description {
+    font-size: 1rem;
+  }
+
+  .pricing-detail__cards {
+    gap: 1.5rem;
+  }
+
+  .pricing-detail__card {
+    padding: 2.5rem 1.5rem;
+    min-height: 250px;
+  }
+
+  .pricing-detail__card-title {
+    font-size: 1.5rem;
+  }
+
+  .pricing-detail__card-price {
+    font-size: 1.8rem;
+  }
+
+  .pricing-detail__card-billing {
+    font-size: 1rem;
+  }
+
+  .pricing-detail__card-button {
+    padding: 0.8rem 1.2rem;
+    font-size: 1rem;
+    margin-top: 10rem;
+  }
+
+  .pricing-detail__card-underline {
+    margin-bottom: 4rem;
+  }
+
+  .pricing-detail__feature-comparison {
+    margin-top: 5rem;
+  }
+
+  .pricing-detail__feature-title {
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
+  }
+
+  .pricing-detail__feature-table th,
+  .pricing-detail__feature-table td {
+    padding: 1.2rem;
+    font-size: 1.3rem;
+  }
+
+  .pricing-detail__feature-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .pricing-detail__feature-category--section {
+    padding-top: 2.5rem;
+  }
+
+  .pricing-detail__feature-category--features,
+  .pricing-detail__feature-category--security {
+    padding-top: 2.5rem !important;
+  }
+}

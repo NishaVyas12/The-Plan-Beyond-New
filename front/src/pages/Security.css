@@ -1,0 +1,310 @@
+.security {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    font-family: "Helvetica";
+  }
+  
+  .security__background {
+    position: relative;
+    width: 100%;
+    height: 65vh;
+    margin-top: 55px;
+    background-image: url('../assets/images/Security/security.png');
+    background-size: cover;
+    background-position: center;
+  }
+  
+  .security__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4rem;
+  }
+  
+  .security__content {
+    position: relative;
+    z-index: 1;
+    text-align: left;
+  }
+  
+  .security__title {
+    color: white;
+    font-family: "New Spirit";
+    font-size: 2rem;
+    margin: 0;
+  }
+  
+  .security__text-section {
+    padding: 4rem;
+    background-color: #f5fffe;
+  }
+  
+  .security__subtitle {
+    font-size: 2rem;
+    font-family: "New Spirit";
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .security__description {
+    font-size: 0.85rem;
+    color: #4c5767;
+    line-height: 1.8;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .security__encryption-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4rem 0 0;
+  }
+  
+  .security__encryption-text {
+    flex: 0 0 45%;
+    padding-right: 2rem;
+  }
+  
+  .security__encryption-title {
+    font-size: 2rem;
+    color: var(--secondary-color);
+    font-family: "New Spirit";
+    margin-bottom: 1rem;
+  }
+  
+  .security__encryption-description {
+    font-size: 0.85rem;
+    color: #4c5767;
+    line-height: 1.8;
+    margin-bottom: 1rem;
+  }
+  
+  .security__encryption-image-container {
+    flex: 0 0 35%;
+  }
+  
+  .security__encryption-image {
+    border: 1px solid rgba(218, 232, 232, 1);
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+
+@media (max-width: 767.98px) {
+  .security__background {
+    height: 40vh;
+    margin-top: 40px;
+  }
+
+  .security__overlay {
+    padding: 1rem;
+  }
+
+  .security__title {
+    font-size: 1.5rem;
+  }
+
+  .security__text-section {
+    padding: 3rem 1rem;
+  }
+
+  .security__subtitle {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    text-align: left;
+  }
+
+  .security__description {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    text-align: left;
+  }
+
+  .security__description br {
+    display: none;
+  }
+
+  .security__encryption-section {
+    flex-direction: column;
+    padding: 2.5rem 0 0;
+    gap: 1rem;
+  }
+
+  .security__encryption-text {
+    flex: 0 0 100%;
+    padding-right: 0;
+    text-align: left;
+  }
+
+  .security__encryption-title {
+    font-size: 1.5rem;
+  }
+
+  .security__encryption-description {
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .security__encryption-image-container {
+    flex: 0 0 80%;
+  }
+
+  .security__encryption-image {
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .security__background {
+    height: 50vh;
+  }
+
+  .security__overlay {
+    padding: 2rem;
+  }
+
+  .security__title {
+    font-size: 1.8rem;
+  }
+
+  .security__text-section {
+    padding: 2rem;
+  }
+
+  .security__subtitle {
+    font-size: 1.5rem;
+  }
+
+  .security__description {
+    font-size: 0.82rem;
+  }
+
+  .security__encryption-section {
+    padding: 2rem 0 0;
+    gap: 1.5rem;
+  }
+
+  .security__encryption-text {
+    flex: 0 0 50%;
+    padding-right: 1.5rem;
+  }
+
+  .security__encryption-title {
+    font-size: 1.5rem;
+  }
+
+  .security__encryption-description {
+    font-size: 0.82rem;
+  }
+
+  .security__encryption-image-container {
+    flex: 0 0 40%;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .security__background {
+    height: 55vh;
+  }
+
+  .security__overlay {
+    padding: 3rem;
+  }
+
+  .security__title {
+    font-size: 1.9rem;
+  }
+
+  .security__text-section {
+    padding: 3rem;
+  }
+
+  .security__subtitle {
+    font-size: 1.9rem;
+  }
+
+  .security__description {
+    font-size: 0.84rem;
+  }
+
+  .security__encryption-section {
+    padding: 3rem 0 0;
+  }
+
+  .security__encryption-text {
+    flex: 0 0 48%;
+    padding-right: 1.5rem;
+  }
+
+  .security__encryption-title {
+    font-size: 1.9rem;
+  }
+
+  .security__encryption-description {
+    font-size: 0.84rem;
+  }
+
+  .security__encryption-image-container {
+    flex: 0 0 38%;
+  }
+}
+
+@media (min-width: 1600px) {
+  .security__background {
+    height: 70vh;
+  }
+
+  .security__overlay {
+    padding: 5rem;
+  }
+
+  .security__title {
+    font-size: 2.5rem;
+  }
+
+  .security__text-section {
+    padding: 5rem;
+  }
+
+  .security__subtitle {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .security__description {
+    font-size: 1.3rem;
+    line-height: 1.7;
+  }
+
+  .security__encryption-section {
+    padding: 5rem 0 0;
+    gap: 2rem;
+  }
+
+  .security__encryption-text {
+    flex: 0 0 40%;
+    padding-right: 2.5rem;
+  }
+
+  .security__encryption-title {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .security__encryption-description {
+    font-size: 1.2rem;
+    line-height: 1.6;
+  }
+
+  .security__encryption-image-container {
+    flex: 0 0 35%;
+  }
+}

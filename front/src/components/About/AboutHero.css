@@ -1,0 +1,130 @@
+.about-hero-container {
+    display: flex;
+    width: 100%;
+    height: 85vh;
+    margin-top: 55px;
+    font-family: "Helvetica";
+  }
+  
+  .about-hero-image-section {
+    flex: 0 0 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  
+  .about-hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .about-hero-text-section {
+    flex: 0 0 50%;
+    background-color: #002e2c;
+    color: #ffffff;
+    padding: 4rem 6.5rem 4rem 7rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .about-hero-title {
+    font-size: 2.2rem;
+    font-family: "New Spirit";
+    margin-bottom: 20px;
+  }
+  
+  .about-hero-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+@media (max-width: 767.98px) {
+  .about-hero-container {
+    flex-direction: column;
+    height: auto;
+    margin-top: 40px;
+  }
+
+  .about-hero-image-section {
+    flex: 0 0 100%;
+    height: 40vh;
+  }
+
+  .about-hero-text-section {
+    flex: 0 0 100%;
+    padding: 2rem 1rem;
+  }
+
+  .about-hero-title {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+
+  .about-hero-description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .about-hero-container {
+    height: 80vh;
+    margin-top: 50px;
+  }
+
+  .about-hero-text-section {
+    padding: 3rem 2rem;
+  }
+
+  .about-hero-title {
+    font-size: 1.5rem;
+  }
+
+  .about-hero-description {
+    font-size: 0.85rem;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .about-hero-container {
+    height: 82vh;
+    margin-top: 50px;
+  }
+
+  .about-hero-text-section {
+    padding: 3.5rem 5rem;
+  }
+
+  .about-hero-title {
+    font-size: 1.8rem;
+  }
+
+  .about-hero-description {
+    font-size: 0.85rem;
+  }
+}
+
+@media (min-width: 1600px){
+  .about-hero-container {
+    height: 90vh;
+    margin-top: 60px;
+  }
+
+  .about-hero-text-section {
+    padding: 5rem 6rem;
+  }
+
+  .about-hero-title {
+    font-size: 2.5rem;
+    margin-bottom: 25px;
+  }
+
+  .about-hero-description {
+    font-size: 1.3rem;
+    line-height: 1.8;
+  }
+}
+

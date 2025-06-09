@@ -1,0 +1,156 @@
+.header-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 4rem;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  font-family: "Helvetica_reg";
+  background-color: transparent;
+  flex-wrap: wrap;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+}
+
+.header-hamburger {
+  display: none;
+  font-size: 1.4rem; /* Reduced from 1.8rem */
+  color: white;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+/* Desktop view */
+.header-nav-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center; /* Added to center links */
+}
+
+.header-nav-links a {
+  text-decoration: none;
+  font-size: 1rem; /* Increased from 0.9rem */
+  cursor: pointer;
+}
+
+/* Buttons */
+.header-auth-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.header-auth-buttons button {
+  padding: 8px 20px;
+  margin-left: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Helvetica";
+}
+
+.header-login-btn {
+  background-color: transparent;
+}
+
+.header-register-btn {
+  background-color: transparent;
+  border: 1px solid white !important;
+  border-radius: 20px !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .header-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem 1rem;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Only when menu is active, apply dark background */
+  .header-nav-links.active~.header-auth-buttons.active~.header-header,
+  .header-header.menu-open {
+    background-color: rgba(0, 0, 0, 0.85);
+  }
+
+  .header-top-row {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header-hamburger {
+    display: block;
+  }
+
+  .header-nav-links,
+  .header-auth-buttons {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+    width: 100%;
+    flex-direction: column;
+    margin-top: 0;
+    padding: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  .header-nav-links.active,
+  .header-auth-buttons.active {
+    max-height: 100vh;
+    opacity: 1;
+    transform: translateY(0);
+    padding: 1rem 0 5rem;
+  }
+
+  .header-nav-links.active {
+    padding: 7rem 0 1rem 0;
+    
+
+  }
+
+  .header-nav-links a,
+  .header-auth-buttons button {
+    margin: 0.5rem 0;
+    font-size: 1.4rem; 
+    width: 100%;
+    text-align: center; 
+  }
+
+  .header-auth-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 15px;
+    width: 100%;
+  }
+
+  .header-auth-buttons button {
+        margin: 8px 0;
+        width: 70%;
+        max-width: 200px;
+        text-align: center;
+        font-size: 1.2rem;
+        padding: 10px;
+  }
+
+  .header-register-btn {
+    border: 1px solid white !important;
+    background-color: transparent;
+  }
+
+  .header-login-btn {
+    background-color: transparent;
+  }
+}

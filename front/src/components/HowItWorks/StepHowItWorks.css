@@ -1,0 +1,375 @@
+.step-how-it-works {
+  width: 100%;
+  background-color: #f5fffe;
+  padding: 2rem 4rem 5rem 4rem;
+  font-family: "Helvetica";
+  display: flex;
+  flex-direction: column;
+  gap: 6rem;
+}
+
+.step-how-it-works__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.step-how-it-works__container {
+  max-width: 35%;
+}
+
+.step-how-it-works__title {
+  font-size: 2rem;
+  font-family: "New Spirit";
+  color: var(--secondary-color);
+  margin-bottom: 1rem;
+}
+
+.step-how-it-works__step {
+  font-size: 0.75rem;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.step-how-it-works__description {
+  font-size: 0.85rem;
+  color: #4c5767;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.step-how-it-works__list {
+  list-style: none;
+  padding: 0;
+}
+
+.step-how-it-works__list-item {
+  font-size: 0.85rem;
+  color: #4c5767;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.step-how-it-works__list-item::before {
+  content: url('../../assets/images/icons/white_tick.svg');
+  position: absolute;
+  left: 0;
+  width: 1rem;
+  height: 1rem;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem;
+}
+
+.step-how-it-works__image-container {
+  max-width: 40%;
+  position: relative;
+  display: flex;
+}
+
+.step-how-it-works__image-left {
+  justify-content: flex-start;
+}
+
+.step-how-it-works__image-right {
+  justify-content: flex-end;
+}
+
+.step-how-it-works__form-image,
+.step-how-it-works__step2-image,
+.step-how-it-works__step3-image,
+.step-how-it-works__step4-image,
+.step-how-it-works__step5-image {
+  width: 70%;
+  border-radius: 10px;
+  border: 1px solid rgba(218, 232, 232, 1);
+  position: absolute;
+  left: -30%;
+  top: 10%;
+  z-index: 1;
+}
+
+.step-how-it-works__background-image,
+.step-how-it-works__step2-background-image,
+.step-how-it-works__step3-background-image,
+.step-how-it-works__step4-background-image,
+.step-how-it-works__step5-background-image {
+  width: 95%;
+  height: auto;
+  border: 1px solid rgba(218, 232, 232, 1);
+  object-fit: contain;
+  border-radius: 10px;
+  z-index: 0;
+}
+
+.step-how-it-works__image-left .step-how-it-works__form-image,
+.step-how-it-works__image-left .step-how-it-works__step2-image,
+.step-how-it-works__image-left .step-how-it-works__step4-image {
+  left: initial;
+  right: -30%;
+}
+
+.step-how-it-works__image-right .step-how-it-works__form-image,
+.step-how-it-works__image-right .step-how-it-works__step3-image,
+.step-how-it-works__image-right .step-how-it-works__step5-image {
+  left: -30%;
+}
+
+@media (max-width: 767.98px) {
+  .step-how-it-works {
+    padding: 1.5rem 1rem 5rem 1rem;
+    gap: 5rem;
+  }
+
+  .step-how-it-works__row {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .step-how-it-works__container {
+    max-width: 100%;
+    text-align: left;
+    order: 1;
+  }
+
+  .step-how-it-works__image-container {
+    max-width: 100%;
+    justify-content: center;
+    order: 2;
+    position: relative;
+  }
+
+  .step-how-it-works__title {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .step-how-it-works__step {
+    font-size: 0.7rem;
+  }
+
+  .step-how-it-works__description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .step-how-it-works__list-item {
+    font-size: 0.8rem;
+    padding-left: 1.2rem;
+  }
+
+  .step-how-it-works__list-item::before {
+    width: 0.9rem;
+    height: 0.9rem;
+    padding: 0.05rem;
+  }
+
+  .step-how-it-works__form-image,
+  .step-how-it-works__step2-image,
+  .step-how-it-works__step3-image,
+  .step-how-it-works__step4-image,
+  .step-how-it-works__step5-image {
+    width: 60%;
+    border-radius: 10px;
+    border: 1px solid rgba(218, 232, 232, 1);
+    position: absolute;
+    left: -20%;
+    top: 10%;
+    z-index: 1;
+  }
+
+  .step-how-it-works__background-image,
+  .step-how-it-works__step2-background-image,
+  .step-how-it-works__step3-background-image,
+  .step-how-it-works__step4-background-image,
+  .step-how-it-works__step5-background-image {
+    width: 80%;
+    height: auto;
+    border: 1px solid rgba(218, 232, 232, 1);
+    object-fit: contain;
+    border-radius: 10px;
+    z-index: 0;
+  }
+
+  .step-how-it-works__image-left,
+  .step-how-it-works__image-right {
+    justify-content: center;
+  }
+
+  .step-how-it-works__image-left .step-how-it-works__form-image,
+  .step-how-it-works__image-left .step-how-it-works__step2-image,
+  .step-how-it-works__image-left .step-how-it-works__step4-image,
+  .step-how-it-works__image-right .step-how-it-works__form-image,
+  .step-how-it-works__image-right .step-how-it-works__step3-image,
+  .step-how-it-works__image-right .step-how-it-works__step5-image {
+    left: 0%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .step-how-it-works {
+    padding: 2rem 2rem 4rem 2rem;
+    gap: 4rem;
+  }
+
+  .step-how-it-works__row {
+    gap: 1.5rem;
+  }
+
+  .step-how-it-works__container {
+    max-width: 40%;
+  }
+
+  .step-how-it-works__title {
+    font-size: 1.8rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .step-how-it-works__step {
+    font-size: 0.72rem;
+  }
+
+  .step-how-it-works__description {
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .step-how-it-works__list-item {
+    font-size: 0.82rem;
+  }
+
+  .step-how-it-works__image-container {
+    max-width: 45%;
+  }
+
+  .step-how-it-works__form-image,
+  .step-how-it-works__step2-image,
+  .step-how-it-works__step3-image,
+  .step-how-it-works__step4-image,
+  .step-how-it-works__step5-image {
+    width: 65%;
+    left: -25%;
+  }
+
+  .step-how-it-works__background-image,
+  .step-how-it-works__step2-background-image,
+  .step-how-it-works__step3-background-image,
+  .step-how-it-works__step4-background-image,
+  .step-how-it-works__step5-background-image {
+    width: 90%;
+  }
+
+  .step-how-it-works__image-left .step-how-it-works__form-image,
+  .step-how-it-works__image-left .step-how-it-works__step2-image,
+  .step-how-it-works__image-left .step-how-it-works__step4-image {
+    right: -25%;
+  }
+
+  .step-how-it-works__image-right .step-how-it-works__form-image,
+  .step-how-it-works__image-right .step-how-it-works__step3-image,
+  .step-how-it-works__image-right .step-how-it-works__step5-image {
+    left: -25%;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .step-how-it-works {
+    padding: 2rem 3rem 4rem 3rem;
+    gap: 5rem;
+  }
+
+  .step-how-it-works__container {
+    max-width: 38%;
+  }
+
+  .step-how-it-works__title {
+    font-size: 1.9rem;
+  }
+
+  .step-how-it-works__description {
+    font-size: 0.84rem;
+  }
+
+  .step-how-it-works__list-item {
+    font-size: 0.84rem;
+  }
+
+  .step-how-it-works__image-container {
+    max-width: 42%;
+  }
+}
+
+@media (min-width: 1600px) {
+  .step-how-it-works {
+    padding: 3rem 5rem 6rem 5rem;
+    gap: 7rem;
+  }
+
+  .step-how-it-works__container {
+    max-width: 40%;
+  }
+
+  .step-how-it-works__title {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .step-how-it-works__step {
+    font-size: 0.9rem;
+  }
+
+  .step-how-it-works__description {
+    font-size: 1.3rem;
+    line-height: 1.6;
+  }
+
+  .step-how-it-works__list-item {
+    font-size: 1rem;
+    padding-left: 1.8rem;
+  }
+
+  .step-how-it-works__list-item::before {
+    width: 1.2rem;
+    height: 1.2rem;
+    padding: 0.15rem;
+  }
+
+  .step-how-it-works__image-container {
+    max-width: 38%;
+  }
+
+  .step-how-it-works__form-image,
+  .step-how-it-works__step2-image,
+  .step-how-it-works__step3-image,
+  .step-how-it-works__step4-image,
+  .step-how-it-works__step5-image {
+    width: 75%;
+    left: -35%;
+  }
+
+  .step-how-it-works__background-image,
+  .step-how-it-works__step2-background-image,
+  .step-how-it-works__step3-background-image,
+  .step-how-it-works__step4-background-image,
+  .step-how-it-works__step5-background-image {
+    width: 100%;
+  }
+
+  .step-how-it-works__image-left .step-how-it-works__form-image,
+  .step-how-it-works__image-left .step-how-it-works__step2-image,
+  .step-how-it-works__image-left .step-how-it-works__step4-image {
+    right: -35%;
+  }
+
+  .step-how-it-works__image-right .step-how-it-works__form-image,
+  .step-how-it-works__image-right .step-how-it-works__step3-image,
+  .step-how-it-works__image-right .step-how-it-works__step5-image {
+    left: -35%;
+  }
+}

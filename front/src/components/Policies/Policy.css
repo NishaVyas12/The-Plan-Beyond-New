@@ -1,0 +1,306 @@
+.hero-policies {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    font-family: "Helvetica";
+  }
+  
+  .hero-policies__background {
+    position: relative;
+    width: 100%;
+    height: 65vh;
+    margin-top: 55px;
+    background-image: url('../../assets/images/Policies/privacy.png');
+    background-size: cover;
+    background-position: center;
+  }
+  
+  .hero-policies__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4rem;
+  }
+  
+  .hero-policies__content {
+    position: relative;
+    z-index: 1;
+    text-align: left;
+  }
+  
+  .hero-policies__title {
+    color: white;
+    font-family: "New Spirit";
+    font-size: 2rem;
+    margin: 0;
+  }
+  
+  .hero-policies__text-section {
+    padding: 3rem 4rem;
+    background-color: #f5fffe;
+  }
+  
+  .hero-policies__subtitle {
+    font-size: 1.2rem;
+    font-family: "New Spirit";
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+  }
+  
+  .hero-policies__description {
+    font-size: 0.9rem;
+    color: #4c5767;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+  
+  .hero-policies__list {
+    margin-left: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .hero-policies__list-item {
+    font-size: 0.9rem;
+    color: #4c5767;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-left: 1rem;
+  }
+  
+  
+  .hero-policies__nested-list {
+    margin-left: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .hero-policies__nested-list-item {
+    font-size: 0.9rem;
+    color: #4c5767;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-policies__description a{
+    color: var(--secondary-color);
+  }
+
+  .hero-policies__questions {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+  }
+
+  .cookie-policies__background {
+    position: relative;
+    width: 100%;
+    height: 65vh;
+    margin-top: 55px;
+    background-image: url('../../assets/images/Policies/cookie.png');
+    background-size: cover;
+    background-position: center;
+  }
+
+  .help-policies__background {
+    position: relative;
+    width: 100%;
+    height: 65vh;
+    margin-top: 55px;
+    background-image: url('../../assets/images/Policies/help.png');
+    background-size: cover;
+    background-position: center;
+  }
+
+@media (max-width: 767.98px) {
+  .hero-policies__background {
+    height: 40vh;
+    margin-top: 70px;
+  }
+
+  .hero-policies__overlay {
+    padding: 1.5rem 1rem;
+  }
+
+  .hero-policies__title {
+    font-size: 1.5rem;
+  }
+
+  .hero-policies__text-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .hero-policies__subtitle {
+    font-size: 1.3rem;
+  }
+
+  .hero-policies__questions {
+    font-size: 0.85rem;
+  }
+
+  .hero-policies__description {
+    font-size: 0.85rem;
+  }
+
+  .hero-policies__list {
+    margin-left: 0.85rem;
+  }
+
+  .hero-policies__list-item {
+    font-size: 0.85rem;
+    padding-left: 0.8rem;
+  }
+
+  .hero-policies__nested-list {
+    margin-left: 1.5rem;
+  }
+
+  .hero-policies__nested-list-item {
+    font-size: 0.85rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .hero-policies__background {
+    height: 50vh;
+    margin-top: 60px;
+  }
+
+  .hero-policies__overlay {
+    padding: 2rem;
+  }
+
+  .hero-policies__title {
+    font-size: 1.8rem;
+  }
+
+  .hero-policies__text-section {
+    padding: 2rem;
+  }
+
+  .hero-policies__subtitle {
+    font-size: 1.1rem;
+  }
+
+  .hero-policies__questions {
+    font-size: 0.85rem;
+  }
+
+  .hero-policies__description {
+    font-size: 0.85rem;
+  }
+
+  .hero-policies__list {
+    margin-left: 0.9rem;
+  }
+
+  .hero-policies__list-item {
+    font-size: 0.85rem;
+  }
+
+  .hero-policies__nested-list {
+    margin-left: 1.8rem;
+  }
+
+  .hero-policies__nested-list-item {
+    font-size: 0.85rem;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .hero-policies__background {
+    height: 60vh;
+  }
+
+  .hero-policies__overlay {
+    padding: 3rem;
+  }
+
+  .hero-policies__title {
+    font-size: 1.9rem;
+  }
+
+  .hero-policies__text-section {
+    padding: 2.5rem 3rem;
+  }
+
+  .hero-policies__subtitle {
+    font-size: 1.15rem;
+  }
+
+  .hero-policies__questions {
+    font-size: 0.9rem;
+  }
+
+  .hero-policies__description {
+    font-size: 0.9rem;
+  }
+
+  .hero-policies__list {
+    margin-left: 1rem;
+  }
+
+  .hero-policies__list-item {
+    font-size: 0.9rem;
+  }
+
+  .hero-policies__nested-list {
+    margin-left: 2rem;
+  }
+
+  .hero-policies__nested-list-item {
+    font-size: 0.9rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .hero-policies__background {
+    height: 70vh;
+  }
+
+  .hero-policies__overlay {
+    padding: 5rem;
+  }
+
+  .hero-policies__title {
+    font-size: 2.5rem;
+  }
+
+  .hero-policies__text-section {
+    padding: 4rem 5rem;
+  }
+
+  .hero-policies__subtitle {
+    font-size: 1.7rem;
+  }
+
+  .hero-policies__questions {
+    font-size: 1.3rem;
+  }
+
+  .hero-policies__description {
+    font-size: 1.3rem;
+  }
+
+  .hero-policies__list {
+    margin-left: 1.2rem;
+  }
+
+  .hero-policies__list-item {
+    font-size: 1.3rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .hero-policies__nested-list {
+    margin-left: 2.2rem;
+  }
+
+  .hero-policies__nested-list-item {
+    font-size: 1.3rem;
+    margin-bottom: 0.6rem;
+  }
+}

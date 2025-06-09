@@ -1,0 +1,267 @@
+.faq-container {
+  padding: 4rem 3rem 4rem 3rem;
+  font-family: "Helvetica";
+  background-color: #f5fffe;
+}
+
+.faq-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-title {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-family: "New Spirit";
+}
+
+.faq-title-black {
+  color: var(--secondary-color);
+}
+
+.faq-title-blue {
+  color: var(--primary-color);
+}
+
+.faq-item:first-child {
+  border-top: none;
+}
+
+.faq-item:last-child {
+  border-bottom: none;
+}
+
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 0;
+  cursor: pointer;
+  color: var(--secondary-color);
+  font-size: 1.1rem;
+  border-bottom: 1px solid #dae8e8;
+}
+
+.faq-toggle {
+  font-size: 1rem;
+}
+
+.faq-toggle-image {
+  width: 1rem;
+  height: 1rem;
+}
+
+.faq-answer {
+  padding: 1rem;
+  color: #4c5767;
+  display: none;
+  border-bottom: 1px solid #dae8e8;
+}
+
+.faq-item.active .faq-answer {
+  display: block;
+}
+
+.faq-join-section {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.faq-join-title {
+  font-family: "New Spirit";
+  font-size: 2rem;
+  line-height: 1.5;
+  color: var(--secondary-color);
+  margin-bottom: 2rem;
+}
+
+.faq-join-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+}
+
+.faq-join-arrow {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 767.98px) {
+  .faq-container {
+    padding: 2rem 1rem;
+  }
+  .faq-content {
+    max-width: 100%;
+  }
+  .faq-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .faq-question {
+    font-size: 1rem;
+    line-height: 1.5;
+    padding: 1.5rem 0;
+  }
+  .faq-toggle-image {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+  .faq-answer {
+    font-size: 1rem;
+    line-height: 1.5;
+    padding: 0.8rem;
+  }
+  .faq-join-section {
+    margin-top: 2rem;
+  }
+  .faq-join-title {
+    font-size: 1.5rem;
+    line-height: 1.4;
+    margin-bottom: 1.5rem;
+  }
+  .faq-join-button {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    gap: 6px;
+  }
+  .faq-join-arrow {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .faq-container {
+    padding: 3rem 2rem;
+  }
+  .faq-content {
+    max-width: 90%;
+  }
+  .faq-title {
+    font-size: 1.8rem;
+    margin-bottom: 1.8rem;
+  }
+  .faq-question {
+    font-size: 1rem;
+    padding: 1.8rem 0;
+  }
+  .faq-toggle-image {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+  .faq-answer {
+    font-size: 0.85rem;
+    padding: 0.9rem;
+  }
+  .faq-join-section {
+    margin-top: 2.5rem;
+  }
+  .faq-join-title {
+    font-size: 1.8rem;
+    line-height: 1.4;
+    margin-bottom: 1.8rem;
+  }
+  .faq-join-button {
+    padding: 9px 18px;
+    font-size: 0.85rem;
+    gap: 7px;
+  }
+  .faq-join-arrow {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .faq-container {
+    padding: 3.5rem 2.5rem;
+  }
+  .faq-content {
+    max-width: 85%;
+  }
+  .faq-title {
+    font-size: 1.9rem;
+    margin-bottom: 1.8rem;
+  }
+  .faq-question {
+    font-size: 1.05rem;
+    padding: 1.8rem 0;
+  }
+  .faq-toggle-image {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+  .faq-answer {
+    font-size: 0.85rem;
+    padding: 0.9rem;
+  }
+  .faq-join-section {
+    margin-top: 2.5rem;
+  }
+  .faq-join-title {
+    font-size: 1.9rem;
+    line-height: 1.4;
+    margin-bottom: 1.8rem;
+  }
+  .faq-join-button {
+    padding: 9px 18px;
+    font-size: 0.85rem;
+    gap: 7px;
+  }
+  .faq-join-arrow {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .faq-container {
+    padding: 5rem;
+  }
+  .faq-content {
+    max-width: 900px;
+  }
+  .faq-title {
+    font-size: 2.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .faq-question {
+    font-size: 1.3rem;
+    padding: 2.5rem 0;
+  }
+  .faq-toggle-image {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+  .faq-answer {
+    font-size: 1.3rem;
+    line-height: 1.6;
+    padding: 1rem;
+  }
+  .faq-join-section {
+    margin-top: 4rem;
+  }
+  .faq-join-title {
+    font-size: 2.5rem;
+    line-height: 1.5;
+    margin-bottom: 2.5rem;
+  }
+  .faq-join-button {
+    padding: 12px 24px;
+    font-size: 1rem;
+    gap: 10px;
+  }
+  .faq-join-arrow {
+    width: 24px;
+    height: 24px;
+  }
+}

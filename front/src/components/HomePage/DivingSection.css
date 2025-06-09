@@ -1,0 +1,238 @@
+.diving-section {
+  background-color: #00322f;
+  padding: 4rem;
+  color: white;
+  font-family: "Helvetica";
+}
+
+.diving-heading {
+  font-size: 2rem;
+  font-family: "New Spirit";
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.diving-cards-container {
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+}
+
+.diving-card {
+  background: linear-gradient(90deg, #007c6a, #007c6a);
+  border-radius: 10px;
+  padding: 2rem 2rem 1rem;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.diving-card-title {
+  font-family: "New Spirit";
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.diving-card-subtitle {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.diving-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #ffffff;
+  padding-top: 1rem;
+}
+
+.diving-card-date {
+  font-size: 0.8rem;
+}
+
+.diving-arrow-icon {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 767.98px) {
+  .diving-section {
+    padding: 3rem 1rem;
+  }
+  .diving-heading {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+  }
+  .diving-cards-container {
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .diving-card {
+    width: 100%;
+    padding: 1.5rem 1.5rem 0.75rem;
+  }
+  .diving-card-title {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  
+  .diving-card-footer {
+    padding-top: 0.9rem;
+  }
+  .diving-card-date {
+    font-size: 0.9rem;
+  }
+  .diving-arrow-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .diving-section {
+    padding: 3rem 2rem;
+  }
+  .diving-heading {
+    font-size: 1.8rem;
+    margin-bottom: 2.5rem;
+  }
+  .diving-cards-container {
+    flex-direction: column;
+    gap: 1.8rem;
+  }
+  .diving-card {
+    width: 100%;
+    padding: 1.8rem 1.8rem 0.9rem;
+  }
+  .diving-card-title {
+    font-size: 1.05rem;
+    line-height: 1.5;
+    margin-bottom: 1.8rem;
+  }
+  .diving-card-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 0.9rem;
+  }
+  .diving-card-footer {
+    padding-top: 0.9rem;
+  }
+  .diving-card-date {
+    font-size: 0.78rem;
+  }
+  .diving-arrow-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .diving-section {
+    padding: 3.5rem 3rem;
+  }
+  .diving-heading {
+    font-size: 1.9rem;
+    margin-bottom: 2.5rem;
+  }
+  .diving-cards-container {
+    gap: 1.5rem;
+  }
+  .diving-card {
+    width: 33%;
+    padding: 1.8rem 1.8rem 0.9rem;
+  }
+  .diving-card-title {
+    font-size: 1.05rem;
+    line-height: 1.5;
+    margin-bottom: 1.8rem;
+  }
+  .diving-card-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 0.9rem;
+  }
+  .diving-card-footer {
+    padding-top: 0.9rem;
+  }
+  .diving-card-date {
+    font-size: 0.78rem;
+  }
+  .diving-arrow-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (min-width: 1600px) and (max-width:1899px) {
+  .diving-section {
+    padding: 5rem;
+  }
+  .diving-heading {
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
+  }
+  .diving-cards-container {
+    gap: 3rem;
+  }
+  .diving-card {
+    width: 450px;
+    padding: 2.5rem 2.5rem 1.5rem;
+  }
+  .diving-card-title {
+    font-size: 1.5rem;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+  }
+  .diving-card-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .diving-card-footer {
+    padding-top: 1.2rem;
+  }
+  .diving-card-date {
+    font-size: 1.2rem;
+  }
+  .diving-arrow-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (min-width: 1900px){
+  .diving-section {
+    padding: 5rem;
+  }
+  .diving-heading {
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
+  }
+  .diving-cards-container {
+    gap: 2.5rem;
+  }
+  .diving-card {
+    width: 550px;
+    padding: 2.5rem 2.5rem 1.5rem;
+  }
+  .diving-card-title {
+    font-size: 1.8rem;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+  }
+  .diving-card-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .diving-card-footer {
+    padding-top: 1.2rem;
+  }
+  .diving-card-date {
+    font-size: 1.2rem;
+  }
+  .diving-arrow-icon {
+    width: 24px;
+    height: 24px;
+  }
+}

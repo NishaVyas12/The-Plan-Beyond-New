@@ -1,0 +1,244 @@
+.revealprice-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 4rem 1rem;
+  background-color: #f5fffe;
+  font-family: "Helvetica";
+}
+
+.revealprice-card {
+  background: linear-gradient(90deg, #00322f, #00322f);
+  border-radius: 20px;
+  padding: 4rem;
+  text-align: center;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.revealprice-card::before {
+  content: "";
+  position: absolute;
+  bottom: -60px;
+  left: -70px;
+  width: 140px;
+  height: 140px;
+  border: 5px solid #007c6a;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.revealprice-card::after {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -70px;
+  width: 140px;
+  height: 140px;
+  border: 5px solid #007c6a;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.revealprice-title {
+  font-family: "New Spirit";
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.revealprice-description {
+  font-size: 0.8rem;
+  margin-bottom: 30px;
+  line-height: 1.5;
+}
+
+.revealprice-button {
+  background-color: white;
+  color: #007c6a;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+  font-family: "Helvetica";
+}
+
+.arrow-icon {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 767.98px) {
+  .revealprice-container {
+    padding: 0 1rem 0.5rem;
+  }
+  .revealprice-card {
+    padding: 2rem 1rem;
+    border-radius: 15px;
+   
+  }
+  .revealprice-card::before,
+  .revealprice-card::after {
+    width: 100px;
+    height: 100px;
+    border-width: 3px;
+  }
+  .revealprice-card::before {
+    bottom: -50px;
+    left: -70px;
+  }
+  .revealprice-card::after {
+    top: -50px;
+    right: -70px;
+  }
+  .revealprice-title {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+  .revealprice-description {
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+
+   .revealprice-description br{
+    display: none;
+  }
+
+  .revealprice-button {
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+  .arrow-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .revealprice-container {
+    padding: 0 2rem 0.75rem;
+  }
+  .revealprice-card {
+    padding: 3rem;
+    border-radius: 18px;
+  }
+  .revealprice-card::before,
+  .revealprice-card::after {
+    width: 120px;
+    height: 120px;
+    border-width: 4px;
+  }
+  .revealprice-card::before {
+    bottom: -50px;
+    left: -60px;
+  }
+  .revealprice-card::after {
+    top: -50px;
+    right: -60px;
+  }
+  .revealprice-title {
+    font-size: 1.5rem;
+    margin-bottom: 18px;
+  }
+  .revealprice-description {
+    font-size: 0.78rem;
+    margin-bottom: 25px;
+  }
+  .revealprice-button {
+    padding: 9px 18px;
+    font-size: 0.78rem;
+    gap: 7px;
+  }
+  .arrow-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .revealprice-container {
+    padding: 0 5rem 1rem;
+  }
+  .revealprice-card {
+    padding: 3.5rem;
+    border-radius: 18px;
+  }
+  .revealprice-card::before,
+  .revealprice-card::after {
+    width: 130px;
+    height: 130px;
+    border-width: 4px;
+  }
+  .revealprice-card::before {
+    bottom: -55px;
+    left: -65px;
+  }
+  .revealprice-card::after {
+    top: -55px;
+    right: -65px;
+  }
+  .revealprice-title {
+    font-size: 1.9rem;
+    margin-bottom: 18px;
+  }
+  .revealprice-description {
+    font-size: 0.78rem;
+    margin-bottom: 28px;
+  }
+  .revealprice-button {
+    padding: 9px 18px;
+    font-size: 0.78rem;
+    gap: 7px;
+  }
+  .arrow-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .revealprice-container {
+    padding: 0 5rem 1.5rem;
+  }
+  .revealprice-card {
+    padding: 5rem;
+    border-radius: 25px;
+  }
+  .revealprice-card::before,
+  .revealprice-card::after {
+    width: 160px;
+    height: 160px;
+    border-width: 6px;
+  }
+  .revealprice-card::before {
+    bottom: -70px;
+    left: -80px;
+  }
+  .revealprice-card::after {
+    top: -70px;
+    right: -80px;
+  }
+  .revealprice-title {
+    font-size: 2.5rem;
+    margin-bottom: 25px;
+  }
+  .revealprice-description {
+    font-size: 1.2rem;
+    margin-bottom: 35px;
+  }
+  .revealprice-button {
+    padding: 12px 24px;
+    font-size: 1rem;
+    gap: 10px;
+  }
+  .arrow-icon {
+    width: 24px;
+    height: 24px;
+  }
+}

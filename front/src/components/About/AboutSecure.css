@@ -1,0 +1,261 @@
+.about_secure-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    background-color: #002e2c;
+    padding: 4rem 4rem 0;
+    font-family: "Helvetica";
+  }
+  
+  .about_secure-content {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 13rem;
+  }
+  
+  .about_secure-text-section {
+    width: 50%;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .about_secure-title {
+    font-size: 2rem;
+    font-family: "New Spirit";
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  
+  .about_secure-description {
+    font-size: 0.85rem;
+    margin-bottom: 2.5rem;
+    color: white;
+  }
+  
+  .about_secure-list {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+  }
+  
+  .about_secure-list-item {
+    font-size: 0.85rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-left: 2rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .about_secure-list-item:before {
+    content: "✔";
+    color: white;
+    position: absolute;
+    left: 0;
+    background-color: #007c6a; 
+    width: 1.3rem;
+    height: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; 
+    font-size: 0.8rem; 
+  }
+  
+  .about_secure-image-section {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .about_secure-image {
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+    border-radius: 10px;
+  }
+
+@media (max-width: 767.98px) {
+  .about_secure-container {
+    padding: 3rem 1rem 0;
+  }
+
+  .about_secure-content {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .about_secure-text-section {
+    width: 100%;
+    text-align: left;
+  }
+
+  .about_secure-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .about_secure-description {
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .about_secure-list-item {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    padding-left: 1.8rem;
+  }
+
+  .about_secure-list-item:before {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 0.7rem;
+  }
+
+  .about_secure-image-section {
+    width: 100%;
+  }
+
+  .about_secure-image {
+    max-width: 300px;
+    border-radius: 10px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .about_secure-container {
+    padding: 2rem 2rem 0;
+  }
+
+  .about_secure-content {
+    gap: 6rem;
+  }
+
+  .about_secure-text-section {
+    width: 50%;
+  }
+
+  .about_secure-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .about_secure-description {
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+  }
+
+  .about_secure-list-item {
+    font-size: 0.85rem;
+    margin-bottom: 1.2rem;
+    padding-left: 1.8rem;
+  }
+
+  .about_secure-list-item:before {
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.75rem;
+  }
+
+  .about_secure-image-section {
+    width: 50%;
+  }
+
+  .about_secure-image {
+    max-width: 350px;
+    border-radius: 8px;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .about_secure-container {
+    padding: 3rem 3rem 0;
+  }
+
+  .about_secure-content {
+    gap: 8rem;
+  }
+
+  .about_secure-text-section {
+    width: 50%;
+  }
+
+  .about_secure-title {
+    font-size: 1.9rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .about_secure-description {
+    font-size: 0.8rem;
+    margin-bottom: 2rem;
+  }
+
+  .about_secure-list-item {
+    font-size: 0.8rem;
+    margin-bottom: 1.3rem;
+  }
+
+  .about_secure-list-item:before {
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.75rem;
+  }
+
+  .about_secure-image-section {
+    width: 50%;
+  }
+
+  .about_secure-image {
+    max-width: 400px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .about_secure-container {
+    padding: 5rem 5rem 0;
+  }
+
+  .about_secure-content {
+    gap: 15rem;
+  }
+
+  .about_secure-text-section {
+    width: 50%;
+  }
+
+  .about_secure-title {
+    font-size: 2.5rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .about_secure-description {
+    font-size: 1.3rem;
+    margin-bottom: 3rem;
+  }
+
+  .about_secure-list-item {
+    font-size: 1.3rem;
+    margin-bottom: 1.8rem;
+    padding-left: 2.2rem;
+  }
+
+  .about_secure-list-item:before {
+    width: 1.4rem;
+    height: 1.4rem;
+    font-size: 0.85rem;
+  }
+
+  .about_secure-image-section {
+    width: 50%;
+  }
+
+  .about_secure-image {
+    max-width: 600px;
+  }
+}

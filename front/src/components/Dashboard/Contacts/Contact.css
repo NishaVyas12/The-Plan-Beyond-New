@@ -1,0 +1,187 @@
+.contact-page {
+    margin-left: 300px;
+    margin-right: 50px;
+    padding: 2rem;
+    background-color: #fff;
+    height: 100%;
+    margin-top: 4rem;
+}
+
+.contact-title {
+    margin-bottom: 16px;
+    font-size: 24px;
+    font-weight: 600;
+    color: rgba(31, 31, 42, 1);
+    font-family: "New Spirit";
+}
+
+.contact-empty-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    border: 1px solid #f1f1f1;
+    background: #fcfcfc;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.contact-folder-icon {
+    width: 100px;
+    margin-bottom: 18px;
+}
+
+.contact-empty-heading {
+    color: rgba(31, 31, 42, 1);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.contact-empty-subtext {
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.contact-add-button {
+    padding: 0.6rem 1.5rem;
+    background-color: #0e735c;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.contact-add-button:hover {
+    background-color: #095946;
+}
+
+/* Drawer Styles */
+.contact-drawer {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 350px;
+    height: 100vh;
+    background-color: #fff;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    z-index: 1002;
+    transition: right 0.3s ease-in-out;
+    padding: 1.5rem;
+}
+
+.contact-drawer.open {
+    right: 0;
+}
+
+.contact-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.contact-drawer-header h3 {
+    color: rgba(31, 31, 42, 1);
+}
+
+.contact-drawer-top {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    height: 30px;
+    position: relative;
+
+}
+
+.drawer-close-btn {
+    color: rgba(107, 116, 131, 1);
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    padding: 0;
+    z-index: 2;
+}
+
+.drawer-divider {
+    width: calc(100% + 3rem);
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 0 -1.5rem 20px -1.5rem;
+}
+
+.contact-drawer-heading {
+    font-size: 15px;
+    font-weight: 500;
+    color: rgba(31, 31, 42, 1);
+    margin-bottom: 12px;
+}
+
+.contact-drawer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.drawer-header-line {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+.drawer-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem;
+    background-color: rgba(255, 255, 255, 1);
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.drawer-option:hover {
+    background-color: #f0f0f0;
+}
+
+.drawer-icon-circle {
+    background-color: rgba(212, 238, 234, 1);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 0.5rem;
+}
+
+.drawer-icon-circle img {
+    width: 20px;
+    width: 20px;
+}
+
+.drawer-option-label {
+    font-size: 14px;
+    color: #333;
+}
+
+/* Backdrop */
+.contact-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1001;
+}
