@@ -4,7 +4,7 @@
 
 .dash-content {
     padding: 20px;
-    margin-left: 250px;
+    margin-left: 280px;
 }
 
 .dash-welcome {
@@ -15,7 +15,7 @@
     margin-top: 65px;
     font-size: 10px;
     color: rgba(107, 116, 131, 1);
-    margin-left: 70px;
+    margin-left: 55px;
     text-align: right;
 }
 
@@ -38,11 +38,12 @@
     gap: 10px;
     margin-bottom: 20px;
     justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .dash-tab {
     height: 100px;
-    width: 100%;
+    width: calc(33.33% - 7px);
     padding: 15px;
     border-radius: 10px;
     display: flex;
@@ -62,6 +63,7 @@
 
 .dash-tab-head {
     color: var(--tertiary-color);
+    font-size: 0.85rem;
     margin-bottom: 5px;
 }
 
@@ -80,7 +82,6 @@
 }
 
 .dash-tab-subscription {
-
     background: transparent;
     border: 1px solid rgba(235, 235, 235, 1);
 }
@@ -97,7 +98,7 @@
 }
 
 .dash-personal-info {
-    flex: 0 0 66.6%;
+    flex: 0 0 65%;
     border-radius: 4px;
     padding: 10px 0;
 }
@@ -109,14 +110,14 @@
 }
 
 .dash-ambassadors {
-    flex: 0 0 31.4%;
+    flex: 0 0 33%;
     border-radius: 4px;
     padding: 10px 0;
 }
 
 .dash-personal-header,
 .dash-ambassador-header {
-    width: 200px;
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -255,7 +256,6 @@
     color: var(--tertiary-color);
 }
 
-
 .dash-ambassador-avatar {
     width: 40px;
     height: 40px;
@@ -291,11 +291,11 @@
 }
 
 .dash-plan-beyond {
-    flex: 0 0 75%;
+    flex: 0 0 100%;
 }
 
 .dash-quick-actions {
-    flex: 0 0 23%;
+    flex: 0 0 25%;
     border: 1px solid rgba(218, 232, 232, 1);
     border-radius: 4px;
     padding: 10px;
@@ -322,10 +322,25 @@
 
 .dash-categories {
     margin-top: 10px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px 10px;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    flex-wrap: wrap;
     font-size: 0.8rem;
+}
+
+.dash-category {
+    width: calc(32%);
+    border: 1px solid rgba(218, 232, 232, 1);
+    border-radius: 5px;
+    padding: 20px 10px;
+    color: var(--secondary-color);
+    height: 120px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .dash-slider-section {
@@ -338,20 +353,6 @@
     overflow-x: hidden;
     scroll-behavior: smooth;
     padding: 10px 0;
-}
-
-.dash-category {
-    flex: 0 0 280px;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 15px;
-    background: white;
-    box-sizing: border-box;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    position: relative;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .slider-btn {
@@ -384,20 +385,6 @@
     align-items: center;
 }
 
-.dash-category {
-    padding: 20px 10px;
-    border: 1px solid rgba(218, 232, 232, 1);
-    border-radius: 5px;
-    color: var(--secondary-color);
-    width: 20rem;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    position: relative;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
 .quick-links-container {
     margin-top: 24px;
 }
@@ -410,7 +397,8 @@
 }
 
 .quick-links-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     flex-wrap: wrap;
 }
@@ -425,7 +413,6 @@
     padding: 12px 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     text-decoration: none;
-    width: 229px;
     height: 95px;
 }
 
@@ -436,7 +423,7 @@
 }
 
 .quick-link-label {
-    font-size: 14px;
+    font-size: 0.8rem;
     font-weight: 500;
     color: #1f2937;
 }
@@ -468,7 +455,6 @@
 .guide-cards-grid {
     display: flex;
     gap: 20px;
-    flex-wrap: wrap;
 }
 
 .guide-card {
@@ -477,8 +463,8 @@
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     overflow: hidden;
     padding: 12px;
-    width: 100%;
-    max-width: 470px;
+    width: 50%;
+    box-sizing: border-box;
 }
 
 .guide-image {
@@ -490,18 +476,19 @@
 }
 
 .guide-content {
-    padding: 16px;
+    padding: 16px 0;
 }
 
 .guide-title {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 500;
     margin-bottom: 6px;
     color: #1f2937;
 }
 
-.guide-description {
-    font-size: 13px;
+.gude-description {
+    font-size: 0.75rem;
+    line-height: 1.5;
     color: #6b7280;
 }
 
@@ -511,8 +498,10 @@
 
 .play-button {
     position: absolute;
-    top: 55%;
+    top: 50%;
     left: 50%;
+    width: 40%;
+    height: auto;
     transform: translate(-50%, -50%);
     cursor: pointer;
 }
@@ -538,7 +527,7 @@
     margin: 0;
     color: rgba(0, 124, 106, 1);
     padding: 0;
-    font-size: 14px;
+    font-size: 0.8rem;
 }
 
 .dash-user-bg {
@@ -563,12 +552,13 @@
 .slider-content-div span {
     color: rgba(31, 31, 42, 1);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 0.85rem;
 }
 
 .slider-content-div p {
     color: rgba(107, 116, 131, 1);
-    font-size: 12px;
+    font-size: 0.85rem;
+    margin-top: 7px;
 }
 
 .dash-user-bg img {
@@ -576,7 +566,6 @@
     max-height: 50%;
     object-fit: contain;
 }
-
 
 .dash-user-bg img {
     justify-content: center;
@@ -592,13 +581,14 @@
 }
 
 .dash-category span {
+    font-size: 0.85rem;
     color: var(--secondary-color);
 }
 
 .dash-category-desc {
     color: var(--tertiary-color);
-    font-size: 0.75rem;
-    margin: 3px 0 0 0;
+    font-size: 0.85rem;
+    margin: 7px 0 0 0;
 }
 
 .dash-arrow-icon {
@@ -643,288 +633,168 @@
     object-fit: contain;
 }
 
+.guide-description {
+    font-size: 13px;
+    color: #6b7280;
+}
 @media (max-width: 767.98px) {
-    .dash-main-content {
-        margin-top: 60px;
+    .dash-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+
+    .dash-tabs {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .dash-tab {
+        width: 100%;
+        height: auto;
+        padding: 10px;
+    }
+
+    .subscription-remaining {
+        margin-left: 90px;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .dash-details {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .dash-personal-info,
+    .dash-ambassadors {
+        flex: 0 0 100%;
+    }
+
+    .dash-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .dash-profile-card {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .dash-avatar {
+        width: 80px;
+        height: 80px;
+    }
+
+    .dash-categories {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .dash-category {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .dash-category-content {
+        position: static;
+        margin-left: 0;
+        align-items: flex-start;
+    }
+
+    .dash-category-desc {
+        margin: 5px 0 10px 0;
+    }
+
+    .dash-action-inline {
+        position: static;
+        justify-content: center;
+    }
+
+    .quick-links-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        justify-items: center;
     }
 
     .quick-link-card {
         width: 100%;
+        height: auto;
+        padding: 10px;
     }
 
-    .dash-content {
-        padding: 1rem;
-        margin-left: 0;
+    .guide-cards-grid {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .guide-card {
+        width: 100%;
+    }
+
+    .dash-slider {
+        gap: 10px;
+    }
+
+    .slider-category {
+        min-width: 80%;
+        height: auto;
+        padding: 15px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .slider-content-div {
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dash-user-bg {
+        position: static;
+        margin-bottom: 10px;
     }
 
     .dash-welcome-text {
         font-size: 1.2rem;
-    }
-
-    .dash-alerts {
-        font-size: 0.9rem;
-    }
-
-    .dash-tabs {
-        flex-direction: column;
-        gap: 13px;
-    }
-
-    .dash-tab {
-        padding: 10px;
-        font-size: 1rem;
-    }
-
-    .dash-tab-content {
-        margin-left: 8px;
-    }
-
-    .dash-tab-icon {
-        width: 16px;
-        height: 16px;
-    }
-
-    .dash-details {
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .dash-personal-info,
-    .dash-ambassadors {
-        flex: 1;
-        padding: 8px 0;
-    }
-
-    .dash-personal-header,
-    .dash-ambassador-header {
-        padding: 0 8px;
+       
     }
 
     .dash-section-title {
-        font-size: 1rem;
-        line-height: 1.4;
-        margin: 0.5rem 0 1rem 0;
-    }
-
-    .dash-edit-btn {
         font-size: 0.85rem;
-        padding: 4px 8px;
-    }
-
-    .dash-edit-icon {
-        width: 16px;
-        height: 16px;
-    }
-
-    .dash-profile-card {
-        flex-direction: column;
-        padding: 0.7rem;
-        gap: 2rem;
-    }
-
-    .dash-avatar {
-        width: 100%;
-        height: auto;
-    }
-
-    .dash-info-grid {
-        display: grid;
-        grid-template-columns: 2fr 2fr;
-        gap: 20px;
-        grid-template-areas:
-            "full-name email"
-            "dob address"
-            "phone id";
-    }
-
-    .dash-info-item:nth-child(1) {
-        grid-area: full-name;
-    }
-
-    .dash-info-item:nth-child(2) {
-        grid-area: email;
-    }
-
-    .dash-info-item:nth-child(3) {
-        grid-area: address;
-    }
-
-    .dash-info-item:nth-child(4) {
-        grid-area: dob;
-    }
-
-    .dash-info-item:nth-child(5) {
-        grid-area: phone;
-    }
-
-    .dash-info-item:nth-child(6) {
-        grid-area: id;
-    }
-
-    .dash-info-item {
-        font-size: 0.9rem;
-    }
-
-    .dash-info-item p {
-        font-size: 0.9rem;
-        margin-top: 5px;
-    }
-
-    .dash-ambassador {
-        padding: 8px;
-        font-size: 0.85rem;
-    }
-
-    .dash-ambassador-avatar {
-        width: 30px;
-        height: 30px;
-    }
-
-    .dash-ambassador-role {
-        font-size: 0.85rem;
-    }
-
-    .dash-right-row {
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .dash-plan-beyond,
-    .dash-quick-actions {
-        flex: 1;
-    }
-
-    .dash-categories {
-        grid-template-columns: 1fr;
-        gap: 13px;
-    }
-
-    .dash-category {
-        padding: 15px 8px;
-        font-size: 1rem;
-        width: 100%;
-    }
-
-    .dash-ambassador-info p {
-        font-size: 1rem;
-    }
-
-    .dash-category-icon,
-    .dash-action-icon {
-        width: 16px;
-        height: 16px;
-    }
-
-    .dash-icon-wrapper {
-        width: 40px;
-        height: 40px;
-    }
-
-    .dash-category-desc {
-        font-size: 0.9rem;
-    }
-
-    .dash-quick-actions {
-        padding: 8px;
-    }
-
-    .dash-action-btn {
-        padding: 8px;
-        font-size: 0.9rem;
-    }
-
-    .dash-separator {
-        margin: 8px 0;
-    }
-
-    .dash-slider {
-        display: flex;
-        gap: 16px;
-        scroll-behavior: smooth;
-        transition: transform 0.3s ease;
-    }
-
-    .dash-category {
-        flex: 0 0 280px;
-    }
-
-    .subscription-remaining {
-        margin-left: 1rem;
-        text-align: left;
     }
 }
 
 @media (min-width: 768px) and (max-width: 991.98px) {
-    .dash-main-content {
-        margin-top: 60px;
-    }
-
     .dash-content {
-        padding: 15px;
         margin-left: 0;
-    }
-
-    .dash-welcome-text {
-        font-size: 1.1rem;
-    }
-
-    .dash-alerts {
-        font-size: 0.75rem;
+        padding: 15px;
     }
 
     .dash-tabs {
-        flex-wrap: wrap;
-        gap: 8px;
+        gap: 10px;
     }
 
     .dash-tab {
-        width: calc(50% - 4px);
-        padding: 12px;
-        font-size: 0.8rem;
+        width: calc(50% - 5px);
+        height: 100px;
     }
 
-    .dash-tab-icon {
-        width: 14px;
-        height: 14px;
+    .subscription-remaining {
+        margin-left: 0;
+        text-align: right;
     }
 
     .dash-details {
         flex-direction: column;
-        gap: 12px;
+        gap: 15px;
     }
 
     .dash-personal-info,
     .dash-ambassadors {
-        flex: 1;
-        padding: 10px 0;
-    }
-
-    .dash-personal-header,
-    .dash-ambassador-header {
-        padding: 0 10px;
-    }
-
-    .dash-section-title {
-        font-size: 0.85rem;
-    }
-
-    .dash-edit-btn {
-        font-size: 0.75rem;
-    }
-
-    .dash-edit-icon {
-        width: 14px;
-        height: 14px;
-    }
-
-    .dash-profile-card {
-        padding: 12px;
-        gap: 15px;
-    }
-
-    .dash-avatar {
-        width: 90px;
-        height: 100px;
+        flex: 0 0 100%;
     }
 
     .dash-info-grid {
@@ -932,361 +802,125 @@
         gap: 20px;
     }
 
-    .dash-info-item {
-        font-size: 0.8rem;
-    }
-
-    .dash-info-item p {
-        font-size: 0.75rem;
-    }
-
-    .dash-ambassador {
-        padding: 10px;
-        font-size: 0.8rem;
-    }
-
-    .dash-ambassador-avatar {
-        width: 35px;
-        height: 35px;
-    }
-
-    .dash-right-row {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .dash-plan-beyond,
-    .dash-quick-actions {
-        flex: 1;
-    }
-
     .dash-categories {
+        gap: 10px;
+    }
+
+    .dash-category {
+        width: calc(50% - 5px);
+        height: 100px;
+    }
+
+    .quick-links-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 10px;
     }
 
-    .dash-category {
-        padding: 15px 10px;
-        font-size: 0.8rem;
+    .quick-link-card {
         width: 100%;
-        max-width: 280px;
+        height: 80px;
     }
 
-    .dash-category-icon,
-    .dash-action-icon {
-        width: 14px;
-        height: 14px;
+    .guide-cards-grid {
+        flex-direction: column;
+        gap: 15px;
     }
 
-    .dash-icon-wrapper {
-        width: 35px;
-        height: 35px;
+    .guide-card {
+        width: 100%;
     }
 
-    .dash-quick-actions {
-        padding: 10px;
-    }
-
-    .dash-action-btn {
-        padding: 10px;
-        font-size: 0.8rem;
-    }
-
-    .dash-slider-wrapper {
-        max-width: 580px;
-    }
-
-    .dash-slider {
-        gap: 20px;
-    }
-
-    .dash-category {
-        flex: 0 0 280px;
-    }
-
-    .subscription-remaining {
-        margin-left: 1rem;
-        text-align: right;
+    .slider-category {
+        min-width: calc(50% - 10px);
     }
 }
 
 @media (min-width: 992px) and (max-width: 1199.98px) {
     .dash-content {
+        margin-left: 250px;
         padding: 15px;
-        margin-left: 230px;
-    }
-
-    .dash-welcome-text {
-        font-size: 1.1rem;
-    }
-
-    .dash-alerts {
-        font-size: 0.75rem;
     }
 
     .dash-tab {
-        padding: 12px;
-        font-size: 0.8rem;
-    }
-
-    .dash-tab-icon {
-        width: 14px;
-        height: 14px;
-    }
-
-    .dash-personal-info {
-        flex: 0 0 73%;
-    }
-
-    .dash-ambassadors {
-        flex: 0 0 25%;
-    }
-
-    .dash-section-title {
-        font-size: 0.85rem;
-    }
-
-    .dash-edit-btn {
-        font-size: 0.75rem;
-    }
-
-    .dash-edit-icon {
-        width: 14px;
-        height: 14px;
-    }
-
-    .dash-profile-card {
-        padding: 12px;
-    }
-
-    .dash-avatar {
-        width: 90px;
-        height: 100px;
-    }
-
-    .dash-info-grid {
-        gap: 20px;
-    }
-
-    .dash-info-item {
-        font-size: 0.8rem;
-    }
-
-    .dash-info-item p {
-        font-size: 0.75rem;
-    }
-
-    .dash-ambassador {
-        padding: 8px;
-        font-size: 0.8rem;
-    }
-
-    .dash-plan-beyond {
-        flex: 0 0 73%;
-    }
-
-    .dash-quick-actions {
-        flex: 0 0 25%;
-        padding: 8px;
+        width: calc(33.33% - 7px);
+        height: 90px;
     }
 
     .dash-categories {
-        gap: 15px 8px;
+        gap: 10px;
     }
 
     .dash-category {
-        padding: 15px 8px;
-        font-size: 0.75rem;
-        width: 100%;
-        max-width: 280px;
+        width: calc(33.33% - 7px);
+        height: 110px;
     }
 
-    .dash-category-icon,
-    .dash-action-icon {
-        width: 14px;
-        height: 14px;
+    .quick-links-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 
-    .dash-icon-wrapper {
-        width: 35px;
-        height: 35px;
+    .quick-link-card {
+        height: 80px;
     }
 
-    .dash-slider-wrapper {
-        max-width: 900px;
+    .slider-category {
+        min-width: calc(33.33% - 7px);
     }
 
-    .dash-slider {
-        gap: 20px;
-    }
-
-    .dash-category {
-        flex: 0 0 280px;
-    }
-
-    .subscription-remaining {
-        margin-left: 1rem;
-        text-align: right;
+    .guide-card {
+        width: 50%;
     }
 }
 
 @media (min-width: 1600px) {
     .dash-content {
-        padding: 30px;
-        margin-left: 280px;
-    }
-
-    .dash-welcome-text {
-        font-size: 1.7rem;
-    }
-
-    .dash-alerts {
-        font-size: 1.1rem;
-    }
-
-    .dash-tabs {
-        gap: 15px;
+        margin-left: 330px;
+        padding: 25px;
     }
 
     .dash-tab {
+        width: calc(33.33% - 10px);
+        height: 120px;
         padding: 20px;
-        font-size: 1.2rem;
-    }
-
-    .dash-tab-icon {
-        width: 20px;
-        height: 20px;
-    }
-
-    .dash-details {
-        gap: 2%;
-    }
-
-    .dash-personal-info {
-        flex: 0 0 75%;
-    }
-
-    .dash-ambassadors {
-        flex: 0 0 23%;
-    }
-
-    .dash-personal-header,
-    .dash-ambassador-header {
-        padding: 0 15px;
-    }
-
-    .dash-section-title {
-        font-size: 1.2rem;
-    }
-
-    .dash-edit-btn {
-        font-size: 1rem;
-        padding: 6px 12px;
-    }
-
-    .dash-edit-icon {
-        width: 20px;
-        height: 20px;
-    }
-
-    .dash-profile-card {
-        padding: 20px;
-        gap: 25px;
-    }
-
-    .dash-avatar {
-        width: 150px;
-        height: 150px;
-    }
-
-    .dash-info-grid {
-        gap: 40px;
-    }
-
-    .dash-info-item {
-        font-size: 1.2rem;
-    }
-
-    .dash-info-item p {
-        font-size: 1rem;
-    }
-
-    .dash-ambassador {
-        padding: 12px;
-        font-size: 1.2rem;
-    }
-
-    .dash-ambassador-avatar {
-        width: 50px;
-        height: 50px;
-    }
-
-    .dash-ambassador-role {
-        font-size: 1rem;
-    }
-
-    .dash-right-row {
-        gap: 2%;
-    }
-
-    .dash-plan-beyond {
-        flex: 0 0 75%;
-    }
-
-    .dash-quick-actions {
-        flex: 0 0 23%;
-        padding: 15px;
     }
 
     .dash-categories {
-        gap: 25px 15px;
+        gap: 15px;
     }
 
     .dash-category {
+        width: calc(33.33% - 10px);
+        height: 140px;
         padding: 25px 15px;
-        font-size: 1.2rem;
-        width: 100%;
-        max-width: 280px;
     }
 
-    .dash-category-icon,
-    .dash-action-icon {
-        width: 20px;
-        height: 20px;
-    }
-
-    .dash-icon-wrapper {
-        width: 50px;
-        height: 50px;
-    }
-
-    .dash-category-desc {
-        font-size: 1rem;
-    }
-
-    .dash-action-btn {
-        padding: 12px;
-        font-size: 1rem;
-    }
-
-    .dash-separator {
-        margin: 12px 0;
-    }
-
-    .dash-slider-wrapper {
-        max-width: 900px;
-    }
-
-    .dash-slider {
+    .quick-links-grid {
+        grid-template-columns: repeat(4, 1fr);
         gap: 20px;
     }
 
-    .dash-category {
-        flex: 0 0 280px;
+    .quick-link-card {
+        height: 100px;
     }
 
-    .subscription-remaining {
-        margin-left: 1rem;
-        text-align: right;
+    .slider-category {
+        min-width: calc(25% - 15px);
+        height: 170px;
     }
+
+    .dash-welcome-text {
+        font-size: 28px;
+    }
+
+    .dash-section-title {
+        font-size: 1rem;
+    }
+.subscription-remaining {
+    margin-top: 65px;
+    font-size: 10px;
+    color: rgba(107, 116, 131, 1);
+    margin-left: 130px;
+    text-align: right;
+}
 }

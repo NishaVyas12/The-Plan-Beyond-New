@@ -77,8 +77,8 @@ const Navbar = () => {
 
 
             <div className="dash-nav-right">
-                <span className="dash-user-name">Security</span>
-                <span className="dash-user-name">Help</span>
+                {/* <span className="dash-user-name">Security</span>
+                <span className="dash-user-name">Help</span> */}
 
                 <div className="dash-notification">
                     <img src={dashNotify} alt="Notify" />
@@ -105,7 +105,7 @@ const Navbar = () => {
                         </div>
                     )}
                     <span className="dash-user-name">{profile.full_name}</span>
-                    <img src={down} alt="" />
+                    {/* <img src={down} alt="" /> */}
                 </div>
             </div>
         </nav>

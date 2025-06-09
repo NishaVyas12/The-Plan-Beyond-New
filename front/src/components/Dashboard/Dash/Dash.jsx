@@ -74,148 +74,7 @@ const Dash = () => {
             }
         };
 
-        const fetchNominees = async () => {
-            try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/get-nominees`,
-                    {
-                        method: "GET",
-                        credentials: "include",
-                    }
-                );
-                const data = await response.json();
-                if (data.success && data.nominees) {
-                    setNomineeCount(data.nominees.length);
-                }
-            } catch (error) {
-                console.error("Error fetching nominees:", error);
-            }
-        };
-
-        const fetchContacts = async () => {
-            try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/get-contacts`,
-                    {
-                        method: "GET",
-                        credentials: "include",
-                    }
-                );
-                const data = await response.json();
-                if (data.success && data.contacts) {
-                    setContactCount(data.contacts.length);
-                }
-            } catch (error) {
-                console.error("Error fetching contacts:", error);
-            }
-        };
-
-        const fetchVideos = async () => {
-            try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/videos`,
-                    {
-                        method: "GET",
-                        credentials: "include",
-                    }
-                );
-                const data = await response.json();
-                if (data.success && data.videos) {
-                    setVideoCount(data.videos.length);
-                }
-            } catch (error) {
-                console.error("Error fetching videos:", error);
-            }
-        };
-
-        const fetchAmbassadors = async () => {
-            try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/get-ambassadors`,
-                    {
-                        method: "GET",
-                        credentials: "include",
-                    }
-                );
-                const data = await response.json();
-                if (data.success && data.ambassadors && data.ambassadors.length > 0) {
-                    let primaryAmbassador = data.ambassadors.find(
-                        (amb) => amb.ambassador_type === "Primary"
-                    );
-                    let secondaryAmbassador = data.ambassadors.find(
-                        (amb) => amb.ambassador_type === "Secondary"
-                    );
-                    let noTypeAmbassadors = data.ambassadors.filter(
-                        (amb) => amb.ambassador_type === ""
-                    );
-
-                    let ambassadorList = [];
-
-                    if (data.ambassadors.length === 1) {
-                        const amb = data.ambassadors[0];
-                        ambassadorList = [
-                            { name: amb.first_name, role: "Initiator" },
-                            { name: "Ambassador 2", role: "Approver" },
-                        ];
-                    } else if (data.ambassadors.length >= 2) {
-                        if (primaryAmbassador) {
-                            ambassadorList.push({
-                                name: primaryAmbassador.first_name,
-                                role: "Initiator",
-                            });
-                            const otherAmb =
-                                secondaryAmbassador ||
-                                noTypeAmbassadors[0] ||
-                                data.ambassadors.find((amb) => amb !== primaryAmbassador);
-                            if (otherAmb) {
-                                ambassadorList.push({
-                                    name: otherAmb.first_name,
-                                    role: "Approver",
-                                });
-                            }
-                        } else if (secondaryAmbassador) {
-                            ambassadorList.push({
-                                name: secondaryAmbassador.first_name,
-                                role: "Approver",
-                            });
-                            const otherAmb =
-                                noTypeAmbassadors[0] ||
-                                data.ambassadors.find((amb) => amb !== secondaryAmbassador);
-                            if (otherAmb) {
-                                ambassadorList.push({
-                                    name: otherAmb.first_name,
-                                    role: "Initiator",
-                                });
-                            }
-                        } else {
-                            ambassadorList = [
-                                { name: data.ambassadors[0].first_name, role: "Initiator" },
-                                { name: data.ambassadors[1].first_name, role: "Approver" },
-                            ];
-                        }
-                    }
-
-                    setAmbassadors(ambassadorList.slice(0, 2));
-                } else {
-                    setAmbassadors([
-                        { name: "Ambassador 1", role: "Initiator" },
-                        { name: "Ambassador 2", role: "Approver" },
-                    ]);
-                }
-            } catch (error) {
-                console.error("Error fetching ambassadors:", error);
-                setAmbassadors([
-                    { name: "Ambassador 1", role: "Initiator" },
-                    { name: "Ambassador 2", role: "Approver" },
-                ]);
-            }
-        };
-
         fetchProfile();
-        fetchNominees();
-        fetchContacts();
-        fetchVideos();
-        fetchAmbassadors();
     }, []);
 
     const getGreeting = () => {
@@ -398,7 +257,7 @@ const Dash = () => {
                                         <div className="dash-category-action">
                                             <span className="dash-action-inline">
                                                 <img src={leaf} alt="leaf" />
-                                                <p>Add Nominees</p>
+                                                <p>Add Ambassador</p>
                                             </span>
                                         </div>
                                     </Link>
@@ -412,7 +271,7 @@ const Dash = () => {
                                         <div className="dash-category-action">
                                             <span className="dash-action-inline">
                                                 <img src={leaf} alt="leaf" />
-                                                <p>Add Nominees</p>
+                                                <p>Add Contacts</p>
                                             </span>
                                         </div>
                                     </Link>
@@ -488,24 +347,20 @@ const Dash = () => {
                                         <img src={Videocamera} alt="Record Video" className="quick-link-icon" />
                                         <span className="quick-link-label">Record Video Message</span>
                                     </Link>
-
                                     <Link to="#" className="quick-link-card">
                                         <img src={Gallery} alt="Upload Photos" className="quick-link-icon" />
                                         <span className="quick-link-label">Upload Photos</span>
                                     </Link>
-
                                     <Link to="#" className="quick-link-card">
                                         <img src={Soundwave} alt="Record Audio" className="quick-link-icon" />
                                         <span className="quick-link-label">Record Audio Message</span>
                                     </Link>
-
                                     <Link to="#" className="quick-link-card">
                                         <img src={Star} alt="What's New" className="quick-link-icon" />
                                         <span className="quick-link-label">What's New</span>
                                     </Link>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                     <div className="guide-section">
@@ -520,11 +375,10 @@ const Dash = () => {
                                     </p>
                                 </div>
                             </div>
-
                             <div className="guide-card video-card">
                                 <div className="video-wrapper">
-                                    <img src={vidThumbnail} alt="Video Thumbnail" className="guide-image" />
-                                    <img className="play-button" src={Play} alt="" />
+                                    <img src={vidThumbnail} alt="Thumbnail" className="guide-image" />
+                                    <img className="play-button" src={Play} alt="thumbnail" />
                                 </div>
                             </div>
                         </div>
