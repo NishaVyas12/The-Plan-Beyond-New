@@ -11,7 +11,7 @@ const fs = require("fs");
 const passwordValidator = require("password-validator");
 const rateLimit = require("express-rate-limit");
 const crypto = require("crypto");
-
+const { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse } = require("@simplewebauthn/server");
 dotenv.config();
 
 if (!process.env.FRONTEND_URL) {
@@ -54,6 +54,11 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
 });
+
+// WebAuthn configuration
+const rpName = "The Plan Beyond";
+const rpID = "localhost";
+const origin = `http://localhost:5173`
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -289,6 +294,7 @@ const passwordRateLimiter = rateLimit({
 app.use("/api/forgot-password", passwordRateLimiter);
 app.use("/api/reset-password", passwordRateLimiter);
 app.use("/api/change-password", passwordRateLimiter);
+
 const createUsersTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS users (
@@ -297,6 +303,9 @@ const createUsersTable = async () => {
       password VARCHAR(255) NOT NULL,
       otp VARCHAR(6),
       is_verified BOOLEAN DEFAULT FALSE,
+      ambassador_accept BOOLEAN DEFAULT FALSE,
+      biometric_credential_id VARCHAR(255),
+      biometric_public_key TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `;
@@ -306,6 +315,16 @@ const createUsersTable = async () => {
     throw err;
   }
 };
+
+createUsersTable().then(() => {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}).catch(err => {
+  console.error("Error creating users table:", err);
+  process.exit(1);
+});
 
 const checkColumnExists = async (tableName, columnName) => {
   const [rows] = await pool.query(
@@ -2809,39 +2828,314 @@ ThePlanBeyond Team`,
 });
 
 app.post("/api/verify-otp", async (req, res) => {
-  const { email, otp, isPasswordReset } = req.body;
+  const { email, otp } = req.body;
 
   try {
-    const [users] = await pool.query("SELECT * FROM users WHERE email = ?", [
-      email,
-    ]);
-    if (users.length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
-    }
+    const [users] = await pool.query(
+      "SELECT * FROM users WHERE email = ? AND otp = ?",
+      [email, otp]
+    );
 
-    const user = users[0];
-    if (user.otp !== otp) {
+    if (users.length === 0) {
       return res.status(400).json({ success: false, message: "Invalid OTP." });
     }
 
-    if (!isPasswordReset) {
-      await pool.query(
-        "UPDATE users SET is_verified = ?, otp = NULL WHERE email = ?",
-        [true, email]
-      );
-      req.session.userId = user.id;
+    await pool.query(
+      "UPDATE users SET is_verified = ?, otp = NULL WHERE email = ?",
+      [true, email]
+    );
+
+    req.session.userId = users[0].id;
+    res.json({ success: true, message: "OTP verified successfully.", userId: users[0].id });
+  } catch (err) {
+    console.error("Error during OTP verification:", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+app.post("/api/register-biometric", async (req, res) => {
+  const { userId } = req.session;
+  const { email } = req.body;
+
+  if (!userId || !email) {
+    return res.status(401).json({ success: false, message: "Unauthorized." });
+  }
+
+  try {
+    const [users] = await pool.query("SELECT * FROM users WHERE id = ? AND email = ?", [userId, email]);
+    if (users.length === 0) {
+      return res.status(400).json({ success: false, message: "User not found." });
     }
+
+    const user = users[0];
+
+    const options = await generateRegistrationOptions({
+      rpName,
+      rpID,
+      userID: Buffer.from(user.id.toString(), 'utf-8'),
+      userName: user.email,
+      attestationType: "none",
+      authenticatorSelection: {
+        userVerification: "required",
+        authenticatorAttachment: "platform",
+      },
+    });
+
+    req.session.challenge = options.challenge;
+    req.session.email = email;
+
+    res.json({ success: true, options });
+  } catch (err) {
+    console.error("Error generating biometric registration options:", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+app.post("/api/verify-biometric-registration", async (req, res) => {
+  const { userId } = req.session;
+  const { response } = req.body;
+
+  if (!userId || !req.session.challenge || !req.session.email) {
+    return res.status(401).json({ success: false, message: "Unauthorized." });
+  }
+
+  if (!response) {
+    return res.status(400).json({ success: false, message: "Missing WebAuthn response." });
+  }
+
+  try {
+    console.log("Verifying biometric registration for userId:", userId);
+    console.log("Expected challenge:", req.session.challenge);
+    console.log("Received response:", JSON.stringify(response, null, 2));
+
+    const verification = await verifyRegistrationResponse({
+      response,
+      expectedChallenge: req.session.challenge,
+      expectedOrigin: origin,
+      expectedRPID: rpID,
+    });
+
+    console.log("Verification result:", JSON.stringify(verification, null, 2));
+
+    if (!verification.verified) {
+      return res.status(400).json({ success: false, message: "Biometric registration verification failed." });
+    }
+
+    // Extract credentialID and credentialPublicKey
+    let credentialID, credentialPublicKey;
+    if (verification.registrationInfo && verification.registrationInfo.credential) {
+      // Current structure: registrationInfo.credential
+      credentialID = verification.registrationInfo.credential.id;
+      credentialPublicKey = verification.registrationInfo.credential.publicKey;
+      // Convert credentialID to Buffer if it's a base64 string
+      if (typeof credentialID === "string") {
+        credentialID = Buffer.from(credentialID, "base64");
+      }
+    } else if (verification.credential) {
+      // Alternative structure: direct credential
+      credentialID = verification.credential.id;
+      credentialPublicKey = verification.credential.publicKey;
+      if (typeof credentialID === "string") {
+        credentialID = Buffer.from(credentialID, "base64");
+      }
+    } else {
+      console.error("Invalid verification response structure:", verification);
+      return res.status(500).json({ success: false, message: "Invalid registration data structure." });
+    }
+
+    if (!credentialID || !credentialPublicKey) {
+      console.error("Missing credentialID or credentialPublicKey:", { credentialID, credentialPublicKey });
+      return res.status(500).json({ success: false, message: "Missing required credential fields." });
+    }
+
+    // Convert to base64 for storage
+    const credentialIDBuffer = Buffer.isBuffer(credentialID)
+      ? credentialID
+      : Buffer.from(credentialID, 'base64'); // force decode
+
+    const publicKeyBuffer = Buffer.isBuffer(credentialPublicKey)
+      ? credentialPublicKey
+      : Buffer.from(credentialPublicKey, 'base64');
+
+    const credentialIDBase64 = credentialIDBuffer.toString("base64");
+    const publicKeyBase64 = publicKeyBuffer.toString("base64");
+
+
+    await pool.query(
+      "UPDATE users SET biometric_credential_id = ?, biometric_public_key = ? WHERE id = ?",
+      [credentialIDBase64, publicKeyBase64, userId]
+    );
+
+    delete req.session.challenge;
+    delete req.session.email;
+
+    res.json({ success: true, message: "Biometric registration successful." });
+  } catch (err) {
+    console.error("Error verifying biometric registration:", err);
+    res.status(500).json({ success: false, message: "Server error: " + err.message });
+  }
+});
+
+app.post("/api/login-biometric", async (req, res) => {
+  try {
+    console.log("Generating biometric login options...");
+    const options = await generateAuthenticationOptions({
+      rpID: "localhost", // Matches http://localhost:5173
+      allowCredentials: [], // Empty to allow any registered credential
+      userVerification: "required",
+      timeout: 60000,
+    });
+
+    console.log("Generated options with challenge:", options.challenge);
+    req.session.challenge = options.challenge;
+
+    res.json({ success: true, options });
+  } catch (err) {
+    console.error("Error in /api/login-biometric:", err);
+    res.status(500).json({ success: false, message: "Biometric login failed: Server error." });
+  }
+});
+
+app.post("/api/verify-biometric-login", async (req, res) => {
+  const { response } = req.body;
+
+  if (!req.session.challenge) {
+    console.error("No challenge found in session.");
+    return res.status(401).json({ success: false, message: "Unauthorized: No challenge." });
+  }
+
+  try {
+    console.log("Received verification payload:", response);
+
+    // Use rawId directly as base64 to avoid encoding issues
+    const rawIdBuffer = Buffer.from(new Uint8Array(response.rawId.data));
+    console.log(rawIdBuffer, "rawIdBuffer")
+    const credentialID = rawIdBuffer.toString("base64");
+
+    console.log(credentialID, 'CRDENTIAL ID')
+
+    const [users] = await pool.query(
+      "SELECT * FROM users WHERE biometric_credential_id = ?",
+      [credentialID]
+    );
+
+    console.log("Matching users found:", users.length);
+
+    if (users.length === 0) {
+      console.error("No user found for credentialID:", credentialID);
+      return res.status(400).json({ success: false, message: "No user found for this biometric credential." });
+    }
+
+    const user = users[0];
+    console.log("Found user:", user.id);
+
+    // Validate authenticatorData
+    if (!response.response.authenticatorData) {
+      console.error("Missing authenticatorData in response.");
+      return res.status(400).json({ success: false, message: "Invalid WebAuthn response: Missing authenticatorData." });
+    }
+
+    const publicKey = Buffer.from(user.biometric_public_key, "base64");
+    const expectedOrigin = "http://localhost:5173"; // Matches frontend origin
+
+    const verification = await verifyAuthenticationResponse({
+      response,
+      expectedChallenge: req.session.challenge,
+      expectedOrigin,
+      expectedRPID: "localhost",
+      authenticator: {
+        credentialID: Buffer.from(user.biometric_credential_id, "base64"),
+        credentialPublicKey: publicKey,
+        counter: 0, // Adjust if counter is stored
+      },
+    });
+
+    if (!verification.verified) {
+      console.error("WebAuthn verification failed.");
+      return res.status(400).json({ success: false, message: "Biometric login failed: Verification unsuccessful." });
+    }
+
+    console.log("Verification successful for user:", user.id);
+    req.session.userId = user.id;
+    delete req.session.challenge;
 
     res.json({
       success: true,
-      message: "OTP verified successfully.",
-      userId: isPasswordReset ? null : user.id,
+      message: "Biometric login successful.",
+      userId: user.id,
+      userType: user.ambassador_accept ? "ambassador" : "user",
     });
   } catch (err) {
-    console.error("Error verifying OTP:", err);
-    res.status(500).json({ success: false, message: "Server error." });
+    console.error("Error in /api/verify-biometric-login:", err);
+    res.status(500).json({ success: false, message: "Biometric login failed: Server error." });
+  }
+});
+
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Email and password are required." });
+  }
+
+  try {
+    const [users] = await pool.query(
+      "SELECT id, password, is_verified, ambassador_accept, biometric_credential_id FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
+    }
+
+    const user = users[0];
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
+    }
+
+    if (user.is_verified === 1) {
+      req.session.userId = user.id;
+      return res.json({
+        success: true,
+        message: "Login successful.",
+        userId: user.id,
+        userType: "user",
+        hasBiometric: !!user.biometric_credential_id,
+      });
+    } else if (user.is_verified === 0 && user.ambassador_accept === 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "You haven't accepted the ambassador request. Please accept and login again.",
+      });
+    } else if (user.is_verified === 0 && user.ambassador_accept === 1) {
+      req.session.userId = user.id;
+      return res.json({
+        success: true,
+        message: "Login successful.",
+        userId: user.id,
+        userType: "ambassador",
+        hasBiometric: !!user.biometric_credential_id,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Please verify your email with OTP.",
+      });
+    }
+  } catch (err) {
+    console.error("Error during login:", err);
+    return res.status(500).json({ success: false, message: "Server error." });
   }
 });
 
@@ -2989,77 +3283,6 @@ app.post("/api/reset-password", async (req, res) => {
   } catch (err) {
     console.error("Error resetting password:", err);
     res.status(500).json({ success: false, message: "Server error." });
-  }
-});
-
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Email and password are required." });
-  }
-
-  try {
-    // Check users table
-    const [users] = await pool.query(
-      "SELECT id, password, is_verified, ambassador_accept FROM users WHERE email = ?",
-      [email]
-    );
-
-    if (users.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
-    }
-
-    const user = users[0];
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
-    }
-
-    // Validation rules
-    if (user.is_verified === 1) {
-      // Case 1: Verified user, redirect to dashboard
-      req.session.userId = user.id;
-      return res.json({
-        success: true,
-        message: "Login successful.",
-        userId: user.id,
-        userType: "user",
-      });
-    } else if (user.is_verified === 0 && user.ambassador_accept === 0) {
-      // Case 2: Unverified user with unaccepted ambassador request
-      return res.status(400).json({
-        success: false,
-        message:
-          "You haven't accepted the ambassador request. Please accept and login again.",
-      });
-    } else if (user.is_verified === 0 && user.ambassador_accept === 1) {
-      // Case 3: Unverified user with accepted ambassador request, redirect to send-message
-      req.session.userId = user.id;
-      return res.json({
-        success: true,
-        message: "Login successful.",
-        userId: user.id,
-        userType: "ambassador",
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Please verify your email with OTP.",
-      });
-    }
-  } catch (err) {
-    console.error("Error during login:", err);
-    return res.status(500).json({ success: false, message: "Server error." });
   }
 });
 

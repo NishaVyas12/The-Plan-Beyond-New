@@ -5,6 +5,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import logoIcon from "../../../assets/images/icons/plan.svg";
+import { startAuthentication } from '@simplewebauthn/browser';
 
 const MIN_PASSWORD_LENGTH = 8;
 const passwordRegex =
@@ -57,7 +58,7 @@ const Login = () => {
 
       if (response.data.success) {
         const userId = response.data.userId;
-        const userType = response.data.userType; // Expecting 'user' or 'ambassador' from backend
+        const userType = response.data.userType;
         sessionStorage.setItem("userId", userId);
 
         if (rememberMe) {
@@ -284,6 +285,57 @@ const Login = () => {
     setForgotPasswordStep("email");
   };
 
+const handleBiometricLogin = async () => {
+  try {
+    // Use environment variable for API URL
+    const optionsResponse = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/login-biometric`,
+      {},
+      { withCredentials: true }
+    );
+
+    if (!optionsResponse.data.success) {
+      throw new Error("Failed to get biometric options");
+    }
+
+    // Start authentication with received options
+    const authResponse = await startAuthentication(optionsResponse.data.options);
+
+    // Verify the authentication
+    const verifyResponse = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/verify-biometric-login`,
+      { response: authResponse },
+      { withCredentials: true }
+    );
+
+    if (verifyResponse.data.success) {
+      const { userId, userType } = verifyResponse.data;
+      sessionStorage.setItem("userId", userId);
+      
+      toast.success("Biometric login successful! Redirecting...", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        if (userType === "user") {
+          navigate("/dashboard");
+        } else if (userType === "ambassador") {
+          navigate("/send-message");
+        }
+      }, 2000);
+    } else {
+      throw new Error(verifyResponse.data.message || "Biometric login failed");
+    }
+  } catch (error) {
+    console.error("Biometric login error:", error);
+    toast.error(`Biometric login failed: ${error.message}`, {
+      position: "top-right",
+      autoClose: 3000,
+    });
+  }
+};
+
   return (
     <div className="login-container">
       <header className="login-header">
@@ -343,6 +395,9 @@ const Login = () => {
             </div>
             <button type="submit" className="login-btn">
               Log In
+            </button>
+            <button type="submit" className="login-btn" onClick={handleBiometricLogin}>
+              Log In with Biometric
             </button>
             <p className="login-signup-text">
               Don't have an account? <Link to="/register">Sign Up</Link>
