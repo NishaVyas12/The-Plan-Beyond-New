@@ -26,5 +26,6 @@ zip
 *.sw?
 dist.zip
 
-front/src/assets/videos/*.mp4
+src/assets/videos/*.mp4
 
+src/assets/videos/*.mp4
