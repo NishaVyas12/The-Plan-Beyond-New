@@ -5,7 +5,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import logoIcon from "../../../assets/images/icons/plan.svg";
-import { startRegistration } from "@simplewebauthn/browser";
+import { startRegistration } from "@simplewebauthn/browser"; 
 
 const Register = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
