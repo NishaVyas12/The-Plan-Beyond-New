@@ -25,3 +25,5 @@ zip
 *.sln
 *.sw?
 dist.zip
+
+src/assets/videos/*.mp4
