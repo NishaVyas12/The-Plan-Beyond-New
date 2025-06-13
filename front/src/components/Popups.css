@@ -1,0 +1,281 @@
+.popups-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    font-family: "Helvetica";
+}
+
+.popups-background {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.popups-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #aaadaf #e8ecef;
+}
+
+.popups-content {
+    position: relative;
+    z-index: 3;
+}
+
+.popups-welcome-content {
+    background: #ffffff;
+    padding: 2rem 4rem;
+    border-radius: 10px;
+    width: 600px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.popups-welcome-illustration,
+.popups-step-illustration {
+    width: 270px;
+    height: 200px;
+    object-fit: contain;
+    margin-bottom: 1.5rem;
+}
+
+.popups-welcome-title {
+    font-family: "New Spirit";
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
+.popups-welcome-subtitle {
+    font-size: 0.8rem;
+    color: var(--tertiary-color);
+    line-height: 1.5;
+    margin-bottom: 2rem;
+}
+
+.popups-start-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.popups-setup-content {
+    background: #ffffff;
+    padding: 2rem 1.5rem;
+    border-radius: 10px;
+    width: 600px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    max-height: 98vh;
+    scrollbar-width: thin;
+    scrollbar-color: #aaadaf #e8ecef;
+}
+
+.popups-back-btn {
+    background: none;
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.popups-back-arrow {
+    width: 1rem;
+    height: 1rem;
+    transform: rotate(180deg);
+}
+
+.popups-setup-title {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    margin: 0;
+    text-align: left;
+}
+
+.popups-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.popups-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.popups-progress-bar {
+    flex-grow: 1;
+    height: 4px;
+    background: repeating-linear-gradient(
+        to right,
+        #d1fae5 0%,
+        #d1fae5 40%,
+        transparent 40%,
+        transparent 50%
+    );
+    background-size: 30% 100%;
+    margin: 0 1rem 0 0;
+    border-radius: 2px;
+}
+
+.popups-progress-filled {
+    height: 100%;
+    background: #065f46;
+    border-radius: 2px;
+}
+
+.popups-progress-text {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.popups-title {
+    font-family: "New Spirit";
+    font-size: 1.1rem;
+    color: var(--secondary-color);
+    margin: 0.5rem 0;
+}
+
+.popups-subtitle {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--tertiary-color);
+    margin-bottom: 3rem;
+}
+
+.popups-continue-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.7rem 4rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: auto;
+    transition: background-color 0.3s;
+}
+
+.popups-continue-btn:disabled {
+    background-color: var(--primary-color);
+    cursor: not-allowed;
+}
+
+.popups-skip-btn {
+    background: none;
+    border: 1px solid rgba(218, 232, 232, 1);
+    color: #6b7280;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.7rem 4rem;
+    border-radius: 10px;
+    transition: color 0.3s;
+}
+
+.popups-skip-btn:hover {
+    color: var(--secondary-color);
+}
+
+.popups-button-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.popups-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.popups-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+    max-width: 550px;
+    align-self: center;
+}
+
+.popups-form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.popups-label {
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+    display: block;
+    text-align: left;
+}
+
+.popups-input {
+    background-color: transparent;
+    color: var(--secondary-color);
+    border: 1px solid #d1fae5;
+    padding: 0.7rem 1.2rem;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    width: 100%;
+    transition: border-color 0.3s;
+}
+
+.popups-input option {
+    color: var(--secondary-color);
+    background-color: #ffffff;
+}
+
+.popups-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.popups-overlay::-webkit-scrollbar,
+.popups-setup-content::-webkit-scrollbar {
+    width: 2px;
+}
+
+.popups-overlay::-webkit-scrollbar-track,
+.popups-setup-content::-webkit-scrollbar-track {
+    background: #e8ecef;
+    border-radius: 2px;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.popups-overlay::-webkit-scrollbar-thumb,
+.popups-setup-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #71777b, #aaadaf);
+    border-radius: 2px;
+    border: 1px solid #e0e0e0;
+}

@@ -185,7 +185,7 @@ const Register = () => {
             draggable: true,
           });
           setTimeout(() => {
-            navigate("/dashboard");
+            navigate("/popups");
           }, 2000);
         }
       }
@@ -214,7 +214,7 @@ const Register = () => {
       draggable: true,
     });
     setTimeout(() => {
-      navigate("/dashboard");
+      navigate("/popups");
     }, 2000);
   };
 

@@ -27,6 +27,7 @@ import FeedbacksPage from "./pages/FeedbacksPage";
 import Confirmation from "./pages/Confirmation";
 import DashboardPage from "./pages/DashboardPage";
 import ContactPage from "./pages/ContactPage";
+import Popups from "./components/Popups";
 
 const PrivateRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -102,6 +103,14 @@ function App() {
                 <AboutPage />
                 <Footer />
               </>
+            }
+          />
+          <Route
+            path="/popups"
+            element={
+              <PrivateRoute>
+                <Popups />
+              </PrivateRoute>
             }
           />
           <Route

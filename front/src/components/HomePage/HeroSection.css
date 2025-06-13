@@ -196,9 +196,9 @@
 
 @media (min-width: 1400px) and (max-width: 1599px) {
     .hero-hero-section {
-        height: 130vh;
+        height: 120vh;
         clip-path: ellipse(92% 82% at 50% 0%);
-        padding-top: 170px;
+        padding-top: 190px;
     }
 
     .hero-hero-content h1 {
@@ -223,7 +223,7 @@
     }
 
     .hero-dashboard-image-section {
-        margin-top: -430px;
+        margin-top: -460px;
     }
 
     .hero-dashboard-image {
