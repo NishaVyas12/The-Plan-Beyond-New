@@ -8,15 +8,11 @@ const userRoutes = require("./routes/user");
 const biometricRoutes = require("./routes/biometric");
 const dotenv = require("dotenv");
 
-// Load environment variables
 dotenv.config();
 
-// Initialize database
 initializeDatabase().then(() => {
-  // Initialize Express app
   const app = express();
 
-  // Middleware
   app.use(express.json());
   app.use(
     cors({
@@ -25,15 +21,11 @@ initializeDatabase().then(() => {
     })
   );
   app.use(configureSession());
-  app.use("/images", express.static(path.join(__dirname, "images")));
-  app.use("/photos", express.static(path.join(__dirname, "photos")));
 
-  // Routes
   app.use("/api", authRoutes);
   app.use("/api", userRoutes);
   app.use("/api", biometricRoutes);
 
-  // Start server
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

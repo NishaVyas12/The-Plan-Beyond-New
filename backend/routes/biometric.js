@@ -12,10 +12,14 @@ const {
 const router = express.Router();
 
 router.post("/register-biometric", checkAuth, async (req, res) => {
-    const { email, userId } = req.body;
+    const { email, userId, biometricType } = req.body;
 
     if (!email || !userId || userId !== req.session.userId) {
         return res.status(400).json({ success: false, message: "Invalid request." });
+    }
+
+    if (!["face", "fingerprint"].includes(biometricType)) {
+        return res.status(400).json({ success: false, message: "Invalid biometric type." });
     }
 
     try {
@@ -25,6 +29,7 @@ router.post("/register-biometric", checkAuth, async (req, res) => {
         }
 
         const user = users[0];
+        console.log(`Generating ${biometricType} registration options for user:`, user.email);
 
         const options = await generateRegistrationOptions({
             rpName: rpName || 'The Plan Beyond',
@@ -42,20 +47,25 @@ router.post("/register-biometric", checkAuth, async (req, res) => {
 
         req.session.challenge = options.challenge;
         req.session.userId = user.id;
+        req.session.biometricType = biometricType; // Store biometric type in session
 
         res.json({ success: true, options });
     } catch (err) {
-        console.error("Error generating biometric registration options:", err);
+        console.error(`Error generating ${biometricType} registration options:`, err);
         res.status(500).json({ success: false, message: "Server error." });
     }
 });
 
 router.post("/verify-biometric-registration", checkAuth, async (req, res) => {
-    const { response, userId } = req.body;
+    const { response, userId, biometricType } = req.body;
 
     if (!response || !userId || userId !== req.session.userId) {
         console.error("Invalid request: Missing response or userId mismatch", { response, userId, sessionUserId: req.session.userId });
         return res.status(400).json({ success: false, message: "Invalid request." });
+    }
+
+    if (!["face", "fingerprint"].includes(biometricType)) {
+        return res.status(400).json({ success: false, message: "Invalid biometric type." });
     }
 
     try {
@@ -93,7 +103,7 @@ router.post("/verify-biometric-registration", checkAuth, async (req, res) => {
                 requireUserVerification: true,
             });
         } catch (err) {
-            console.error("Verification error:", err);
+            console.error(`Verification error for ${biometricType}:`, err);
             return res.status(400).json({ success: false, message: `Verification failed: ${err.message}` });
         }
 
@@ -101,56 +111,59 @@ router.post("/verify-biometric-registration", checkAuth, async (req, res) => {
             const { id: credentialID, publicKey: credentialPublicKey, counter } = verification.registrationInfo.credential;
 
             if (!credentialID || !credentialPublicKey || counter === undefined) {
-                console.error("Invalid registrationInfo.credential:", { credentialID, credentialPublicKey, counter });
-                return res.status(400).json({ success: false, message: "Invalid biometric registration data." });
+                console.error(`Invalid registrationInfo.credential for ${biometricType}:`, { credentialID, credentialPublicKey, counter });
+                return res.status(400).json({ success: false, message: `Invalid ${biometricType} registration data.` });
             }
 
             const normalizedCredentialID = credentialID.replace(/=+$/, '');
 
             await pool.query(
-                "INSERT INTO webauthn_credentials (user_id, credential_id, public_key, counter) VALUES (?, ?, ?, ?)",
+                "INSERT INTO webauthn_credentials (user_id, credential_id, public_key, counter, biometric_type) VALUES (?, ?, ?, ?, ?)",
                 [
                     parseInt(userId),
                     normalizedCredentialID,
                     Buffer.from(credentialPublicKey).toString("base64"),
                     counter,
+                    biometricType
                 ]
             );
 
             delete req.session.challenge;
+            delete req.session.biometricType;
 
-            res.json({ success: true, message: "Biometric registration successful." });
+            res.json({ success: true, message: `${biometricType === "face" ? "Face ID" : "Fingerprint"} registration successful.` });
         } else {
-            console.error("Biometric registration verification failed:", verification);
-            return res.status(400).json({ success: false, message: "Biometric registration verification failed." });
+            console.error(`${biometricType} registration verification failed:`, verification);
+            return res.status(400).json({ success: false, message: `${biometricType === "face" ? "Face ID" : "Fingerprint"} registration verification failed.` });
         }
     } catch (err) {
-        console.error("Error verifying biometric registration:", err);
+        console.error(`Error verifying ${biometricType} registration:`, err);
         return res.status(500).json({ success: false, message: "Server error." });
     }
 });
 
 router.post("/login-biometric", async (req, res) => {
+    const { biometricType } = req.body; // Optionally accept biometricType for login
+
     try {
         const [credentials] = await pool.query(
-            "SELECT user_id, credential_id FROM webauthn_credentials"
+            "SELECT user_id, credential_id, biometric_type FROM webauthn_credentials WHERE biometric_type = ? OR biometric_type IS NULL",
+            [biometricType || "fingerprint"]
         );
 
         if (credentials.length === 0) {
-            console.error("No biometric credentials found in the database.");
+            console.error("No biometric credentials found for type:", biometricType || "any");
             return res.status(400).json({
                 success: false,
                 message: "No biometric credentials registered.",
             });
         }
 
-        // Validate credential_id format
         const validCredentials = credentials.filter(cred => {
             if (typeof cred.credential_id !== 'string' || !cred.credential_id) {
                 console.warn("Invalid credential_id type or empty for user_id:", cred.user_id, { credential_id: cred.credential_id });
                 return false;
             }
-            // Allow base64url characters (A-Z, a-z, 0-9, -, _, =)
             const base64urlRegex = /^[A-Za-z0-9\-_=]+$/;
             if (!base64urlRegex.test(cred.credential_id)) {
                 console.warn("Invalid base64url format for credential_id for user_id:", cred.user_id, { credential_id: cred.credential_id });
@@ -160,21 +173,12 @@ router.post("/login-biometric", async (req, res) => {
         });
 
         if (validCredentials.length === 0) {
-            console.error("No valid credentials found after filtering.");
+            console.error("No valid credentials found after filtering for type:", biometricType || "any");
             return res.status(400).json({
                 success: false,
                 message: "No valid biometric credentials registered. Please re-register your biometrics.",
             });
         }
-
-        // const options = await generateAuthenticationOptions({
-        //   rpID,
-        //   allowCredentials: validCredentials.map(cred => ({
-        //     id: cred.credential_id, // Use raw base64url string
-        //     type: "public-key",
-        //   })),
-        //   userVerification: "required",
-        // });
 
         const allowCredentials = validCredentials.map((cred) => ({
             id: cred.credential_id,
@@ -190,16 +194,17 @@ router.post("/login-biometric", async (req, res) => {
         });
 
         req.session.challenge = options.challenge;
+        req.session.biometricType = biometricType; // Store for verification
 
         res.json({ success: true, options });
     } catch (err) {
-        console.error("Error generating biometric login options:", err);
+        console.error(`Error generating biometric login options for ${biometricType || "any"}:`, err);
         res.status(500).json({ success: false, message: "Server error." });
     }
 });
 
 router.post("/verify-biometric-login", async (req, res) => {
-    const { response } = req.body;
+    const { response, biometricType } = req.body;
 
     if (!response || !response.id) {
         console.error("Invalid request: Missing response or response.id", { response });
@@ -216,7 +221,7 @@ router.post("/verify-biometric-login", async (req, res) => {
         const credentialId = response.id;
 
         const [credentials] = await pool.query(
-            "SELECT user_id, credential_id, public_key, counter FROM webauthn_credentials WHERE credential_id = ?",
+            "SELECT user_id, credential_id, public_key, counter, biometric_type FROM webauthn_credentials WHERE credential_id = ?",
             [credentialId]
         );
 
@@ -229,6 +234,14 @@ router.post("/verify-biometric-login", async (req, res) => {
         }
 
         const credential = credentials[0];
+        if (biometricType && credential.biometric_type && biometricType !== credential.biometric_type) {
+            console.error("Biometric type mismatch:", { requested: biometricType, stored: credential.biometric_type });
+            return res.status(400).json({
+                success: false,
+                message: `Requested ${biometricType} but credential is registered as ${credential.biometric_type}.`,
+            });
+        }
+
         const [users] = await pool.query(
             "SELECT id, email, is_verified, ambassador_accept FROM users WHERE id = ?",
             [credential.user_id]
@@ -255,7 +268,7 @@ router.post("/verify-biometric-login", async (req, res) => {
                 requireUserVerification: true,
             });
         } catch (err) {
-            console.error("Verification error:", err);
+            console.error(`Verification error for ${biometricType || "biometric"}:`, err);
             return res.status(400).json({ success: false, message: `Verification failed: ${err.message}` });
         }
 
@@ -266,12 +279,13 @@ router.post("/verify-biometric-login", async (req, res) => {
             );
 
             delete req.session.challenge;
+            delete req.session.biometricType;
 
             if (user.is_verified === 1) {
                 req.session.userId = user.id;
                 return res.json({
                     success: true,
-                    message: "Biometric login successful.",
+                    message: `${biometricType === "face" ? "Face ID" : "Fingerprint"} login successful.`,
                     userId: user.id,
                     userType: "user",
                 });
@@ -284,7 +298,7 @@ router.post("/verify-biometric-login", async (req, res) => {
                 req.session.userId = user.id;
                 return res.json({
                     success: true,
-                    message: "Biometric login successful.",
+                    message: `${biometricType === "face" ? "Face ID" : "Fingerprint"} login successful.`,
                     userId: user.id,
                     userType: "ambassador",
                 });
@@ -295,11 +309,11 @@ router.post("/verify-biometric-login", async (req, res) => {
                 });
             }
         } else {
-            console.error("Biometric login verification failed:", verification);
-            return res.status(400).json({ success: false, message: "Biometric login verification failed." });
+            console.error(`${biometricType || "Biometric"} login verification failed:`, verification);
+            return res.status(400).json({ success: false, message: `${biometricType === "face" ? "Face ID" : "Fingerprint"} login verification failed.` });
         }
     } catch (err) {
-        console.error("Error verifying biometric login:", err);
+        console.error(`Error verifying ${biometricType || "biometric"} login:`, err);
         return res.status(500).json({ success: false, message: "Server error." });
     }
 });
