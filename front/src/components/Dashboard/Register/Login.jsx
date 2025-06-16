@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import "./Login.css";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import logoIcon from "../../../assets/images/icons/plan.svg";
+import logoIcon from "../../../assets/images/icons/planbeyond.svg";
+import faceIcon from "../../../assets/images/icons/face.svg"; // Import face icon
+import fingerprintIcon from "../../../assets/images/icons/fingerprint.svg"; // Import fingerprint icon
 import { startAuthentication } from '@simplewebauthn/browser';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -23,10 +25,32 @@ const Login = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showEmailLogin, setShowEmailLogin] = useState(false); // State to toggle email login form
   const navigate = useNavigate();
-  const passwordAttempts = useRef(0);
 
   useEffect(() => {
+    // Check if WebAuthn is supported
+    if (window.PublicKeyCredential) {
+      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+        .then((available) => {
+          console.log("WebAuthn support:", available);
+          setIsBiometricSupported(available);
+        })
+        .catch((err) => {
+          console.error("Error checking WebAuthn support:", err);
+          setIsBiometricSupported(false);
+          toast.error("Biometric authentication not supported on this device.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        });
+    } else {
+      console.log("WebAuthn not supported in this browser.");
+    }
+
+    // Check for saved email
     const savedEmail = localStorage.getItem("rememberedEmail");
     if (savedEmail) {
       setEmail(savedEmail);
@@ -49,6 +73,7 @@ const Login = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/login`,
@@ -73,7 +98,6 @@ const Login = () => {
         });
 
         setTimeout(() => {
-          // Redirect based on userType
           if (userType === "user") {
             navigate("/dashboard");
           } else if (userType === "ambassador") {
@@ -91,6 +115,72 @@ const Login = () => {
         pauseOnHover: true,
         draggable: true,
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    if (!isBiometricSupported) {
+      toast.error("Biometric authentication is not supported on this device.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      console.log("Requesting biometric login options...");
+      const optionsResponse = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/login-biometric`,
+        {},
+        { withCredentials: true }
+      );
+
+      console.log("Biometric options received:", JSON.stringify(optionsResponse.data, null, 2));
+
+      if (!optionsResponse.data.success) {
+        throw new Error(optionsResponse.data.message || "Failed to get biometric options");
+      }
+
+      const authResponse = await startAuthentication(optionsResponse.data.options);
+      console.log("Authentication response:", JSON.stringify(authResponse, null, 2));
+
+      const verifyResponse = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/verify-biometric-login`,
+        { response: authResponse },
+        { withCredentials: true }
+      );
+
+      console.log("Verification response:", JSON.stringify(verifyResponse.data, null, 2));
+
+      if (verifyResponse.data.success) {
+        const { userId, userType } = verifyResponse.data;
+        sessionStorage.setItem("userId", userId);
+
+        toast.success("Biometric login successful! Redirecting...", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+
+        setTimeout(() => {
+          if (userType === "user") {
+            navigate("/dashboard");
+          } else if (userType === "ambassador") {
+            navigate("/send-message");
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Biometric login error:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Biometric login failed. Please try email/password login.";
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -121,6 +211,7 @@ const Login = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/forgot-password`,
@@ -145,6 +236,8 @@ const Login = () => {
         pauseOnHover: true,
         draggable: true,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -163,6 +256,7 @@ const Login = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/verify-otp`,
@@ -187,6 +281,8 @@ const Login = () => {
         pauseOnHover: true,
         draggable: true,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -232,19 +328,7 @@ const Login = () => {
       return;
     }
 
-    passwordAttempts.current += 1;
-    if (passwordAttempts.current > 5) {
-      toast.error("Too many attempts. Please try again later.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      return;
-    }
-
+    setIsLoading(true);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/reset-password`,
@@ -257,13 +341,13 @@ const Login = () => {
           position: "top-right",
           autoClose: 3000,
         });
-        passwordAttempts.current = 0;
         setTimeout(() => {
           setForgotPasswordStep(null);
           setForgotEmail("");
           setOtp("");
           setNewPassword("");
           setConfirmNewPassword("");
+          setShowEmailLogin(false); // Reset email login form
         }, 3000);
       }
     } catch (err) {
@@ -277,6 +361,8 @@ const Login = () => {
         pauseOnHover: true,
         draggable: true,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -285,124 +371,115 @@ const Login = () => {
     setForgotPasswordStep("email");
   };
 
-const handleBiometricLogin = async () => {
-  try {
-    // Use environment variable for API URL
-    const optionsResponse = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/login-biometric`,
-      {},
-      { withCredentials: true }
-    );
-
-    if (!optionsResponse.data.success) {
-      throw new Error("Failed to get biometric options");
-    }
-
-    // Start authentication with received options
-    const authResponse = await startAuthentication(optionsResponse.data.options);
-
-    // Verify the authentication
-    const verifyResponse = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/verify-biometric-login`,
-      { response: authResponse },
-      { withCredentials: true }
-    );
-
-    if (verifyResponse.data.success) {
-      const { userId, userType } = verifyResponse.data;
-      sessionStorage.setItem("userId", userId);
-      
-      toast.success("Biometric login successful! Redirecting...", {
-        position: "top-right",
-        autoClose: 2000,
-      });
-
-      setTimeout(() => {
-        if (userType === "user") {
-          navigate("/dashboard");
-        } else if (userType === "ambassador") {
-          navigate("/send-message");
-        }
-      }, 2000);
-    } else {
-      throw new Error(verifyResponse.data.message || "Biometric login failed");
-    }
-  } catch (error) {
-    console.error("Biometric login error:", error);
-    toast.error(`Biometric login failed: ${error.message}`, {
-      position: "top-right",
-      autoClose: 3000,
-    });
-  }
-};
-
   return (
     <div className="login-container">
       <header className="login-header">
         <img src={logoIcon} alt="The Plan Beyond Logo" className="login-logo" />
       </header>
       <div className="login-card">
-        <h2>Welcome Back The Plan Beyond</h2>
+        {showEmailLogin && (
+          <button
+            className="back-button"
+            onClick={() => setShowEmailLogin(false)}
+          >
+            ← Back
+          </button>
+        )}
+        <h2>Welcome Back to The Plan Beyond</h2>
         <p className="login-subtext">Securely manage your life and legacy</p>
 
-        {!forgotPasswordStep ? (
-          <form onSubmit={handleLogin}>
-            <div className="login-form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                placeholder="Aiyana10@hotmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="login-form-group password-container">
-              <label>Password</label>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <span
-                className="password-toggle-icon"
-                onClick={togglePasswordVisibility}
-              >
-                <i
-                  className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}
-                ></i>
-              </span>
-            </div>
-            <div className="login-remember">
-              <div>
-                <input
-                  type="checkbox"
-                  id="remember"
-                  checked={rememberMe}
-                  onChange={() => setRememberMe(!rememberMe)}
-                />
-                <label htmlFor="remember">Remember Me</label>
+        {!forgotPasswordStep && !showEmailLogin ? (
+          <>
+            {isBiometricSupported && (
+              <div className="biometric-login">
+                <button
+                  type="button"
+                  className="biometric-option"
+                  onClick={handleBiometricLogin}
+                  disabled={isLoading}
+                >
+                  <img src={faceIcon} alt="Face Icon" className="biometric-icon" />
+                </button>
+                <p className="or-text">OR</p>
+                <button
+                  type="button"
+                  className="biometric-option"
+                  onClick={handleBiometricLogin}
+                  disabled={isLoading}
+                >
+                  <img src={fingerprintIcon} alt="Fingerprint Icon" className="biometric-icon" />
+                </button>
               </div>
-              <a
-                href="#forgot"
-                className="login-forgot-password"
-                onClick={handleForgotPasswordClick}
-              >
-                Forgot Password?
-              </a>
-            </div>
-            <button type="submit" className="login-btn">
-              Log In
-            </button>
-            <button type="submit" className="login-btn" onClick={handleBiometricLogin}>
-              Log In with Biometric
+            )}
+            <button
+              type="button"
+              className="login-btn"
+              onClick={() => setShowEmailLogin(true)}
+              disabled={isLoading}
+            >
+              {isLoading ? "Processing..." : "Log In with Email"}
             </button>
             <p className="login-signup-text">
               Don't have an account? <Link to="/register">Sign Up</Link>
             </p>
-          </form>
+          </>
+        ) : !forgotPasswordStep && showEmailLogin ? (
+          <>
+            <form onSubmit={handleLogin}>
+              <div className="login-form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  placeholder="Aiyana10@hotmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="login-form-group password-container">
+                <label>Password</label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <span
+                  className="password-toggle-icon"
+                  onClick={togglePasswordVisibility}
+                >
+                  <i
+                    className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}
+                  ></i>
+                </span>
+              </div>
+              <div className="login-remember">
+                <div>
+                  <input
+                    type="checkbox"
+                    id="remember"
+                    checked={rememberMe}
+                    onChange={() => setRememberMe(!rememberMe)}
+                  />
+                  <label htmlFor="remember">Remember Me</label>
+                </div>
+                <a
+                  href="#forgot"
+                  className="login-forgot-password"
+                  onClick={handleForgotPasswordClick}
+                >
+                  Forgot Password?
+                </a>
+              </div>
+              <button type="submit" className="login-btn" disabled={isLoading}>
+                {isLoading ? "Logging In..." : "Log In"}
+              </button>
+            </form>
+            <p className="login-signup-text">
+              Don't have an account? <Link to="/register">Sign Up</Link>
+            </p>
+          </>
         ) : forgotPasswordStep === "email" ? (
           <form onSubmit={handleForgotPassword}>
             <div className="login-form-group">
@@ -415,12 +492,12 @@ const handleBiometricLogin = async () => {
                 required
               />
             </div>
-            <button type="submit" className="login-btn">
-              Continue
+            <button type="submit" className="login-btn" disabled={isLoading}>
+              {isLoading ? "Processing..." : "Continue"}
             </button>
             <p className="login-signup-text">
               Back to{" "}
-              <Link to="/login" onClick={() => setForgotPasswordStep(null)}>
+              <Link to="/login" onClick={() => { setForgotPasswordStep(null); setShowEmailLogin(false); }}>
                 Login
               </Link>
             </p>
@@ -437,12 +514,12 @@ const handleBiometricLogin = async () => {
                 required
               />
             </div>
-            <button type="submit" className="login-btn">
-              Verify OTP
+            <button type="submit" className="login-btn" disabled={isLoading}>
+              {isLoading ? "Verifying..." : "Verify OTP"}
             </button>
             <p className="login-signup-text">
               Back to{" "}
-              <Link to="/login" onClick={() => setForgotPasswordStep(null)}>
+              <Link to="/login" onClick={() => { setForgotPasswordStep(null); setShowEmailLogin(false); }}>
                 Login
               </Link>
             </p>
@@ -489,12 +566,12 @@ const handleBiometricLogin = async () => {
                 ></i>
               </span>
             </div>
-            <button type="submit" className="login-btn">
-              Reset Password
+            <button type="submit" className="login-btn" disabled={isLoading}>
+              {isLoading ? "Resetting..." : "Reset Password"}
             </button>
             <p className="login-signup-text">
               Back to{" "}
-              <Link to="/login" onClick={() => setForgotPasswordStep(null)}>
+              <Link to="/login" onClick={() => { setForgotPasswordStep(null); setShowEmailLogin(false); }}>
                 Login
               </Link>
             </p>

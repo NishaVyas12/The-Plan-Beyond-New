@@ -1,19 +1,21 @@
 .login-container {
   display: flex;
+  align-items: center;
+  justify-content: center;
   flex-direction: column;
   min-height: 100vh;
   position: relative;
   overflow: hidden;
+  background: linear-gradient(180deg, rgba(158, 255, 191, 0.2), rgba(255, 255, 255, 0.1));
 }
 
 .login-header {
-  background-color: #00322f;
-  padding: 10px 4rem;
-  text-align: left;
+  background-color: transparent;
+  padding: 0 4rem;
+  text-align: center;
 }
 
 .login-logo {
-  width: 30px;
   height: auto;
   display: inline-block;
 }
@@ -24,12 +26,27 @@
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
   margin: 0 auto;
   text-align: center;
-  margin-top: 6rem;
+  margin-top: 1rem; 
   position: relative;
   z-index: 1;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: #6b7483;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  margin-bottom: 20px; 
+}
+
+.back-button:hover {
+  text-decoration: underline;
 }
 
 .login-card h2 {
@@ -42,6 +59,35 @@
   color: #6b7483;
   margin-bottom: 20px;
   font-size: 0.9rem;
+}
+
+.biometric-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center; 
+  margin-bottom: 30px;
+}
+
+.biometric-option {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin: 10px 0;
+  display: flex;
+  justify-content: center; 
+}
+
+.biometric-icon {
+  width: 70px;
+  height: 70px;
+}
+
+.or-text {
+  color: #6b7483;
+  font-size: 0.9rem;
+  margin: 10px 0;
 }
 
 .login-form-group {
@@ -120,7 +166,7 @@
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 10px;
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s;
@@ -232,4 +278,3 @@
 .error-text {
   margin-bottom: 20px;
 }
-
