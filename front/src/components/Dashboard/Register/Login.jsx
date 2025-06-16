@@ -26,13 +26,13 @@ const Login = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+  const [isFaceIdSupported, setIsFaceIdSupported] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [deviceId, setDeviceId] = useState('');
   const navigate = useNavigate();
 
-  // Reset state on mount to clear stale data
   useEffect(() => {
     setEmail('');
     setPassword('');
@@ -41,20 +41,48 @@ const Login = () => {
     setOtp('');
     setForgotPasswordStep(null);
 
-    // Check WebAuthn support
+    console.log("Checking WebAuthn support...");
+    console.log("Navigator platform:", navigator.platform);
+    console.log("Navigator userAgent:", navigator.userAgent);
+
     if (window.PublicKeyCredential) {
       PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
         .then((available) => {
+          console.log("WebAuthn platform authenticator available:", available);
           setIsBiometricSupported(available);
+
+          // Stricter heuristic for Face ID support
+          const isIOS = /iPhone|iPad/.test(navigator.platform);
+          const isMacWithFaceID = /Mac/.test(navigator.platform) && 
+                                  navigator.userAgent.includes("AppleWebKit") && 
+                                  // Assume recent Macs with TrueDepth (rough heuristic)
+                                  navigator.userAgent.includes("Version/15") || navigator.userAgent.includes("Version/16");
+          const isWindowsHelloFace = /Windows/.test(navigator.platform) && 
+                                     navigator.userAgent.includes("Edge") && 
+                                     // Check for Windows Hello face support (approximation)
+                                     available;
+
+          const isLikelyFaceIdDevice = isIOS || isMacWithFaceID || isWindowsHelloFace;
+          setIsFaceIdSupported(available && isLikelyFaceIdDevice);
+          console.log("Face ID support determined:", isLikelyFaceIdDevice, {
+            isIOS,
+            isMacWithFaceID,
+            isWindowsHelloFace
+          });
         })
         .catch((err) => {
+          console.error("Error checking WebAuthn support:", err);
           setIsBiometricSupported(false);
+          setIsFaceIdSupported(false);
           toast.error('Biometric authentication not supported.', {
             position: 'top-right',
             autoClose: 3000,
           });
         });
     } else {
+      console.log("WebAuthn not supported in this browser.");
+      setIsBiometricSupported(false);
+      setIsFaceIdSupported(false);
       toast.error('Biometric authentication not supported in this browser.', {
         position: 'top-right',
         autoClose: 3000,
@@ -67,7 +95,6 @@ const Login = () => {
       setEmail(storeEmail);
     }
 
-    // Generate or load base device ID
     let baseDeviceId = localStorage.getItem('baseDeviceId');
     if (!baseDeviceId) {
       baseDeviceId = uuidv4();
@@ -75,8 +102,6 @@ const Login = () => {
     }
   }, []);
 
-
-  // Update deviceId when email changes
   useEffect(() => {
     if (email) {
       const baseDeviceId = localStorage.getItem('baseDeviceId');
@@ -208,39 +233,50 @@ const Login = () => {
     }
   };
 
-  const handleBiometricLogin = async () => {
+  const handleBiometricLogin = async (type) => {
+    console.log(`Initiating ${type} login with deviceId:`, deviceId);
     if (!isBiometricSupported) {
-      toast.error('Biometric authentication not supported.', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      console.log("Biometric authentication not supported.");
+      toast.error('Biometric authentication is not supported on this device.');
+      return;
+    }
+
+    if (type === "face" && !isFaceIdSupported) {
+      console.log("Face ID not supported on this device.");
+      toast.error('Your device does not support Face ID.');
       return;
     }
 
     setIsLoading(true);
     try {
+      console.log(`Sending ${type} login request to backend...`);
       const optionsResponse = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/login-biometric`,
-        { deviceId },
+        { deviceId, biometricType: type },
         { withCredentials: true }
       );
 
       if (!optionsResponse.data.success) {
-        throw new Error(optionsResponse.data.message || 'Failed to get biometric options');
+        console.log(`${type} login options request failed:`, optionsResponse.data.message);
+        throw new Error(optionsResponse.data.message || `Failed to get ${type} options`);
       }
 
+      console.log(`${type} login options received:`, optionsResponse.data.options);
       const authResponse = await startAuthentication(optionsResponse.data.options);
+      console.log(`${type} WebAuthn authentication response:`, authResponse);
+
       const verifyResponse = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/verify-biometric-login`,
-        { response: authResponse, deviceId },
+        { response: authResponse, deviceId, biometricType: type },
         { withCredentials: true }
       );
 
       if (verifyResponse.data.success) {
+        console.log(`${type} login verified successfully.`);
         const { userId, userType } = verifyResponse.data;
         sessionStorage.setItem('userId', userId);
 
-        toast.success('Biometric login successful! Redirecting...', {
+        toast.success(`${type === "face" ? "Face ID" : "Fingerprint"} login successful! Redirecting...`, {
           position: 'top-right',
           autoClose: 2000,
         });
@@ -248,13 +284,17 @@ const Login = () => {
         setTimeout(() => {
           navigate(userType === 'user' ? '/dashboard' : '/send-message');
         }, 2000);
+      } else {
+        console.log(`${type} login verification failed:`, verifyResponse.data.message);
+        toast.error(verifyResponse.data.message || `${type === "face" ? "Face ID" : "Fingerprint"} login failed.`);
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Biometric login failed.';
-      toast.error(errorMessage, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      console.error(`${type} login error:`, err);
+      const errorMessage = err.response?.data?.message || 
+        (err.name === "NotAllowedError" && type === "face" 
+          ? "Your device does not support Face ID or permission was denied." 
+          : `${type === "face" ? "Face ID" : "Fingerprint"} login failed.`);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -463,23 +503,37 @@ const Login = () => {
           <>
             {isBiometricSupported && (
               <div className="biometric-login">
-                <button
-                  type="button"
-                  className="biometric-option"
-                  onClick={handleBiometricLogin}
-                  disabled={isLoading}
-                >
-                  <img src={faceIcon} alt="Face Icon" className="biometric-icon" />
-                </button>
-                <p className="or-text">OR</p>
-                <button
-                  type="button"
-                  className="biometric-option"
-                  onClick={handleBiometricLogin}
-                  disabled={isLoading}
-                >
-                  <img src={fingerprintIcon} alt="Fingerprint Icon" className="biometric-icon" />
-                </button>
+                {isFaceIdSupported && (
+                  <button
+                    type="button"
+                    className="biometric-option"
+                    onClick={() => {
+                      console.log("Face ID button clicked");
+                      handleBiometricLogin("face");
+                    }}
+                    disabled={isLoading}
+                    title="Log in with Face ID"
+                  >
+                    <img src={faceIcon} alt="Face Icon" className="biometric-icon" />
+                  </button>
+                )}
+                {isFaceIdSupported && isBiometricSupported && (
+                  <p className="or-text">OR</p>
+                )}
+                {isBiometricSupported && (
+                  <button
+                    type="button"
+                    className="biometric-option"
+                    onClick={() => {
+                      console.log("Fingerprint button clicked");
+                      handleBiometricLogin("fingerprint");
+                    }}
+                    disabled={isLoading}
+                    title="Log in with Fingerprint"
+                  >
+                    <img src={fingerprintIcon} alt="Fingerprint Icon" className="biometric-icon" />
+                  </button>
+                )}
               </div>
             )}
             <button
@@ -661,7 +715,7 @@ const Login = () => {
                 type={showConfirmNewPassword ? 'text' : 'password'}
                 placeholder="Confirm new password"
                 value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                onChange={(e) => setNewPassword(e.target.value)}
                 required
               />
               <span

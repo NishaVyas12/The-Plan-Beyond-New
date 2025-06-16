@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./navbar.css";
-import logo from "../../../assets/images/icons/dashlogo.svg";
+import logo from "../../../assets/images/dash_icon/logo.svg";
 import { useSidebar } from "../../../context/SidebarContext";
 import dashUser from "../../../assets/images/icons/dashUser.svg"
 import dashNotify from "../../../assets/images/icons/dashNotify.svg"

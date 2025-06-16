@@ -80,8 +80,8 @@
 }
 
 .biometric-icon {
-  width: 70px;
-  height: 70px;
+  width: 100px;
+  height: 100px;
 }
 
 .or-text {
@@ -278,3 +278,4 @@
 .error-text {
   margin-bottom: 20px;
 }
+

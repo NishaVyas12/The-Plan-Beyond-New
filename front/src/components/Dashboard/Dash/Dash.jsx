@@ -17,8 +17,12 @@ import Star from "../../../assets/images/icons/Star.svg";
 import letsStarted from "../../../assets/images/icons/letsStarted.svg";
 import vidThumbnail from "../../../assets/images/icons/vidThumbnail.svg";
 import Play from "../../../assets/images/icons/Play.svg";
-// Import a sample video (replace with your actual video source)
-// import sampleVideo from "../../../assets/videos/TPB.mp4"; // Adjust path as needed
+import sampleVideo from "../../../assets/videos/TPB.mp4"; 
+import financialIcon from "../../../assets/images/sidebar/icon8.svg";
+import legal from "../../../assets/images/sidebar/Legal.svg";
+import health from "../../../assets/images/sidebar/icon7.svg";
+import Family from "../../../assets/images/sidebar/icon9.svg";
+import Gone from "../../../assets/images/sidebar/icon10.svg";
 
 const Dash = () => {
   const [profile, setProfile] = useState({
@@ -79,6 +83,20 @@ const Dash = () => {
 
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+  const handleEscapeKey = (e) => {
+    if (e.key === "Escape" && showVideoPopup) {
+      closeVideoPopup();
+    }
+  };
+
+  document.addEventListener("keydown", handleEscapeKey);
+
+  return () => {
+    document.removeEventListener("keydown", handleEscapeKey);
+  };
+}, [showVideoPopup]); 
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -342,24 +360,57 @@ const Dash = () => {
                 </div>
                 <div className="slider-category">
                   <div className="dash-user-bg">
-                    <img src={user} alt="" />
+                    <img src={financialIcon} alt="" />
                   </div>
                   <div className="slider-content-div">
                     <span className="slider-category-name">
-                      Personal Info & IDs
+                      Financial Plan
                     </span>
-                    <p>Who you are, all in one place</p>
+                    <p>Your money, your future organized</p>
                   </div>
                 </div>
                 <div className="slider-category">
                   <div className="dash-user-bg">
-                    <img src={user} alt="" />
+                    <img src={legal} alt="" />
                   </div>
                   <div className="slider-content-div">
                     <span className="slider-category-name">
-                      Personal Info & IDs
+                      Legal Docs
                     </span>
-                    <p>Who you are, all in one place</p>
+                    <p>Secure your online world.</p>
+                  </div>
+                </div>
+                <div className="slider-category">
+                  <div className="dash-user-bg">
+                    <img src={health} alt="" />
+                  </div>
+                  <div className="slider-content-div">
+                    <span className="slider-category-name">
+                      Health Info
+                    </span>
+                    <p>Vital health details.</p>
+                  </div>
+                </div>
+                <div className="slider-category">
+                  <div className="dash-user-bg">
+                    <img src={Family} alt="" />
+                  </div>
+                  <div className="slider-content-div">
+                    <span className="slider-category-name">
+                      Family Contacts
+                    </span>
+                    <p>Your circle close and connected</p>
+                  </div>
+                </div>
+                <div className="slider-category">
+                  <div className="dash-user-bg">
+                    <img src={Gone} alt="" />
+                  </div>
+                  <div className="slider-content-div">
+                    <span className="slider-category-name">
+                      End-of-Life Wishes
+                    </span>
+                    <p>Say what matters. Even in goodbye.</p>
                   </div>
                 </div>
               </div>
@@ -428,7 +479,6 @@ const Dash = () => {
             </div>
           </div>
 
-          {/* Video Popup */}
           {showVideoPopup && (
             <div className="video-popup-overlay">
               <div className="video-popup">
@@ -437,7 +487,7 @@ const Dash = () => {
                 </button>
                 <video
                   className="video-player"
-                  // src={sampleVideo}
+                  src={sampleVideo}
                   controls
                   autoPlay
                 ></video>
