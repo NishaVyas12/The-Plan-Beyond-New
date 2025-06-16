@@ -18,7 +18,7 @@ import letsStarted from "../../../assets/images/icons/letsStarted.svg";
 import vidThumbnail from "../../../assets/images/icons/vidThumbnail.svg";
 import Play from "../../../assets/images/icons/Play.svg";
 // Import a sample video (replace with your actual video source)
-import sampleVideo from "../../../assets/videos/TPB.mp4"; // Adjust path as needed
+// import sampleVideo from "../../../assets/videos/TPB.mp4"; // Adjust path as needed
 
 const Dash = () => {
   const [profile, setProfile] = useState({
@@ -437,7 +437,7 @@ const Dash = () => {
                 </button>
                 <video
                   className="video-player"
-                  src={sampleVideo}
+                  // src={sampleVideo}
                   controls
                   autoPlay
                 ></video>

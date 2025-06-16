@@ -26,7 +26,7 @@ const Popups = () => {
   const getMaxDate = () => {
     const today = new Date();
     const maxDate = new Date(today.setFullYear(today.getFullYear() - 18));
-    return maxDate.toISOString().split("T")[0]; 
+    return maxDate.toISOString().split("T")[0];
   };
 
   useEffect(() => {
@@ -100,11 +100,11 @@ const Popups = () => {
             setCurrentStep(currentStep + 1);
           } else {
             console.error("Failed to submit popup data:", data.message);
-            setCurrentStep(currentStep + 1); 
+            setCurrentStep(currentStep + 1);
           }
         } catch (error) {
           console.error("Error submitting popup data:", error);
-          setCurrentStep(currentStep + 1); 
+          setCurrentStep(currentStep + 1);
         }
       }
       return;
@@ -142,7 +142,7 @@ const Popups = () => {
                 Life doesn’t come with a manual. But the future? You can shape
                 it. The Plan Beyond. helps you organize what truly matters from
                 vital documents to decisions no one wants to leave hanging.
-                <br /><br/>
+                <br /><br />
                 It’s about making things easier for the people you love, and
                 lighter for the you of tomorrow.
               </p>
@@ -236,7 +236,7 @@ const Popups = () => {
                           value={personalInfo.dateOfBirth}
                           onChange={handlePersonalInfoChange}
                           className="popups-input"
-                          max={getMaxDate()} 
+                          max={getMaxDate()}
                         />
                       </div>
                       <div className="popups-form-field">
@@ -273,7 +273,7 @@ const Popups = () => {
                   />
                   <h2 className="popups-title">Set your profile</h2>
                   <p className="popups-subtitle">
-                    Create your account, fill in your details, and select<br/> trusted 
+                    Create your account, fill in your details, and select<br /> trusted
                     nominees.
                   </p>
                 </>
@@ -287,7 +287,7 @@ const Popups = () => {
                   />
                   <h2 className="popups-title">Add Your Connection</h2>
                   <p className="popups-subtitle">
-                    Include family, friends, or others you want notified when the<br/>
+                    Include family, friends, or others you want notified when the<br />
                     time comes.
                   </p>
                 </>
@@ -301,7 +301,7 @@ const Popups = () => {
                   />
                   <h2 className="popups-title">Nominee Access and Notification</h2>
                   <p className="popups-subtitle">
-                    Nominees can securely access and act on the information you've<br/>
+                    Nominees can securely access and act on the information you've<br />
                     assigned to them.
                   </p>
                 </>
@@ -315,7 +315,7 @@ const Popups = () => {
                   />
                   <h2 className="popups-title">Add Information to Vault</h2>
                   <p className="popups-subtitle">
-                    Securely upload your wishes, messages, and digital details after<br/>
+                    Securely upload your wishes, messages, and digital details after<br />
                     identity authentication.
                   </p>
                 </>
@@ -329,7 +329,7 @@ const Popups = () => {
                   />
                   <h2 className="popups-title">Legacy Activation</h2>
                   <p className="popups-subtitle">
-                    When you’re gone, your nominee will trigger custom notifications and share your<br/>
+                    When you’re gone, your nominee will trigger custom notifications and share your<br />
                     messages with selected loved ones.
                   </p>
                 </>
