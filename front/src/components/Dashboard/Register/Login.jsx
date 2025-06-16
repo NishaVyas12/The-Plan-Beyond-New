@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Login.css';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify'; 
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { v4 as uuidv4 } from 'uuid';
 import logoIcon from "../../../assets/images/icons/planbeyond.svg";
@@ -79,7 +79,6 @@ const Login = () => {
   // Update deviceId when email changes
   useEffect(() => {
     if (email) {
-      // Generate user-specific deviceId by hashing email and baseDeviceId
       const baseDeviceId = localStorage.getItem('baseDeviceId');
       const userDeviceId = CryptoJS.SHA256(email + baseDeviceId).toString();
       setDeviceId(userDeviceId);

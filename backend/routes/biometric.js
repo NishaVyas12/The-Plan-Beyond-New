@@ -162,11 +162,6 @@ router.post("/login-biometric", async (req, res) => {
             });
         }
 
-        console.log("Valid credentials:", validCredentials.map(cred => ({
-            user_id: cred.user_id,
-            credential_id: cred.credential_id,
-        })));
-
         // const options = await generateAuthenticationOptions({
         //   rpID,
         //   allowCredentials: validCredentials.map(cred => ({
@@ -190,7 +185,6 @@ router.post("/login-biometric", async (req, res) => {
         });
 
         req.session.challenge = options.challenge;
-        console.log("Generated biometric login options:", JSON.stringify(options, null, 2));
 
         res.json({ success: true, options });
     } catch (err) {
