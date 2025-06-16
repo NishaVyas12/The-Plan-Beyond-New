@@ -1,8 +1,13 @@
 const express = require("express");
 const { pool } = require("../config/database");
-const { checkAuth } = require("../middleware/auth"); 
+const { checkAuth } = require("../middleware/auth");
 const { rpName, rpID, origin } = require("../config/webauthn");
-const { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse } = require("@simplewebauthn/server");
+const {
+    generateRegistrationOptions,
+    verifyRegistrationResponse,
+    generateAuthenticationOptions,
+    verifyAuthenticationResponse
+} = require("@simplewebauthn/server");
 
 const router = express.Router();
 
@@ -22,7 +27,7 @@ router.post("/register-biometric", checkAuth, async (req, res) => {
         const user = users[0];
 
         const options = await generateRegistrationOptions({
-            rpName: rpName || 'Your App Name',
+            rpName: rpName || 'The Plan Beyond',
             rpID: rpID || 'localhost',
             userId: Buffer.from(user.id.toString()),
             userName: user.email,

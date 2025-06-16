@@ -30,6 +30,39 @@ const Popups = () => {
   };
 
   useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Fetch user session
+        const sessionResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/check-session`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const sessionData = await sessionResponse.json();
+        if (!sessionData.success) {
+          onClose();
+          return;
+        }
+        setUserId(sessionData.userId);
+
+        // Fetch user location
+        const res = await fetch("https://ipinfo.io/json?token=a6543a21b58e9f");
+        const data = await res.json();
+        const countryCode = data.country;
+        if (countryCode) {
+          setPersonalInfo((prev) => ({
+            ...prev,
+            country: countryCode,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        onClose();
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
     const fetchUserId = async () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/check-session`, {
