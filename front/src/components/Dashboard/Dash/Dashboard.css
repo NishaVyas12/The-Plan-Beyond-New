@@ -15,7 +15,8 @@
     margin-top: 65px;
     font-size: 10px;
     color: rgba(107, 116, 131, 1);
-    margin-left: 55px;
+    position: absolute;
+    right: 10px;
     text-align: right;
 }
 
@@ -39,6 +40,7 @@
     margin-bottom: 20px;
     justify-content: space-between;
     flex-wrap: wrap;
+    position: relative;
 }
 
 .dash-tab {
@@ -167,7 +169,7 @@
     border: 1px solid rgba(218, 232, 232, 1);
     border-radius: 12px;
     margin: 0;
-    padding: 15px;
+    padding: 20px 15px;
 }
 
 .dash-avatar {
@@ -333,13 +335,13 @@
     width: calc(32%);
     border: 1px solid rgba(218, 232, 232, 1);
     border-radius: 5px;
-    padding: 20px 10px;
+    padding: 25px 10px;
     color: var(--secondary-color);
-    height: 120px;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: 3rem;
+    justify-content: space-between;
     text-decoration: none;
-    position: relative;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
@@ -429,16 +431,16 @@
 }
 
 .slider-category {
-    padding: 20px 10px;
+    padding: 25px 20px;
     border: 1px solid rgba(218, 232, 232, 1);
     border-radius: 5px;
     color: var(--secondary-color);
     min-width: calc(95% / 3);
-    height: 150px;
     display: flex;
-    align-items: center;
+    gap: 3rem;
+    flex-direction: column;
+    justify-content: space-between;
     text-decoration: none;
-    position: relative;
 }
 
 .guide-section {
@@ -514,9 +516,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    bottom: 10px;
-    position: absolute;
-    margin: 2px;
+    margin-top: 10px;
 }
 
 .dash-action-inline img {
@@ -532,21 +532,19 @@
 
 .dash-user-bg {
     height: 35px;
-    position: absolute;
-    top: 10px;
     width: 35px;
     display: flex;
     justify-content: center;
     align-items: center;
     background: rgba(235, 235, 235, 1);
     border-radius: 24px;
+    margin-bottom: 10px;
 }
 
 .slider-content-div {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    height: 100%;
+    gap: 7px;
 }
 
 .slider-content-div span {
@@ -558,7 +556,7 @@
 .slider-content-div p {
     color: rgba(107, 116, 131, 1);
     font-size: 0.85rem;
-    margin-top: 7px;
+    margin: 0;
 }
 
 .dash-user-bg img {
@@ -572,8 +570,6 @@
 }
 
 .dash-category-content {
-    position: absolute;
-    bottom: 70px;
     flex: 1;
     margin-left: 10px;
     display: flex;
@@ -697,9 +693,9 @@
     }
 
     .subscription-remaining {
-        margin-left: 90px;
         text-align: center;
         margin-top: 10px;
+        position: static;
     }
 
     .dash-details {
@@ -735,14 +731,12 @@
 
     .dash-category {
         width: 100%;
-        height: auto;
-        padding: 15px;
+        padding: 25px 10px;
         justify-content: center;
         text-align: center;
     }
 
     .dash-category-content {
-        position: static;
         margin-left: 0;
         align-items: flex-start;
     }
@@ -752,7 +746,7 @@
     }
 
     .dash-action-inline {
-        position: static;
+        margin-top: 10px;
         justify-content: center;
     }
 
@@ -783,8 +777,7 @@
 
     .slider-category {
         min-width: 80%;
-        height: auto;
-        padding: 15px;
+        padding: 25px 10px;
         justify-content: center;
         text-align: center;
     }
@@ -795,7 +788,6 @@
     }
 
     .dash-user-bg {
-        position: static;
         margin-bottom: 10px;
     }
 
@@ -829,8 +821,9 @@
     }
 
     .subscription-remaining {
-        margin-left: 0;
         text-align: right;
+        position: absolute;
+        right: 10px;
     }
 
     .dash-details {
@@ -854,7 +847,7 @@
 
     .dash-category {
         width: calc(50% - 5px);
-        height: 100px;
+        padding: 25px 10px;
     }
 
     .quick-links-grid {
@@ -878,6 +871,7 @@
 
     .slider-category {
         min-width: calc(50% - 10px);
+        padding: 25px 10px;
     }
 
     .video-popup {
@@ -903,7 +897,7 @@
 
     .dash-category {
         width: calc(33.33% - 7px);
-        height: 110px;
+        padding: 25px 10px;
     }
 
     .quick-links-grid {
@@ -917,6 +911,7 @@
 
     .slider-category {
         min-width: calc(33.33% - 7px);
+        padding: 25px 10px;
     }
 
     .guide-card {
@@ -947,7 +942,6 @@
 
     .dash-category {
         width: calc(33.33% - 10px);
-        height: 140px;
         padding: 25px 15px;
     }
 
@@ -962,7 +956,7 @@
 
     .slider-category {
         min-width: calc(25% - 15px);
-        height: 170px;
+        padding: 25px 15px;
     }
 
     .dash-welcome-text {
@@ -977,7 +971,8 @@
         margin-top: 65px;
         font-size: 10px;
         color: rgba(107, 116, 131, 1);
-        margin-left: 130px;
+        position: absolute;
+        right: 10px;
         text-align: right;
     }
 

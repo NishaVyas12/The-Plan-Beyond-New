@@ -6,7 +6,7 @@
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(158, 255, 191, 0.2), rgba(255, 255, 255, 0.1));
+  background: linear-gradient(180deg, rgba(158, 255, 191, 0.1), rgba(255, 255, 255, 0.1));
 }
 
 .login-header {
