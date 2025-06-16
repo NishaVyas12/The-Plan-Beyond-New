@@ -169,23 +169,23 @@ const Dash = () => {
                   <div className="dash-info-grid">
                     <div className="dash-info-item">
                       <span className="dash-info-item-head">Full Name</span>
-                      <p>{profile.full_name}</p>
+                      <p>{profile.full_name || "NA"}</p>
                     </div>
                     <div className="dash-info-item">
                       <span className="dash-info-item-head">Email</span>
-                      <p>{profile.email}</p>
+                      <p>{profile.email || "NA"}</p>
                     </div>
                     <div className="dash-info-item">
                       <span className="dash-info-item-head">Address</span>
-                      <p>{profile.address}</p>
+                      <p>{profile.address || "NA"}</p>
                     </div>
                     <div className="dash-info-item">
                       <span className="dash-info-item-head">Date of Birth</span>
-                      <p>{profile.date_of_birth}</p>
+                      <p>{profile.date_of_birth || "NA"}</p>
                     </div>
                     <div className="dash-info-item">
                       <span className="dash-info-item-head">Phone</span>
-                      <p>{profile.phone_number}</p>
+                      <p>{profile.phone_number || "NA"}</p>
                     </div>
                     <div className="dash-info-item">
                       <span className="dash-info-item-head">Identification</span>
