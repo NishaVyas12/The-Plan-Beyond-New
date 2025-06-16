@@ -1,6 +1,6 @@
 const express = require("express");
 const { pool } = require("../config/database");
-const { checkAuth } = require("../middleware/auth");
+const { checkAuth } = require("../middleware/auth"); 
 const { rpName, rpID, origin } = require("../config/webauthn");
 const { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse } = require("@simplewebauthn/server");
 
