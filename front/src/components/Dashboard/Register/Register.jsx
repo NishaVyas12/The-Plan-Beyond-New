@@ -5,8 +5,8 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import logoIcon from "../../../assets/images/icons/planbeyond.svg";
-import faceIcon from "../../../assets/images/icons/face.svg"; // Import face icon
-import fingerprintIcon from "../../../assets/images/icons/fingerprint.svg"; // Import fingerprint icon
+import faceIcon from "../../../assets/images/icons/face.svg"; 
+import fingerprintIcon from "../../../assets/images/icons/fingerprint.svg"; 
 import { startRegistration } from "@simplewebauthn/browser";
 
 const Register = () => {
@@ -140,10 +140,8 @@ const Register = () => {
 
       if (response.data.success) {
         const options = response.data.options;
-        // Start WebAuthn registration
         const regResponse = await startRegistration(options);
 
-        // Verify the registration response
         const verificationResponse = await axios.post(
           `${import.meta.env.VITE_API_URL}/api/verify-biometric-registration`,
           { response: regResponse, userId },

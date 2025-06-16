@@ -1,0 +1,151 @@
+const { pool } = require("../config/database");
+
+const createUsersTable = async () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      otp VARCHAR(6),
+      is_verified BOOLEAN DEFAULT FALSE,
+      ambassador_id INT NULL,
+      ambassador_user_id INT NULL,
+      ambassador_accept BOOLEAN DEFAULT FALSE,
+      remember_me BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+  try {
+    await pool.query(query);
+    console.log("Users table created or already exists.");
+  } catch (err) {
+    console.error("Error creating users table:", err);
+    throw err;
+  }
+};
+
+const createDevicesTable = async () => {
+  const query = `
+      CREATE TABLE IF NOT EXISTS devices (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        device_id VARCHAR(255) NOT NULL UNIQUE,
+        device_name VARCHAR(255),
+        is_trusted BOOLEAN DEFAULT FALSE,
+        last_login DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `;
+  try {
+    await pool.query(query);
+  } catch (err) {
+    console.error("Error initializing database:", err);
+    throw err;
+  }
+}
+
+const createProfileTable = async () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS profile (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL UNIQUE,
+      first_name VARCHAR(255),
+      middle_name VARCHAR(255),
+      last_name VARCHAR(255),
+      email VARCHAR(255),
+      phone_number VARCHAR(20),
+      phone_verified BOOLEAN DEFAULT FALSE,
+      date_of_birth DATE,
+      gender VARCHAR(50),
+      address_line_1 VARCHAR(255),
+      address_line_2 VARCHAR(255),
+      city VARCHAR(100),
+      state VARCHAR(100),
+      zip_code VARCHAR(20),
+      country VARCHAR(100),
+      profile_image VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `;
+  try {
+    await pool.query(query);
+  } catch (err) {
+    throw err;
+  }
+};
+
+const createUserPopupResponsesTable = async () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS user_popup_responses (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      responses JSON NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      UNIQUE KEY unique_user (user_id)
+    )
+  `;
+  try {
+    await pool.query(query);
+  } catch (err) {
+    throw err;
+  }
+};
+
+const createWebAuthnCredentialsTable = async () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS webauthn_credentials (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      credential_id VARCHAR(255) NOT NULL,
+      public_key TEXT NOT NULL,
+      counter BIGINT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      UNIQUE KEY unique_credential_id (credential_id)
+    )
+  `;
+  try {
+    await pool.query(query);
+  } catch (err) {
+    throw err;
+  }
+};
+
+const checkTableExists = async (tableName) => {
+  const query = `
+    SELECT COUNT(*) as count
+    FROM information_schema.tables
+    WHERE table_schema = ? AND table_name = ?
+  `;
+  try {
+    const [rows] = await pool.query(query, [
+      process.env.DB_NAME || "plan_beyond",
+      tableName,
+    ]);
+    return rows[0].count > 0;
+  } catch (err) {
+    console.error(`Error checking existence of table ${tableName}:`, err);
+    throw err;
+  }
+};
+
+const initializeDatabase = async () => {
+  try {
+    await createUsersTable();
+    await createDevicesTable();
+    await createProfileTable();
+    await createUserPopupResponsesTable();
+    await createWebAuthnCredentialsTable();
+  } catch (err) {
+    console.error("Error setting up database:", err);
+    throw err;
+  }
+};
+
+module.exports = {
+  initializeDatabase,
+  checkTableExists,
+};
