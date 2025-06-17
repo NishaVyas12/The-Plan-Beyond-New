@@ -1,6 +1,3 @@
-const dotenv = require("dotenv");
-dotenv.config({ path: '/var/www/backend/.env' });
-
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -9,7 +6,9 @@ const { initializeDatabase } = require("./database/schema");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const biometricRoutes = require("./routes/biometric");
+const dotenv = require("dotenv");
 
+dotenv.config();
 
 initializeDatabase().then(() => {
   const app = express();
