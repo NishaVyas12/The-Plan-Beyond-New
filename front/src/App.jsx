@@ -105,14 +105,14 @@ function App() {
               </>
             }
           />
-          <Route
+          {/* <Route
             path="/popups"
             element={
               <PrivateRoute>
                 <Popups />
               </PrivateRoute>
             }
-          />
+          /> */}
           <Route
             path="/how-it-works"
             element={

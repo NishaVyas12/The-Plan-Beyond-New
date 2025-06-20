@@ -11,7 +11,7 @@ import popup6Illustration from "../assets/images/Homepage/popup6.svg";
 import arrowLeft from "../assets/images/icons/green_arrow.svg";
 import "./Popups.css";
 
-const Popups = () => {
+const Popups = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
   const [userId, setUserId] = useState(null);
@@ -21,6 +21,7 @@ const Popups = () => {
     dateOfBirth: "",
     country: "",
   });
+  const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
 
   const getMaxDate = () => {
@@ -39,7 +40,8 @@ const Popups = () => {
         });
         const sessionData = await sessionResponse.json();
         if (!sessionData.success) {
-          onClose();
+          setIsOpen(false);
+          navigate("/login");
           return;
         }
         setUserId(sessionData.userId);
@@ -56,11 +58,12 @@ const Popups = () => {
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        onClose();
+        setIsOpen(false);
+        navigate("/login");
       }
     };
     fetchUserData();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -74,10 +77,12 @@ const Popups = () => {
           setUserId(data.userId);
         } else {
           navigate("/login");
+          setIsOpen(false);
         }
       } catch (error) {
         console.error("Error fetching user session:", error);
         navigate("/login");
+        setIsOpen(false);
       }
     };
 
@@ -98,12 +103,15 @@ const Popups = () => {
   };
 
   const handleSkip = () => {
-    navigate("/dashboard");
+    setIsOpen(false);
+    localStorage.setItem("popupCompleted", "true");
+    onComplete();
   };
 
   const handleContinue = async () => {
     if (!userId) {
       navigate("/login");
+      setIsOpen(false);
       return;
     }
 
@@ -144,13 +152,17 @@ const Popups = () => {
     }
 
     if (currentStep === 6) {
-      navigate("/dashboard");
+      setIsOpen(false);
+      localStorage.setItem("popupCompleted", "true");
+      onComplete();
     } else {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const countries = Country.getAllCountries();
+
+  if (!isOpen) return null;
 
   return (
     <div className="popups-container">

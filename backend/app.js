@@ -10,7 +10,6 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const biometricRoutes = require("./routes/biometric");
 
-
 initializeDatabase().then(() => {
   const app = express();
 

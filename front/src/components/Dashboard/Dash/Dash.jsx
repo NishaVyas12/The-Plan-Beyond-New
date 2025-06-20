@@ -17,12 +17,12 @@ import Star from "../../../assets/images/icons/Star.svg";
 import letsStarted from "../../../assets/images/icons/letsStarted.svg";
 import vidThumbnail from "../../../assets/images/icons/vidThumbnail.svg";
 import Play from "../../../assets/images/icons/Play.svg";
-import sampleVideo from "../../../assets/videos/TPB.mp4"; 
 import financialIcon from "../../../assets/images/sidebar/icon8.svg";
 import legal from "../../../assets/images/sidebar/Legal.svg";
 import health from "../../../assets/images/sidebar/icon7.svg";
 import Family from "../../../assets/images/sidebar/icon9.svg";
 import Gone from "../../../assets/images/sidebar/icon10.svg";
+import Popups from "../../Popups";
 
 const Dash = () => {
   const [profile, setProfile] = useState({
@@ -41,7 +41,8 @@ const Dash = () => {
     { name: "Ambassador 1", role: "Initiator" },
     { name: "Ambassador 2", role: "Approver" },
   ]);
-  const [showVideoPopup, setShowVideoPopup] = useState(false); // State for popup
+  const [showVideoPopup, setShowVideoPopup] = useState(false);
+  const [showSetupPopup, setShowSetupPopup] = useState(false);
   const navigate = useNavigate();
   const sliderRef = useRef(null);
 
@@ -81,22 +82,28 @@ const Dash = () => {
       }
     };
 
+    const checkPopupStatus = () => {
+      const popupCompleted = localStorage.getItem("popupCompleted");
+      if (!popupCompleted || popupCompleted !== "true") {
+        setShowSetupPopup(true);
+      }
+    };
+
     fetchProfile();
+    checkPopupStatus();
   }, []);
 
   useEffect(() => {
-  const handleEscapeKey = (e) => {
-    if (e.key === "Escape" && showVideoPopup) {
-      closeVideoPopup();
-    }
-  };
-
-  document.addEventListener("keydown", handleEscapeKey);
-
-  return () => {
-    document.removeEventListener("keydown", handleEscapeKey);
-  };
-}, [showVideoPopup]); 
+    const handleEscapeKey = (e) => {
+      if (e.key === "Escape" && showVideoPopup) {
+        closeVideoPopup();
+      }
+    };
+    document.addEventListener("keydown", handleEscapeKey);
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [showVideoPopup]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -123,6 +130,11 @@ const Dash = () => {
 
   const closeVideoPopup = () => {
     setShowVideoPopup(false);
+  };
+
+  const handlePopupComplete = () => {
+    localStorage.setItem("popupCompleted", "true");
+    setShowSetupPopup(false);
   };
 
   return (
@@ -465,7 +477,7 @@ const Dash = () => {
                 <div className="guide-content">
                   <h4 className="guide-title">Let’s Get Started</h4>
                   <p className="guide-description">
-                    Your 101 guide to securing information on the platform and
+                    Your \nu101 guide to securing information on the platform and
                     accessing it whenever you need it.
                   </p>
                 </div>
@@ -483,16 +495,20 @@ const Dash = () => {
             <div className="video-popup-overlay">
               <div className="video-popup">
                 <button className="video-popup-close" onClick={closeVideoPopup}>
-                  &times;
+                  ×
                 </button>
                 <video
                   className="video-player"
-                  src={sampleVideo}
+                  src={"sampleVideo"}
                   controls
                   autoPlay
                 ></video>
               </div>
             </div>
+          )}
+
+          {showSetupPopup && (
+            <Popups onComplete={handlePopupComplete} />
           )}
         </main>
       </div>
