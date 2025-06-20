@@ -152,7 +152,6 @@ const Profile = () => {
       [name]: value,
     }));
 
-    // Fetch address suggestions only for address_line_1
     if (name === "address_line_1") {
       fetchAddressSuggestions(value);
     }

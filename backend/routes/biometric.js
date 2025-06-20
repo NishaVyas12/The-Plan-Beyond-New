@@ -318,4 +318,40 @@ router.post("/verify-biometric-login", async (req, res) => {
     }
 });
 
+router.delete("/delete-biometric", checkAuth, async (req, res) => {
+    const { biometricType } = req.body;
+    const userId = req.session.userId;
+
+    if (!["face", "fingerprint"].includes(biometricType)) {
+        return res.status(400).json({ success: false, message: "Invalid biometric type." });
+    }
+
+    try {
+        const [credentials] = await pool.query(
+            "SELECT credential_id FROM webauthn_credentials WHERE user_id = ? AND biometric_type = ?",
+            [userId, biometricType]
+        );
+
+        if (credentials.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: `No ${biometricType === "face" ? "Face ID" : "Fingerprint"} biometric registered.`,
+            });
+        }
+
+        await pool.query(
+            "DELETE FROM webauthn_credentials WHERE user_id = ? AND biometric_type = ?",
+            [userId, biometricType]
+        );
+
+        res.json({
+            success: true,
+            message: `${biometricType === "face" ? "Face ID" : "Fingerprint"} biometric deleted successfully.`,
+        });
+    } catch (err) {
+        console.error(`Error deleting ${biometricType} biometric:`, err);
+        res.status(500).json({ success: false, message: "Server error." });
+    }
+});
+
 module.exports = router;
