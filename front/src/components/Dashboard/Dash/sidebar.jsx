@@ -25,33 +25,33 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const [showNewAmbassadorTab, setShowNewAmbassadorTab] = useState(false);
 
-    useEffect(() => {
-        const fetchUserStatus = async () => {
-            try {
-                const userId = sessionStorage.getItem("userId");
-                if (!userId) {
-                    console.error("No userId found in sessionStorage");
-                    return;
-                }
+    // useEffect(() => {
+    //     const fetchUserStatus = async () => {
+    //         try {
+    //             const userId = sessionStorage.getItem("userId");
+    //             if (!userId) {
+    //                 console.error("No userId found in sessionStorage");
+    //                 return;
+    //             }
 
-                const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/api/check-user-status`,
-                    {
-                        withCredentials: true,
-                        params: { userId },
-                    }
-                );
+    //             const response = await axios.get(
+    //                 `${import.meta.env.VITE_API_URL}/api/check-user-status`,
+    //                 {
+    //                     withCredentials: true,
+    //                     params: { userId },
+    //                 }
+    //             );
 
-                if (response.data.success && response.data.is_verified === 1 && response.data.ambassador_accept === 1) {
-                    setShowNewAmbassadorTab(true);
-                }
-            } catch (err) {
-                console.error("Error fetching user status:", err);
-            }
-        };
+    //             if (response.data.success && response.data.is_verified === 1 && response.data.ambassador_accept === 1) {
+    //                 setShowNewAmbassadorTab(true);
+    //             }
+    //         } catch (err) {
+    //             console.error("Error fetching user status:", err);
+    //         }
+    //     };
 
-        fetchUserStatus();
-    }, []);
+    //     fetchUserStatus();
+    // }, []);
 
     return (
         <>

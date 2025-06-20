@@ -27,7 +27,7 @@ import FeedbacksPage from "./pages/FeedbacksPage";
 import Confirmation from "./pages/Confirmation";
 import DashboardPage from "./pages/DashboardPage";
 import ContactPage from "./pages/ContactPage";
-import Popups from "./components/Popups";
+import ProfilePage from "./pages/ProfilePage";
 
 const PrivateRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -299,6 +299,16 @@ function App() {
               <>
                 <PrivateRoute>
                   <ContactPage />
+                </PrivateRoute>
+              </>
+            }
+          />
+           <Route
+            path="/profile"
+            element={
+              <>
+                <PrivateRoute>
+                  <ProfilePage />
                 </PrivateRoute>
               </>
             }

@@ -77,6 +77,77 @@ router.get("/get-profile", checkAuth, async (req, res) => {
   }
 });
 
+router.put("/update-profile", checkAuth, async (req, res) => {
+  const userId = req.session.userId;
+  const {
+    first_name,
+    middle_name,
+    last_name,
+    email,
+    phone_number,
+    date_of_birth,
+    gender,
+    address_line_1,
+    address_line_2,
+    city,
+    state,
+    zip_code,
+    country,
+  } = req.body;
+
+  try {
+    // Ensure the user exists
+    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [userId]);
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    // Update profile
+    await pool.query(
+      `INSERT INTO profile (
+        user_id, first_name, middle_name, last_name, email, phone_number,
+        date_of_birth, gender, address_line_1, address_line_2, city, state, zip_code, country
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        first_name = VALUES(first_name),
+        middle_name = VALUES(middle_name),
+        last_name = VALUES(last_name),
+        email = VALUES(email),
+        phone_number = VALUES(phone_number),
+        date_of_birth = VALUES(date_of_birth),
+        gender = VALUES(gender),
+        address_line_1 = VALUES(address_line_1),
+        address_line_2 = VALUES(address_line_2),
+        city = VALUES(city),
+        state = VALUES(state),
+        zip_code = VALUES(zip_code),
+        country = VALUES(country)`,
+      [
+        userId,
+        first_name || null,
+        middle_name || null,
+        last_name || null,
+        email || null,
+        phone_number || null,
+        date_of_birth || null,
+        gender || null,
+        address_line_1 || null,
+        address_line_2 || null,
+        city || null,
+        state || null,
+        zip_code || null,
+        country || null,
+      ]
+    );
+
+    res.json({ success: true, message: "User profile updated successfully." });
+  } catch (err) {
+    console.error("Error updating user profile:", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+
 router.post("/popup/submit", checkAuth, async (req, res) => {
   const { responses } = req.body;
   const userId = req.session.userId;
