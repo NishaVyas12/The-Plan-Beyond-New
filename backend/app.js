@@ -9,6 +9,10 @@ const { initializeDatabase } = require("./database/schema");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const biometricRoutes = require("./routes/biometric");
+<<<<<<< Updated upstream
+=======
+const contactsRoutes = require("./routes/contacts");
+>>>>>>> Stashed changes
 
 initializeDatabase().then(() => {
   const app = express();
@@ -25,6 +29,10 @@ initializeDatabase().then(() => {
   app.use("/api", authRoutes);
   app.use("/api", userRoutes);
   app.use("/api", biometricRoutes);
+  app.use("/api/contacts", contactsRoutes);
+
+  // Serve uploaded files
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
