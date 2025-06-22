@@ -20,6 +20,7 @@
     font-size: 1.5rem;
     color: var(--secondary-color);
     margin: 0 0 30px;
+    font-family: "New Spirit";
 }
 
 .contact-header-actions {
@@ -1033,3 +1034,4 @@
   background-color: #ffe6f3; /* Light pink for Family/Daughter/Ambassador or Ambassador/Nominee */
   color: #333;
 }
+

@@ -6,13 +6,11 @@ const cors = require("cors");
 const path = require("path");
 const { configureSession } = require("./config/session");
 const { initializeDatabase } = require("./database/schema");
+
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const biometricRoutes = require("./routes/biometric");
-<<<<<<< Updated upstream
-=======
-const contactsRoutes = require("./routes/contacts");
->>>>>>> Stashed changes
+const contactsRoutes = require("./routes/contacts"); // ✅ THIS MUST EXIST BEFORE USE
 
 initializeDatabase().then(() => {
   const app = express();
@@ -29,9 +27,8 @@ initializeDatabase().then(() => {
   app.use("/api", authRoutes);
   app.use("/api", userRoutes);
   app.use("/api", biometricRoutes);
-  app.use("/api/contacts", contactsRoutes);
+  app.use("/api/contacts", contactsRoutes); // ✅ USING IT HERE
 
-  // Serve uploaded files
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
   const PORT = process.env.PORT || 5000;

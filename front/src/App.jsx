@@ -28,7 +28,8 @@ import Confirmation from "./pages/Confirmation";
 import DashboardPage from "./pages/DashboardPage";
 import ContactPage from "./pages/ContactPage";
 import ProfilePage from "./pages/ProfilePage";
-
+import NomineePage from "./pages/NomineePage";
+import AmbassadorPage from "./pages/AmbassadorPage";
 const PrivateRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
@@ -311,6 +312,23 @@ function App() {
                   <ProfilePage />
                 </PrivateRoute>
               </>
+            }
+          />
+
+          <Route
+            path="/nominee"
+            element={
+              <PrivateRoute>
+                <NomineePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/ambassador"
+            element={
+              <PrivateRoute>
+                <AmbassadorPage />
+              </PrivateRoute>
             }
           />
           <Route path="/login" element={<LoginPage />} />
