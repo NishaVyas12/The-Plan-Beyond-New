@@ -1,3 +1,4 @@
+
 .nominee-add-contact-container-add-nominee {
   margin-left: 300px;
   padding: 2rem;
@@ -156,16 +157,20 @@
 
 .nominee-add-contact-info-add-nominee {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   margin-top: 12px;
+}
+
+.nominee-add-contact-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
 .nominee-add-info-add-nominee {
   font-size: 0.8rem;
   color: var(--secondary-color);
   line-height: 1.8;
-  flex: 1;
-  margin-right: 10px; 
 }
 
 .nominee-add-info-label-add-nominee {
@@ -252,7 +257,7 @@
   border: 1px solid #DAE8E8;
   border-radius: 5px;
   padding: 8px;
-  width: 100%;
+  width: 100% !important;
   margin-bottom: 12px;
   box-sizing: border-box;
   color: var(--secondary-color);

@@ -214,21 +214,24 @@ const createNomineesTable = async () => {
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT NOT NULL,
       first_name VARCHAR(255) NOT NULL,
-      contact TEXT NOT NULL,
+      middle_name VARCHAR(255),
+      last_name VARCHAR(255),
       email VARCHAR(255) NOT NULL,
       phone_number VARCHAR(20) NOT NULL,
       phone_number1 VARCHAR(20) DEFAULT '',
       phone_number2 VARCHAR(20) DEFAULT '',
       relationship VARCHAR(100) NOT NULL,
       category VARCHAR(100) NOT NULL,
-      nominee_type ENUM('Primary', 'Secondary', '') NOT NULL DEFAULT '',
+      nominee_type ENUM('Primary', 'Secondary', 'Tertiary', 'Quaternary', 'Quinary', '') NOT NULL DEFAULT '',
       profile_image VARCHAR(1000),
+      nominee_accept BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     )
   `;
   try {
     await pool.query(query);
+    console.log("Nominees table created or already exists.");
   } catch (err) {
     console.error("Error creating nominees table:", err);
     throw err;
@@ -240,8 +243,9 @@ const createAmbassadorsTable = async () => {
     CREATE TABLE IF NOT EXISTS ambassadors (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT NOT NULL,
-      contact TEXT NOT NULL,
       first_name VARCHAR(255) NOT NULL,
+      middle_name VARCHAR(255),
+      last_name VARCHAR(255),
       category VARCHAR(100) NOT NULL,
       email VARCHAR(255) NOT NULL,
       phone_number VARCHAR(20) NOT NULL,

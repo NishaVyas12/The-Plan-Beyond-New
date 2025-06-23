@@ -3,9 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { FaCamera } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import PhoneInput from "react-phone-input-2";
-import editIcon from "../../../assets/images/dash_icon/pen.svg";
-import eyeIcon from "../../../assets/images/dash_icon/eye.svg";
-import deleteIcon from "../../../assets/images/dash_icon/trash.svg";
 import "./Nominee.css";
 import Select from "react-select";
 import "react-phone-input-2/lib/style.css";
@@ -13,132 +10,35 @@ import "react-toastify/dist/ReactToastify.css";
 
 const NomineeCard = ({
   id,
-  title,
-  name = "",
+  type,
+  firstName = "",
+  middleName = "",
+  lastName = "",
   email = "",
   phone_number = "",
   phone_number1 = "",
   phone_number2 = "",
   category = "",
   relation = "",
-  addedOn = "",
   profileImage = "",
   onEdit,
   onRemove,
   onImageUpload,
   isEmpty,
-  categoryData
 }) => {
   const navigate = useNavigate();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [nomineeAssets, setNomineeAssets] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [showOptions, setShowOptions] = useState(false);
-  const [showActions, setShowActions] = useState(false);
 
-  const handleCategoryClick = (category) => {
-    setSelectedCategory((prev) => (prev === category ? null : category));
-  };
+  const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim() || "Not Assigned";
 
   const handleViewAssets = () => {
     if (isEmpty) return;
-
-    const assets = [];
-    Object.keys(categoryData).forEach(category => {
-      const categoryItems = categoryData[category]?.records || categoryData[category]?.ids || [];
-      categoryItems.forEach(item => {
-        let nomineeContact;
-
-        if (category === "Password Management") {
-          nomineeContact = item.nominee_contact || item.first_name;
-        } else if (category === "Email Accounts") {
-          nomineeContact = item.nomineeContact || item.first_name;
-        } else if (category === "Devices") {
-          nomineeContact = item.contact;
-        } else {
-          nomineeContact = item.nominee_contact || item.nomineeContact || item.contact;
-        }
-        if (
-          nomineeContact &&
-          (
-            (nomineeContact.toLowerCase() === name?.toLowerCase() ||
-              email && nomineeContact.toLowerCase() === email?.toLowerCase())
-          )
-        ) {
-          assets.push({
-            category,
-            ...item
-          });
-        }
-      });
-    });
-    setNomineeAssets(assets);
     setIsPopupOpen(true);
   };
 
   const closePopup = () => {
     setIsPopupOpen(false);
-    setNomineeAssets([]);
-    setSelectedCategory(null);
-  };
-
-  const handleNavigate = (category) => {
-    switch (category) {
-      case "Home":
-      case "Home Insurance":
-      case "Vehicle":
-      case "Storage facilities":
-      case "Safe Deposit Boxes":
-      case "Home Safes":
-      case "Other important possessions":
-      case "Other Real State":
-      case "Other Insurance":
-        navigate("/home-property-info");
-        break;
-      case "Credit Card":
-      case "Loan":
-      case "Home Insurance":
-      case "Advisor and Agents":
-      case "Life Insurance":
-      case "Disability Insurance":
-      case "Tax Return":
-      case "Other Annuities or Benefits":
-      case "Pension":
-      case "Military Benefits":
-      case "Disability Benefits":
-      case "Rewards and Miles":
-      case "Other Government Benefits":
-        navigate("/financial-info");
-        break;
-      case "Pets":
-      case "Physical & Antique Photos":
-      case "Family Recipes":
-        navigate("/family-loved-one-info");
-        break;
-      case "Attorneys":
-      case "Will":
-      case "Power of Attorneys":
-      case "Trusts":
-      case "Other Legal Documents":
-        navigate("/legal-info");
-        break;
-      case "Final Arrangements":
-      case "About My Life":
-      case "My Secret":
-        navigate("/after-gone-info");
-        break;
-      case "Government Id":
-      case "Military Service":
-      case "Miscellaneous":
-      case "Charities & Causes":
-      case "Employment Details":
-      case "Clubs and Affiliations":
-      case "Degrees and Certifications":
-        navigate("/personal-info");
-        break;
-      default:
-        navigate("/digital-info");
-    }
   };
 
   const handleImageUpload = async (event) => {
@@ -151,31 +51,32 @@ const NomineeCard = ({
     formData.append("nomineeId", id);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/upload-nominee-image`,
-        {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
-      }
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees/upload-image`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
       const data = await response.json();
       if (data.success) {
-        onImageUpload(id, data.imagePath);
+        onImageUpload({ id, imagePath: data.imagePath });
         toast.success("Profile image uploaded successfully!", {
           position: "top-right",
           autoClose: 3000,
         });
       } else {
-        toast.error(data.message || "Failed to upload image.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to upload image.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error uploading image:", err);
@@ -213,8 +114,10 @@ const NomineeCard = ({
       case "Edit":
         onEdit({
           id,
-          title,
-          name,
+          type,
+          firstName,
+          middleName,
+          lastName,
           email,
           phone_number,
           phone_number1,
@@ -226,12 +129,6 @@ const NomineeCard = ({
         break;
       case "Delete":
         onRemove(id);
-        break;
-      case "Send Invite":
-        toast.success("Invite sent successfully!", {
-          position: "top-right",
-          autoClose: 3000,
-        });
         break;
       case "View Assets":
         handleViewAssets();
@@ -258,10 +155,7 @@ const NomineeCard = ({
                 : {}
             }
           >
-            <label
-              htmlFor={`avatar-upload-${id}`}
-              className="nominee-add-avatar-upload"
-            >
+            <label htmlFor={`avatar-upload-${id}`} className="nominee-add-avatar-upload">
               <FaCamera className="nominee-add-camera-icon" />
               <input
                 type="file"
@@ -276,170 +170,68 @@ const NomineeCard = ({
         </div>
         <div className="nominee-add-details-add-nominee">
           <div className="nominee-add-name-relation-add-nominee">
-            <h3 className="nominee-add-name-add-nominee">{name || "Not Assigned"}</h3>
-            <div className="nominee-add-options-add-nominee" onClick={() => setShowOptions(!showOptions)}>
+            <div>
+              <h3 className="nominee-add-name-add-nominee">{fullName}</h3>
+              <p className="nominee-add-type-add-nominee">{type || "No Type Assigned"}</p>
+              <p className="nominee-add-info-add-nominee">{relationshipDisplay}</p>
+            </div>
+            <div
+              className="nominee-add-options-add-nominee"
+              onClick={() => setShowOptions(!showOptions)}
+            >
               ...
               {showOptions && (
                 <div className="nominee-add-options-menu-add-nominee">
-                  <button className="nominee-add-option-add-nominee" onClick={() => handleOptionClick("Send Invite")}>
-                    Send Invite
-                  </button>
-                  <button className="nominee-add-option-add-nominee" onClick={() => handleOptionClick("Edit")}>
+                  <button
+                    className="nominee-add-option-add-nominee"
+                    onClick={() => handleOptionClick("Edit")}
+                    disabled={isEmpty}
+                  >
                     Edit
                   </button>
-                  <button className="nominee-add-option-add-nominee" onClick={() => handleOptionClick("Delete")}>
+                  <button
+                    className="nominee-add-option-add-nominee"
+                    onClick={() => handleOptionClick("Delete")}
+                    disabled={isEmpty}
+                  >
                     Delete
                   </button>
-                  <button className="nominee-add-option-add-nominee" onClick={() => handleOptionClick("View Assets")}>
+                  <button
+                    className="nominee-add-option-add-nominee"
+                    onClick={() => handleOptionClick("View Assets")}
+                    disabled={isEmpty}
+                  >
                     View Assets
                   </button>
                 </div>
               )}
             </div>
           </div>
-          <p className="nominee-add-relation-add-nominee">{relationshipDisplay}</p>
         </div>
       </div>
       <div className="nominee-add-contact-info-add-nominee">
-        <p className="nominee-add-info-add-nominee">
-          <span className="nominee-add-info-label-add-nominee">Phone</span>
-          <br />
-          {phone_number || "-"}
-        </p>
-        <p className="nominee-add-info-add-nominee">
-          <span className="nominee-add-info-label-add-nominee">Email</span>
-          <br />
-          {email || "-"}
-        </p>
-      </div>
-      {showActions && (
-        <div className="nominee-add-actions-wrapper-add-nominee">
-          <div className="nominee-add-actions-add-nominee">
-            <button
-              className="nominee-add-button-add-nominee nominee-add-button-view-assets-add-nominee"
-              onClick={handleViewAssets}
-              disabled={isEmpty}
-            >
-              <img
-                src={eyeIcon}
-                alt="View Assets"
-                className="nominee-add-button-icon-add-nominee"
-              />{" "}
-              View Assets
-            </button>
-          </div>
+        <div className="nominee-add-contact-row">
+          <p className="nominee-add-info-add-nominee">
+            <span className="nominee-add-info-label-add-nominee">Email</span>
+            <br />
+            {email || "-"}
+          </p>
+          <p className="nominee-add-info-add-nominee">
+            <span className="nominee-add-info-label-add-nominee">Phone</span>
+            <br />
+            {phone_number || "-"}
+          </p>
         </div>
-      )}
+      </div>
 
       {isPopupOpen && (
         <div className="nominee-add-popup-overlay nominee-add">
           <div className="nominee-add-popup-content nominee-add">
             <div className="nominee-add-popup-header">
-              <h2 className="nominee-add-asset-title">Assets for {name || title}</h2>
-              <span className="nominee-add-asset-count">{nomineeAssets.length} {nomineeAssets.length === 1 ? "Asset" : "Assets"}</span>
+              <h2 className="nominee-add-asset-title">Assets for {fullName}</h2>
+              <span className="nominee-add-asset-count">0 Assets</span>
             </div>
-            {nomineeAssets.length > 0 ? (
-              <>
-                <div className="nominee-add-assets-grid">
-                  {Object.entries(
-                    nomineeAssets.reduce((acc, asset) => {
-                      if (!acc[asset.category]) {
-                        acc[asset.category] = [];
-                      }
-                      acc[asset.category].push(asset);
-                      return acc;
-                    }, {})
-                  ).map(([category, assets], index) => (
-                    <div className="nominee-add-assets-grid-item" key={index}>
-                      <div
-                        className="nominee-add-assets-header clickable"
-                        onClick={() => handleCategoryClick(category)}
-                      >
-                        <span className="nominee-add-assets-category">
-                          {category.charAt(0).toUpperCase() + category.slice(1)}
-                        </span>
-                        <span className="nominee-add-assets-count">{assets.length}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {selectedCategory && (
-                  <div className="nominee-add-assets-details">
-                    <h3 className="nominee-add-assets-details-title">
-                      {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}
-                    </h3>
-                    {nomineeAssets
-                      .filter(asset => asset.category === selectedCategory)
-                      .map((asset, i) => {
-                        const displayName =
-                          asset.nominee_contact ||
-                          asset.first_name ||
-                          asset.service_name ||
-                          asset.name ||
-                          asset.title ||
-                          asset.ownership ||
-                          asset.insuranceCompany ||
-                          asset.facilityName ||
-                          asset.bankName ||
-                          asset.safeLocation ||
-                          asset.itemName ||
-                          asset.propertyType ||
-                          asset.insuranceType ||
-                          asset.cardType ||
-                          asset.loanType ||
-                          asset.advisorType ||
-                          asset.policyType ||
-                          asset.taxYear?.split("-")?.[0] ||
-                          asset.annuityType ||
-                          asset.adminPension ||
-                          asset.disabilitySource ||
-                          asset.adminContact ||
-                          asset.rewardType ||
-                          asset.govBenefitType ||
-                          asset.petType ||
-                          asset.photoLocation ||
-                          asset.recipeName ||
-                          asset.attorneyType ||
-                          asset.pass_file ||
-                          asset.poaType ||
-                          asset.trustName ||
-                          asset.documentName ||
-                          asset.howCremated ||
-                          asset.lifeThoughts ||
-                          asset.notes ||
-                          asset.type ||
-                          asset.military_branch ||
-                          asset.item ||
-                          asset.charity_name ||
-                          asset.employment_benefit ||
-                          asset.club_contact ||
-                          asset.university_name ||
-                          "NA";
-                        const createdAt = asset.created_at
-                          ? new Date(asset.created_at).toLocaleDateString()
-                          : "-";
-
-                        return (
-                          <div key={i} className="nominee-add-asset-item">
-                            <div className="nominee-add-asset-details">
-                              <p className="nominee-add-asset-name">{displayName}</p>
-                              <p className="nominee-add-asset-date">{createdAt}</p>
-                            </div>
-                            <button
-                              className="nominee-add-button-view-details"
-                              onClick={() => handleNavigate(selectedCategory)}
-                            >
-                              View
-                            </button>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="nominee-add-no-assets">No assets allocated to this nominee.</p>
-            )}
+            <p className="nominee-add-no-assets">Nothing allocated</p>
             <button
               className="nominee-add-button-add-nominee nominee-add-button-close-popup"
               onClick={closePopup}
@@ -457,13 +249,14 @@ const AddNomineeForm = ({
   onNomineeAdded,
   onEditNominee,
   editNominee,
+  nominees,
   onCancel,
   isOpen,
   onClose,
 }) => {
   const [formData, setFormData] = useState({
-    firstName: "",
     contact: null,
+    firstName: "",
     middleName: "",
     lastName: "",
     email: "",
@@ -472,44 +265,98 @@ const AddNomineeForm = ({
     phone_number2: "",
     category: "",
     relation: "",
-    profileImage: "",
+    profileImage: null,
   });
   const [showPhone1, setShowPhone1] = useState(false);
   const [showPhone2, setShowPhone2] = useState(false);
   const [showRelationInput, setShowRelationInput] = useState(false);
-  const [customRelation, setCustomRelation] = useState("");
-  const [allContacts, setAllContacts] = useState([]);
   const [isCustomRelation, setIsCustomRelation] = useState(false);
+  const [customRelation, setCustomRelation] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [allContacts, setAllContacts] = useState([]);
+  const navigate = useNavigate();
+
+  const relationOptions = [
+    "Wife",
+    "Husband",
+    "Mother",
+    "Father",
+    "Sister",
+    "Brother",
+    "Daughter",
+    "Son",
+    "Custom",
+  ];
 
   useEffect(() => {
     if (editNominee) {
-      const nameParts = editNominee.name ? editNominee.name.split(" ") : ["", "", ""];
+      const contactLabel = [editNominee.firstName, editNominee.middleName, editNominee.lastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      const imageUrl = editNominee.profileImage
+        ? `${import.meta.env.VITE_API_URL}${editNominee.profileImage}`
+        : null;
+
+      // Find matching contact in allContacts
+      const matchingContact = allContacts.find(
+        (contact) =>
+          contact.phone_number === editNominee.phone_number ||
+          contact.email === editNominee.email
+      );
+
+      console.log("Edit Nominee:", editNominee);
+      console.log("Matching Contact:", matchingContact);
+      console.log("Image URL:", imageUrl);
+
       setFormData({
-        firstName: nameParts[0] || "",
-        middleName: nameParts.length > 2 ? nameParts[1] : "",
-        contact: {
-          value: editNominee?.phone_number,
-          label: editNominee?.name,
-        },
-        lastName: nameParts.length > 1 ? nameParts[nameParts.length - 1] : "",
-        email: editNominee.email,
+        contact: matchingContact
+          ? {
+              value: matchingContact.phone_number,
+              label: [matchingContact.first_name, matchingContact.middle_name, matchingContact.last_name]
+                .filter(Boolean)
+                .join(" ")
+                .trim(),
+              fName: matchingContact.first_name || "",
+              mName: matchingContact.middle_name || "",
+              lName: matchingContact.last_name || "",
+              email: matchingContact.email || "",
+              phone: matchingContact.phone_number || "",
+              category: matchingContact.category || "",
+              relation: matchingContact.relation || "",
+            }
+          : {
+              value: editNominee.phone_number,
+              label: contactLabel || editNominee.phone_number,
+              fName: editNominee.firstName || "",
+              mName: editNominee.middleName || "",
+              lName: editNominee.lastName || "",
+              email: editNominee.email || "",
+              phone: editNominee.phone_number || "",
+              category: editNominee.category || "",
+              relation: editNominee.relation || "",
+            },
+        firstName: editNominee.firstName || "",
+        middleName: editNominee.middleName || "",
+        lastName: editNominee.lastName || "",
+        email: editNominee.email || "",
         phone_number: editNominee.phone_number || "",
         phone_number1: editNominee.phone_number1 || "",
         phone_number2: editNominee.phone_number2 || "",
         category: editNominee.category || "",
         relation: editNominee.relation || "",
-        profileImage: editNominee.profileImage || "",
+        profileImage: null,
       });
       setShowPhone1(!!editNominee.phone_number1);
       setShowPhone2(!!editNominee.phone_number2);
       setShowRelationInput(editNominee.category === "Family");
+      setIsCustomRelation(editNominee.relation && !relationOptions.includes(editNominee.relation));
       setCustomRelation(editNominee.relation || "");
-      setImagePreview(editNominee.profileImage ? `${import.meta.env.VITE_API_URL}${editNominee.profileImage.startsWith("/") ? "" : "/"}${editNominee.profileImage}` : null);
+      setImagePreview(imageUrl);
     } else {
       setFormData({
-        firstName: "",
         contact: null,
+        firstName: "",
         middleName: "",
         lastName: "",
         email: "",
@@ -518,44 +365,36 @@ const AddNomineeForm = ({
         phone_number2: "",
         category: "",
         relation: "",
-        profileImage: "",
+        profileImage: null,
       });
       setShowPhone1(false);
       setShowPhone2(false);
       setShowRelationInput(false);
+      setIsCustomRelation(false);
       setCustomRelation("");
       setImagePreview(null);
     }
-  }, [editNominee]);
+  }, [editNominee, allContacts]);
 
   const handleInputChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === "category" ? {
-        relation: value === "Family" ? prev.relation : "",
-        category: value
-      } : {})
+      ...(name === "category"
+        ? {
+            relation: value === "Family" ? prev.relation : "",
+            category: value,
+          }
+        : {}),
     }));
     if (name === "category") {
       setShowRelationInput(value === "Family");
       if (value !== "Family") {
         setCustomRelation("");
+        setIsCustomRelation(false);
       }
     }
   };
-
-  useEffect(() => {
-    if (formData.relation) {
-      if (relationOptions.includes(formData.relation)) {
-        setIsCustomRelation(false);
-        setCustomRelation("");
-      } else {
-        setIsCustomRelation(true);
-        setCustomRelation(formData.relation);
-      }
-    }
-  }, [formData.relation]);
 
   const handleAddPhoneNumber = () => {
     if (!showPhone1) {
@@ -572,7 +411,22 @@ const AddNomineeForm = ({
     } else {
       setIsCustomRelation(false);
       setFormData((prev) => ({ ...prev, relation: value }));
-      setCustomRelation("");
+      setCustomRelation(value);
+    }
+  };
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      setFormData((prev) => ({
+        ...prev,
+        profileImage: file,
+      }));
     }
   };
 
@@ -592,51 +446,88 @@ const AddNomineeForm = ({
       });
       return;
     }
-    const fullName = [formData.firstName, formData.middleName, formData.lastName]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-    if (!fullName) {
-      toast.error("Please enter at least a first name.", {
+    if (!formData.firstName) {
+      toast.error("Please enter a first name.", {
         position: "top-right",
         autoClose: 3000,
       });
       return;
     }
-    const submitData = {
-      ...formData,
-      firstName: fullName,
-      relation: formData.category === "Family" ? formData.relation : "",
-    };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid email address.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+    if (!formData.phone_number) {
+      toast.error("Please enter a primary phone number.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    const submitData = new FormData();
+    submitData.append("firstName", formData.firstName);
+    submitData.append("middleName", formData.middleName);
+    submitData.append("lastName", formData.lastName);
+    submitData.append("email", formData.email);
+    submitData.append("phone_number", formData.phone_number);
+    submitData.append("phone_number1", formData.phone_number1);
+    submitData.append("phone_number2", formData.phone_number2);
+    submitData.append("category", formData.category);
+    submitData.append("relation", formData.category === "Family" ? formData.relation : "");
+    if (formData.profileImage) {
+      submitData.append("profileImage", formData.profileImage);
+    }
+
     try {
       const url = editNominee
-        ? `${import.meta.env.VITE_API_URL}/api/update-nominee/${editNominee.id}`
-        : `${import.meta.env.VITE_API_URL}/api/add-nominee`;
+        ? `${import.meta.env.VITE_API_URL}/api/nominees/${editNominee.id}`
+        : `${import.meta.env.VITE_API_URL}/api/nominees`;
       const method = editNominee ? "PUT" : "POST";
       const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(submitData),
+        body: submitData,
       });
+
       const data = await response.json();
       if (data.success) {
+        const nomineeData = {
+          id: editNominee ? editNominee.id : data.nominee.id,
+          first_name: formData.firstName,
+          middle_name: formData.middleName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone_number: formData.phone_number,
+          phone_number1: formData.phone_number1,
+          phone_number2: formData.phone_number2,
+          category: formData.category,
+          relation: formData.relation,
+          nominee_type: editNominee ? editNominee.type : data.nominee.nominee_type,
+          profile_image: data.nominee.profile_image || editNominee?.profileImage,
+          created_at: editNominee ? editNominee.created_at : data.nominee.created_at,
+        };
+
         if (editNominee) {
-          onEditNominee({ ...submitData, id: editNominee.id });
+          onEditNominee(nomineeData);
           toast.success("Nominee updated successfully!", {
             position: "top-right",
             autoClose: 3000,
           });
         } else {
-          onNomineeAdded({ ...data.nominee, name: fullName });
+          onNomineeAdded(nomineeData);
           toast.success("Nominee added successfully!", {
             position: "top-right",
             autoClose: 3000,
           });
         }
+
         setFormData({
-          firstName: "",
           contact: null,
+          firstName: "",
           middleName: "",
           lastName: "",
           email: "",
@@ -645,7 +536,7 @@ const AddNomineeForm = ({
           phone_number2: "",
           category: "",
           relation: "",
-          profileImage: "",
+          profileImage: null,
         });
         setShowPhone1(false);
         setShowPhone2(false);
@@ -654,10 +545,18 @@ const AddNomineeForm = ({
         setImagePreview(null);
         onClose();
       } else {
-        toast.error(data.message || "Failed to save nominee", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to save nominee.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error saving nominee:", err);
@@ -668,75 +567,37 @@ const AddNomineeForm = ({
     }
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setFormData((prev) => ({
-        ...prev,
-        profileImage: file,
-      }));
-    }
-  };
-
-  const relationOptions = [
-    "Wife",
-    "Husband",
-    "Mother",
-    "Father",
-    "Sister",
-    "Brother",
-    "Daughter",
-    "Son",
-    "Custom",
-  ];
-
-  const contacts = allContacts?.map(item => {
-    const nameParts = item.name.trim().split(" ");
-    const fName = nameParts[0] || "";
-    const mName = nameParts.length === 3 ? nameParts[1] : "";
-    const lName = nameParts.length >= 2 ? nameParts[nameParts.length - 1] : "";
-
-    return {
-      value: item.phone_number,
-      label: item.name,
-      fName,
-      mName,
-      lName,
-      email: item.email || "",
-      phone: item.phone_number,
-      category: item.category,
-      relation: item.relation
-    };
-  });
-
   const fetchAllContacts = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/get-contacts`,
-        { credentials: "include" }
-      );
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (err) {
-        console.error("JSON parse error for contacts:", err);
-        toast.error("Invalid server response for contacts");
-        return;
-      }
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts`, {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
       if (data.success) {
-        setAllContacts(data.contacts);
+        setAllContacts(data.contacts || []);
       } else {
-        toast.error(data.message);
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to fetch contacts.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error fetching contacts:", err);
-      toast.error("Error fetching contacts");
+      toast.error("Error fetching contacts. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   };
 
@@ -753,30 +614,38 @@ const AddNomineeForm = ({
       borderColor: "#e9e6ff",
       boxShadow: state.isFocused ? "#000" : "none",
       "&:hover": {
-        borderColor: "#e9e6ff"
+        borderColor: "#e9e6ff",
       },
       minHeight: "30px",
-      borderRadius: "5px"
+      borderRadius: "5px",
     }),
     option: (provided, state) => ({
       ...provided,
-      backgroundColor: state.isSelected
-        ? "#2684FF"
-        : state.isFocused
-          ? "#f0f8ff"
-          : "#fff",
+      backgroundColor: state.isSelected ? "#2684FF" : state.isFocused ? "#f0f8ff" : "#fff",
       color: state.isSelected ? "#fff" : "#333",
-      padding: 10
+      padding: 10,
     }),
     menu: (provided) => ({
       ...provided,
-      zIndex: 9999
+      zIndex: 9999,
     }),
     singleValue: (provided) => ({
       ...provided,
-      color: "#333"
-    })
+      color: "#333",
+    }),
   };
+
+  const contacts = allContacts?.map((item) => ({
+    value: item.phone_number,
+    label: [item.first_name, item.middle_name, item.last_name].filter(Boolean).join(" "),
+    fName: item.first_name,
+    mName: item.middle_name || "",
+    lName: item.last_name || "",
+    email: item.email || "",
+    phone: item.phone_number,
+    category: item.category || "",
+    relation: item.relation || "",
+  }));
 
   if (!isOpen) return null;
 
@@ -802,10 +671,12 @@ const AddNomineeForm = ({
                     ...prev,
                     contact: selectedOption,
                     firstName: selectedOption?.fName || "",
-                    lastName: selectedOption?.lName || "",
                     middleName: selectedOption?.mName || "",
+                    lastName: selectedOption?.lName || "",
                     email: selectedOption?.email || "",
-                    phone_number: selectedOption?.phone || ""
+                    phone_number: selectedOption?.phone || "",
+                    category: selectedOption?.category || "",
+                    relation: selectedOption?.relation || "",
                   }));
                 }}
               />
@@ -939,18 +810,17 @@ const AddNomineeForm = ({
                   </select>
                 ) : (
                   <input
-  type="text"
-  className="nominee-add-input-field-add-nominee"
-  placeholder="Enter custom relationship"
-  value={customRelation}
-  onChange={(e) => {
-    const value = e.target.value;
-    setCustomRelation(value); // or value + " Giannis Antetokounmpo" if intentional
-    setFormData((prev) => ({ ...prev, relation: value }));
-  }}
-  required
-/>
-
+                    type="text"
+                    className="nominee-add-input-field-add-nominee"
+                    placeholder="Enter custom relationship"
+                    value={customRelation}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCustomRelation(value);
+                      setFormData((prev) => ({ ...prev, relation: value }));
+                    }}
+                    required
+                  />
                 )}
               </div>
             )}
@@ -969,10 +839,7 @@ const AddNomineeForm = ({
                     : { backgroundColor: "#DAE8E8" }
                 }
               >
-                <label
-                  htmlFor="avatar-upload-form"
-                  className="nominee-add-avatar-upload"
-                >
+                <label htmlFor="avatar-upload-form" className="nominee-add-avatar-upload">
                   <FaCamera className="nominee-add-camera-icon" />
                   <input
                     type="file"
@@ -1012,113 +879,42 @@ const Nominee = () => {
   const [nominees, setNominees] = useState([]);
   const [editNominee, setEditNominee] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [categoryData, setCategoryData] = useState({});
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchAllCategoryData = async () => {
-      const baseUrl = import.meta.env.VITE_API_URL;
-      const categoryEndpoints = {
-        "Password Management": "/api/get-password-details",
-        "Email Accounts": "/api/get-email-details",
-        "Devices": "/api/get-device-details",
-        "Wifi": "/api/get-wifi-details",
-        "Social Media": "/api/get-social-details",
-        "Shopping/e-commerce": "/api/get-shopping-details",
-        "Video streaming": "/api/get-video-details",
-        "Music": "/api/get-music-details",
-        "Gaming": "/api/get-gaming-details",
-        "Cloud Storage": "/api/get-cloud-details",
-        "Business & Networking": "/api/get-business-details",
-        "Software & App licence": "/api/get-software-details",
-        "Domains & Web Hosting": "/api/get-domain-details",
-        "Other Subscription and Service": "/api/get-other-details",
-        "Home": "/api/get-homes-details",
-        "Home Insurance": "/api/get-home-insurance-details",
-        "Vehicle": "/api/get-vehicle-insurance-details",
-        "Storage facilities": "/api/get-storage-facilities-details",
-        "Safe Deposit Boxes": "/api/get-safe-deposit-details",
-        "Home Safes": "/api/get-home-safes-details",
-        "Other important possessions": "/api/get-possessions-details",
-        "Other Real State": "/api/get-other-real-estate-details",
-        "Other Insurance": "/api/get-other-insurance-details",
-        "Credit Card": "/api/get-credit-cards-details",
-        "Loan": "/api/get-loans-details",
-        "Advisor and Agents": "/api/get-advisor-agent-details",
-        "Life Insurance": "/api/get-life-insurance-details",
-        "Disability Insurance": "/api/get-disability-insurance-details",
-        "Tax Return": "/api/get-tax-returns-details",
-        "Other Annuities or Benefits": "/api/get-other-annuities-benefits-details",
-        "Pension": "/api/get-pensions-details",
-        "Military Benefits": "/api/get-military-benefits-details",
-        "Disability Benefits": "/api/get-disability-benefits-details",
-        "Rewards and Miles": "/api/get-miles-reward-details",
-        "Other Government Benefits": "/api/get-government-benefit-details",
-        "Pets": "/api/get-pets-details",
-        "Physical & Antique Photos": "/api/get-physical-photos-details",
-        "Family Recipes": "/api/get-family-recipes-details",
-        "Attorneys": "/api/get-attorneys-details",
-        "Will": "/api/get-wills-details",
-        "Power of Attorneys": "/api/get-power-of-attorney-details",
-        "Trusts": "/api/get-trusts-details",
-        "Other Legal Documents": "/api/get-other-legal-documents-details",
-        "Final Arrangements": "/api/get-final-arrangement-details",
-        "About My Life": "/api/get-about-my-life-details",
-        "My Secret": "/api/get-my-secret-details",
-        "Government Id": "/api/get-government-ids",
-        "Military Service": "/api/get-military-details",
-        "Miscellaneous": "/api/get-miscellaneous-details",
-        "Charities & Causes": "/api/get-charity-details",
-        "Employment Details": "/api/employment-detail",
-        "Clubs and Affiliations": "/api/get-club-details",
-        "Degrees and Certifications": "/api/get-degree-details",
-      };
-
-      const fetchPromises = Object.entries(categoryEndpoints).map(
-        async ([category, endpoint]) => {
-          try {
-            const res = await fetch(`${baseUrl}${endpoint}`, {
-              credentials: "include",
-            });
-            const data = await res.json();
-            return { category, data };
-          } catch (err) {
-            console.error(`Error fetching ${category}:`, err);
-            return { category, data: { success: false, records: [] } };
-          }
-        }
-      );
-
-      const results = await Promise.all(fetchPromises);
-      const dataMap = results.reduce((acc, { category, data }) => {
-        acc[category] = data;
-        return acc;
-      }, {});
-
-      setCategoryData(dataMap);
-    };
-
-    fetchAllCategoryData();
-  }, []);
 
   const fetchNominees = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/get-nominees`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+      }
       const data = await response.json();
       if (data.success) {
-        setNominees(data.nominees || []);
+        const updatedNominees = data.nominees.map((nominee) => ({
+          ...nominee,
+          first_name: nominee.first_name || "",
+          middle_name: nominee.middle_name || "",
+          last_name: nominee.last_name || "",
+          profile_image: nominee.profile_image || "",
+          nominee_type: nominee.nominee_type || "",
+        }));
+        setNominees(updatedNominees || []);
       } else {
-        toast.error(data.message || "Failed to fetch nominees", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to fetch nominees.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error fetching nominees:", err);
@@ -1127,23 +923,36 @@ const Nominee = () => {
         autoClose: 3000,
       });
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     fetchNominees();
   }, [fetchNominees]);
 
-  const handleNomineeAdded = async () => {
+  const handleNomineeAdded = async (nominee) => {
     await fetchNominees();
     setShowForm(false);
   };
 
   const handleEditNominee = (nominee) => {
-    setEditNominee(nominee);
+    setEditNominee({
+      id: nominee.id,
+      type: nominee.nominee_type,
+      firstName: nominee.first_name,
+      middleName: nominee.middle_name,
+      lastName: nominee.last_name,
+      email: nominee.email,
+      phone_number: nominee.phone_number,
+      phone_number1: nominee.phone_number1,
+      phone_number2: nominee.phone_number2,
+      category: nominee.category,
+      relation: nominee.relation,
+      profileImage: nominee.profile_image,
+    });
     setShowForm(true);
   };
 
-  const handleUpdateNominee = async () => {
+  const handleUpdateNominee = async (nominee) => {
     await fetchNominees();
     setEditNominee(null);
     setShowForm(false);
@@ -1151,14 +960,14 @@ const Nominee = () => {
 
   const handleRemoveNominee = async (id) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/remove-nominee/${id}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+      }
       const data = await response.json();
       if (data.success) {
         await fetchNominees();
@@ -1167,10 +976,18 @@ const Nominee = () => {
           autoClose: 3000,
         });
       } else {
-        toast.error(data.message || "Failed to remove nominee", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to remove nominee.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error removing nominee:", err);
@@ -1181,12 +998,11 @@ const Nominee = () => {
     }
   };
 
-  const handleImageUpload = (id, imagePath) => {
+  const handleImageUpload = (data) => {
+    const { id, imagePath } = data;
     setNominees((prev) =>
       prev.map((nominee) =>
-        nominee.id === id
-          ? { ...nominee, profile_image: imagePath }
-          : nominee
+        nominee.id === id ? { ...nominee, profile_image: imagePath } : nominee
       )
     );
   };
@@ -1204,16 +1020,26 @@ const Nominee = () => {
       });
       return;
     }
+    setEditNominee(null);
     setShowForm(true);
   };
 
-  const nomineeSlots = [
-    nominees[0] || {},
-    nominees[1] || {},
-    nominees[2] || {},
-    nominees[3] || {},
-    nominees[4] || {},
-  ];
+  const nomineeSlots = Array(5).fill({});
+  let availableNominees = [...nominees];
+
+  const typeOrder = ["Primary", "Secondary", "Tertiary", "Quaternary", "Quinary"];
+  typeOrder.forEach((type, index) => {
+    const nomineeIndex = availableNominees.findIndex((n) => n.nominee_type === type);
+    if (nomineeIndex !== -1) {
+      nomineeSlots[index] = availableNominees.splice(nomineeIndex, 1)[0];
+    }
+  });
+
+  for (let i = 0; i < nomineeSlots.length; i++) {
+    if (!nomineeSlots[i].id && availableNominees.length > 0) {
+      nomineeSlots[i] = availableNominees.shift();
+    }
+  }
 
   return (
     <div className="nominee-add-contact-container-add-nominee">
@@ -1224,15 +1050,11 @@ const Nominee = () => {
           className="nominee-add-button-add-nominee nominee-add-button-submit-add-nominee"
           onClick={handleAddNomineeClick}
         >
-          
-          
-          
-          + Add 
+          + Add
         </button>
       </div>
       <p className="nominee-add-page-description-add-nominee">
-        Manage your trusted contacts who can access your information in case
-        of an emergency
+        Manage your trusted contacts who can access your information in case of an emergency
       </p>
       <div className="nominee-add-layout-add-nominee">
         <div
@@ -1243,8 +1065,10 @@ const Nominee = () => {
             <NomineeCard
               key={index}
               id={nominee.id}
-              title={`Nominee ${index + 1}`}
-              name={nominee.first_name}
+              type={nominee.nominee_type}
+              firstName={nominee.first_name}
+              middleName={nominee.middle_name}
+              lastName={nominee.last_name}
               email={nominee.email}
               phone_number={nominee.phone_number}
               phone_number1={nominee.phone_number1}
@@ -1252,16 +1076,10 @@ const Nominee = () => {
               category={nominee.category}
               relation={nominee.relation}
               profileImage={nominee.profile_image}
-              addedOn={
-                nominee.created_at
-                  ? new Date(nominee.created_at).toLocaleDateString()
-                  : ""
-              }
               onEdit={handleEditNominee}
               onRemove={handleRemoveNominee}
               onImageUpload={handleImageUpload}
               isEmpty={!nominee.id}
-              categoryData={categoryData}
             />
           ))}
         </div>
@@ -1271,6 +1089,7 @@ const Nominee = () => {
           onNomineeAdded={handleNomineeAdded}
           onEditNominee={handleUpdateNominee}
           editNominee={editNominee}
+          nominees={nominees}
           onCancel={handleCancel}
           isOpen={showForm}
           onClose={handleCancel}

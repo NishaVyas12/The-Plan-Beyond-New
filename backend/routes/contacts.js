@@ -10,6 +10,7 @@ const {
 const path = require("path");
 const fs = require("fs").promises;
 const { parsePhoneNumberFromString } = require("libphonenumber-js");
+const { checkAuth } = require("../middleware/auth");
 
 // Middleware to check authentication
 const auth = (req, res, next) => {
@@ -392,7 +393,7 @@ router.post(
           // Handle profile image
           if (files.profileImage.length > 0) {
             const profileImage = files.profileImage[0];
-            contactImagePath = `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
+            contactImagePath = `/Uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
             if (contactImagePath.length > 255) {
               throw new Error("Profile image path exceeds 255 characters");
             }
@@ -521,7 +522,7 @@ router.post(
             // Handle additional file uploads
             if (tempFiles.length > 0) {
               const finalDir = path.join(
-                "uploads",
+                "Uploads",
                 "send_file",
                 `${req.session.userId}`,
                 `${contactId}`
@@ -531,7 +532,7 @@ router.post(
               for (const tempFile of tempFiles) {
                 const finalPath = path.join(finalDir, tempFile.filename);
                 await fs.rename(tempFile.originalPath, finalPath);
-                const filePath = `/uploads/send_file/${req.session.userId}/${contactId}/${tempFile.filename}`;
+                const filePath = `/Uploads/send_file/${req.session.userId}/${contactId}/${tempFile.filename}`;
                 if (filePath.length > 255) {
                   throw new Error(
                     `File path ${filePath} exceeds 255 characters`
@@ -635,13 +636,13 @@ router.post(
               const profileImagePath = path.join(
                 __dirname,
                 "..",
-                `/uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
+                `/Uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
               );
               try {
                 await fs.unlink(profileImagePath);
               } catch (unlinkErr) {
                 console.error(
-                  `Error cleaningmodernizing profile image ${profileImagePath}:`,
+                  `Error cleaning up profile image ${profileImagePath}:`,
                   unlinkErr
                 );
               }
@@ -677,7 +678,7 @@ router.post(
           const profileImagePath = path.join(
             __dirname,
             "..",
-            `/uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
+            `/Uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
           );
           try {
             await fs.unlink(profileImagePath);
@@ -757,7 +758,7 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
       const uploadedFiles = [];
       for (const file of files) {
         const finalDir = path.join(
-          "uploads",
+          "Uploads",
           "send_file",
           `${req.session.userId}`,
           `${contactId}`
@@ -765,7 +766,7 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
         await fs.mkdir(finalDir, { recursive: true });
         const finalPath = path.join(finalDir, file.filename);
         await fs.rename(file.path, finalPath);
-        const filePath = `/uploads/send_file/${req.session.userId}/${contactId}/${file.filename}`;
+        const filePath = `/Uploads/send_file/${req.session.userId}/${contactId}/${file.filename}`;
         if (filePath.length > 255) {
           throw new Error(`File path ${filePath} exceeds 255 characters`);
         }
@@ -814,22 +815,97 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
 });
 
 // GET /api/contacts
-router.get("/", auth, async (req, res) => {
+router.get("/", checkAuth, async (req, res) => {
   try {
-    const tableName = `contacts_user_${req.session.userId}`;
-    const tableExists = await checkTableExists(tableName);
-    if (!tableExists) {
-      return res.json({
-        success: true,
-        contacts: [],
-        message: "No contacts found.",
-      });
+    const userId = parseInt(req.session.userId, 10);
+    if (isNaN(userId)) {
+      return res.status(400).json({ success: false, message: "Invalid user ID." });
     }
 
-    const [contacts] = await pool.query(`SELECT * FROM ${tableName}`);
+    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [userId]);
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const tableName = `contacts_user_${userId}`;
+    await createUserContactsTable(userId);
+
+    const tableExists = await checkTableExists(tableName);
+    if (!tableExists) {
+      return res.json({ success: true, contacts: [], total: 0, totalPages: 0 });
+    }
+
+    // Get query parameters
+    let page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    let offset = (page - 1) * limit;
+    const filter = req.query.filter || "ALL";
+    const search = req.query.search || "";
+
+    // Determine if full fetch
+    const noPagination = !req.query.page && !req.query.limit && filter === "ALL" && !search;
+    if (noPagination) {
+      limit = null;
+      offset = null;
+    }
+
+    let whereClause = "";
+    let queryParams = [];
+
+    // Apply filter
+    if (filter !== "ALL") {
+      if (filter === "Ambassador") {
+        whereClause += " WHERE is_ambassador = ?";
+        queryParams.push(1);
+      } else if (filter === "Nominee") {
+        whereClause += " WHERE is_nominee = ?";
+        queryParams.push(1);
+      } else if (["Friends", "Work"].includes(filter)) {
+        whereClause += " WHERE category = ?";
+        queryParams.push(filter);
+      } else if (filter === "Family") {
+        whereClause += " WHERE category LIKE ?";
+        queryParams.push("%Family%");
+      }
+    }
+
+    // Apply search
+    if (search) {
+      whereClause += whereClause ? " AND" : " WHERE";
+      whereClause += " first_name LIKE ? OR middle_name LIKE ? OR last_name LIKE ?";
+      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    // Get total count for pagination
+    let total = 0;
+    if (!noPagination) {
+      const [[result]] = await pool.query(
+        `SELECT COUNT(*) AS total FROM ${tableName}${whereClause}`,
+        queryParams
+      );
+      total = result.total;
+    }
+
+    // Fetch contacts with all fields
+    const contactsQuery = `
+      SELECT id, user_id, first_name, middle_name, last_name, company, job_type, website,
+             category, relation, phone_number, phone_number1, phone_number2, phone_number3,
+             email, flat_building_no, street, country, state, city, postal_code,
+             date_of_birth, anniversary, notes, contact_image, release_on_pass,
+             is_ambassador, is_nominee, created_at
+      FROM ${tableName}
+      ${whereClause}
+      ORDER BY first_name ASC
+      ${!noPagination ? 'LIMIT ? OFFSET ?' : ''}
+    `;
+    const queryValues = !noPagination ? [...queryParams, limit, offset] : queryParams;
+
+    const [contacts] = await pool.query(contactsQuery, queryValues);
+
+    // Fetch uploaded files
     const [uploadedFiles] = await pool.query(
       `SELECT id, contact_id, file_path, file_name FROM uploaded_files WHERE user_id = ?`,
-      [req.session.userId]
+      [userId]
     );
 
     const filesByContactId = uploadedFiles.reduce((acc, file) => {
@@ -842,14 +918,60 @@ router.get("/", auth, async (req, res) => {
       return acc;
     }, {});
 
-    const enrichedContacts = contacts.map((contact) => ({
-      ...contact,
-      uploaded_files: filesByContactId[contact.id] || [],
-    }));
+    // Parse and enrich contacts
+    const parsedContacts = contacts.map((contact) => {
+      const name = [contact.first_name, contact.middle_name, contact.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      const categoryParts = [];
+      if (contact.is_ambassador) categoryParts.push("Ambassador");
+      if (contact.is_nominee) categoryParts.push("Nominee");
+      if (contact.category) categoryParts.push(contact.category);
+      if (contact.relation) categoryParts.push(contact.relation);
+      const categoryDisplay = categoryParts.join("/");
+
+      return {
+        id: contact.id,
+        user_id: contact.user_id,
+        name,
+        first_name: contact.first_name,
+        middle_name: contact.middle_name || "",
+        last_name: contact.last_name || "",
+        company: contact.company || "",
+        job_type: contact.job_type || "",
+        website: contact.website || "",
+        category: contact.category || "",
+        relation: contact.relation || "",
+        phone_number: contact.phone_number || "",
+        phone_number1: contact.phone_number1 || "",
+        phone_number2: contact.phone_number2 || "",
+        phone_number3: contact.phone_number3 || "",
+        email: contact.email || "",
+        flat_building_no: contact.flat_building_no || "",
+        street: contact.street || "",
+        country: contact.country || "",
+        state: contact.state || "",
+        city: contact.city || "",
+        postal_code: contact.postal_code || "",
+        date_of_birth: contact.date_of_birth || "",
+        anniversary: contact.anniversary || "",
+        notes: contact.notes || "",
+        contact_image: contact.contact_image || "",
+        release_on_pass: contact.release_on_pass || false,
+        is_ambassador: contact.is_ambassador || false,
+        is_nominee: contact.is_nominee || false,
+        created_at: contact.created_at,
+        uploaded_files: filesByContactId[contact.id] || [],
+      };
+    });
 
     res.json({
       success: true,
-      contacts: enrichedContacts,
+      contacts: parsedContacts,
+      total: noPagination ? parsedContacts.length : total,
+      totalPages: noPagination ? 1 : Math.ceil(total / limit),
+      currentPage: noPagination ? 1 : page,
     });
   } catch (err) {
     console.error("Error fetching contacts:", err);
@@ -1113,9 +1235,6 @@ router.post("/categorize-contacts", auth, async (req, res) => {
           contact.phone_number2,
           contact.phone_number3,
         ].filter((num) => num);
-        const fullName = [contact.first_name, contact.middle_name, contact.last_name]
-          .filter(Boolean)
-          .join(" ");
 
         // Remove from nominees/ambassadors tables if isNominee/isAmbassador is false
         if (contact.is_nominee && !isNominee) {
@@ -1156,12 +1275,13 @@ router.post("/categorize-contacts", auth, async (req, res) => {
           ]);
           if (existingNominee.length === 0) {
             await connection.query(
-              `INSERT INTO nominees (user_id, first_name, contact, email, phone_number, phone_number1, phone_number2, relationship, category, nominee_type, profile_image)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              `INSERT INTO nominees (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, relationship, category, nominee_type, profile_image)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 req.session.userId,
-                fullName,
-                fullName,
+                contact.first_name,
+                contact.middle_name || "",
+                contact.last_name || "",
                 contact.email || "",
                 phoneNumbers[0] || "",
                 phoneNumbers[1] || "",
@@ -1187,12 +1307,13 @@ router.post("/categorize-contacts", auth, async (req, res) => {
           ]);
           if (existingAmbassador.length === 0) {
             await connection.query(
-              `INSERT INTO ambassadors (user_id, contact, first_name, email, phone_number, phone_number1, phone_number2, relationship, category, ambassador_type, profile_image)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              `INSERT INTO ambassadors (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, relationship, category, ambassador_type, profile_image)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 req.session.userId,
-                fullName,
-                fullName,
+                contact.first_name,
+                contact.middle_name || "",
+                contact.last_name || "",
                 contact.email || "",
                 phoneNumbers[0] || "",
                 phoneNumbers[1] || "",

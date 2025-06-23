@@ -10,7 +10,9 @@ const { initializeDatabase } = require("./database/schema");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const biometricRoutes = require("./routes/biometric");
-const contactsRoutes = require("./routes/contacts"); // ✅ THIS MUST EXIST BEFORE USE
+const contactsRoutes = require("./routes/contacts");
+const ambassadorsRoutes = require("./routes/ambassadors");
+const nomineesRoutes = require("./routes/nominees");
 
 initializeDatabase().then(() => {
   const app = express();
@@ -24,12 +26,15 @@ initializeDatabase().then(() => {
   );
   app.use(configureSession());
 
+  // Routes
   app.use("/api", authRoutes);
   app.use("/api", userRoutes);
   app.use("/api", biometricRoutes);
-  app.use("/api/contacts", contactsRoutes); // ✅ USING IT HERE
+  app.use("/api/contacts", contactsRoutes);
+  app.use("/api/ambassadors", ambassadorsRoutes);
+  app.use("/api", nomineesRoutes);
 
-  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+  app.use("/uploads", express.static(path.join(__dirname, "Uploads")));
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

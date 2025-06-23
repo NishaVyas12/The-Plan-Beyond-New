@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { FaCamera } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
@@ -6,15 +5,15 @@ import "react-toastify/dist/ReactToastify.css";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import "./Ambassador.css";
-import editIcon from "../../../assets/images/dash_icon/pen.svg";
-import mailIcon from "../../../assets/images/dash_icon/mail.svg";
-import deleteIcon from "../../../assets/images/dash_icon/trash.svg";
 import Select from "react-select";
+import { useNavigate } from "react-router-dom";
 
 const AmbassadorCard = ({
   id,
   type,
-  name = "",
+  firstName = "",
+  middleName = "",
+  lastName = "",
   email = "",
   phone_number = "",
   phone_number1 = "",
@@ -29,6 +28,9 @@ const AmbassadorCard = ({
 }) => {
   const [isInviting, setIsInviting] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const navigate = useNavigate();
+
+  const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim() || "Not Assigned";
 
   const handleInvite = async () => {
     if (isEmpty) return;
@@ -42,7 +44,7 @@ const AmbassadorCard = ({
     setIsInviting(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/send-ambassador-invite`,
+        `${import.meta.env.VITE_API_URL}/api/ambassadors/send-invite`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,11 +60,19 @@ const AmbassadorCard = ({
           onClose: () => setIsInviting(false),
         });
       } else {
-        toast.error(data.message || "Failed to send invite.", {
-          position: "top-right",
-          autoClose: 3000,
-          onClose: () => setIsInviting(false),
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to send invite.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => setIsInviting(false),
+          });
+        }
       }
     } catch (err) {
       console.error("Error sending invite:", err);
@@ -85,17 +95,13 @@ const AmbassadorCard = ({
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/upload-ambassador-image`,
+        `${import.meta.env.VITE_API_URL}/api/ambassadors/upload-image`,
         {
           method: "POST",
           credentials: "include",
           body: formData,
         }
       );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
-      }
 
       const data = await response.json();
       if (data.success) {
@@ -105,10 +111,18 @@ const AmbassadorCard = ({
           autoClose: 3000,
         });
       } else {
-        toast.error(data.message || "Failed to upload image.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to upload image.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error uploading image:", err);
@@ -134,7 +148,9 @@ const AmbassadorCard = ({
         onEdit({
           id,
           type,
-          name,
+          firstName,
+          middleName,
+          lastName,
           email,
           phone_number,
           phone_number1,
@@ -192,7 +208,10 @@ const AmbassadorCard = ({
         </div>
         <div className="ambassador-add-details-add-ambassador">
           <div className="ambassador-add-name-relation-add-ambassador">
-            <h3 className="ambassador-add-name-add-ambassador">{name || "Not Assigned"}</h3>
+            <div>
+              <h3 className="ambassador-add-name-add-ambassador">{fullName}</h3>
+              <p className="ambassador-add-type-add-ambassador">{type || "No Type Assigned"}</p>
+            </div>
             <div
               className="ambassador-add-options-add-ambassador"
               onClick={() => setShowOptions(!showOptions)}
@@ -203,19 +222,21 @@ const AmbassadorCard = ({
                   <button
                     className="ambassador-add-option-add-ambassador"
                     onClick={() => handleOptionClick("Invite")}
-                    disabled={isInviting}
+                    disabled={isInviting || isEmpty}
                   >
                     Send Invite
                   </button>
                   <button
                     className="ambassador-add-option-add-ambassador"
                     onClick={() => handleOptionClick("Edit")}
+                    disabled={isEmpty}
                   >
                     Edit
                   </button>
                   <button
                     className="ambassador-add-option-add-ambassador"
                     onClick={() => handleOptionClick("Delete")}
+                    disabled={isEmpty}
                   >
                     Delete
                   </button>
@@ -223,20 +244,28 @@ const AmbassadorCard = ({
               )}
             </div>
           </div>
-          <p className="ambassador-add-relation-add-ambassador">{relationshipDisplay}</p>
         </div>
       </div>
       <div className="ambassador-add-contact-info-add-ambassador">
-        <p className="ambassador-add-info-add-ambassador">
-          <span className="ambassador-add-info-label-add-ambassador">Phone</span>
-          <br />
-          {phone_number || "-"}
-        </p>
-        <p className="ambassador-add-info-add-ambassador">
-          <span className="ambassador-add-info-label-add-ambassador">Email</span>
-          <br />
-          {email || "-"}
-        </p>
+        <div className="ambassador-add-contact-row">
+          <p className="ambassador-add-info-add-ambassador">
+            <span className="ambassador-add-info-label-add-ambassador">Phone</span>
+            <br />
+            {phone_number || "-"}
+          </p>
+          <p className="ambassador-add-info-add-ambassador">
+            <span className="ambassador-add-info-label-add-ambassador">Email</span>
+            <br />
+            {email || "-"}
+          </p>
+        </div>
+        <div className="ambassador-add-category-row">
+          <p className="ambassador-add-info-add-ambassador">
+            <span className="ambassador-add-info-label-add-ambassador">Category</span>
+            <br />
+            {relationshipDisplay}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -272,6 +301,7 @@ const AddAmbassadorForm = ({
   const [isCustomRelation, setIsCustomRelation] = useState(false);
   const [customRelation, setCustomRelation] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const navigate = useNavigate();
 
   const relationOptions = [
     "Wife",
@@ -287,15 +317,17 @@ const AddAmbassadorForm = ({
 
   useEffect(() => {
     if (editAmbassador) {
-      const nameParts = editAmbassador.name ? editAmbassador.name.split(" ") : ["", "", ""];
       setFormData({
         contact: {
           value: editAmbassador?.phone_number,
-          label: editAmbassador?.name,
+          label: [editAmbassador.firstName, editAmbassador.middleName, editAmbassador.lastName]
+            .filter(Boolean)
+            .join(" ")
+            .trim(),
         },
-        firstName: nameParts[0] || "",
-        middleName: nameParts.length > 2 ? nameParts[1] : "",
-        lastName: nameParts.length > 1 ? nameParts[nameParts.length - 1] : "",
+        firstName: editAmbassador.firstName || "",
+        middleName: editAmbassador.middleName || "",
+        lastName: editAmbassador.lastName || "",
         email: editAmbassador.email || "",
         phone_number: editAmbassador.phone_number || "",
         phone_number1: editAmbassador.phone_number1 || "",
@@ -425,26 +457,36 @@ const AddAmbassadorForm = ({
       });
       return;
     }
-    const fullName = [formData.firstName, formData.middleName, formData.lastName]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-    if (!fullName) {
-      toast.error("Please enter at least a first name.", {
+    if (!formData.firstName) {
+      toast.error("Please enter a first name.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid email address.", {
         position: "top-right",
         autoClose: 3000,
       });
       return;
     }
     const submitData = {
-      ...formData,
-      firstName: fullName,
+      firstName: formData.firstName,
+      middleName: formData.middleName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone_number: formData.phone_number,
+      phone_number1: formData.phone_number1,
+      phone_number2: formData.phone_number2,
+      category: formData.category,
       relation: formData.category === "Family" ? formData.relation : "",
+      ambassadorType: formData.ambassadorType,
     };
     try {
       const url = editAmbassador
-        ? `${import.meta.env.VITE_API_URL}/api/update-ambassador/${editAmbassador.id}`
-        : `${import.meta.env.VITE_API_URL}/api/add-ambassador`;
+        ? `${import.meta.env.VITE_API_URL}/api/ambassadors/${editAmbassador.id}`
+        : `${import.meta.env.VITE_API_URL}/api/ambassadors`;
       const method = editAmbassador ? "PUT" : "POST";
       const response = await fetch(url, {
         method,
@@ -454,14 +496,46 @@ const AddAmbassadorForm = ({
       });
       const data = await response.json();
       if (data.success) {
+        let ambassadorId = editAmbassador ? editAmbassador.id : data.ambassador.id;
+
+        if (formData.profileImage instanceof File) {
+          const formDataImage = new FormData();
+          formDataImage.append("profileImage", formData.profileImage);
+          formDataImage.append("ambassadorId", ambassadorId);
+          const imageResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/ambassadors/upload-image`,
+            {
+              method: "POST",
+              credentials: "include",
+              body: formDataImage,
+            }
+          );
+          const imageData = await imageResponse.json();
+          if (imageData.success) {
+            submitData.profileImage = imageData.imagePath;
+          } else {
+            toast.warn("Ambassador saved, but failed to upload image.", {
+              position: "top-right",
+              autoClose: 3000,
+            });
+          }
+        }
+
         if (editAmbassador) {
-          onEditAmbassador({ ...submitData, id: editAmbassador.id });
+          onEditAmbassador({
+            ...submitData,
+            id: editAmbassador.id,
+            profileImage: submitData.profileImage,
+          });
           toast.success("Ambassador updated successfully!", {
             position: "top-right",
             autoClose: 3000,
           });
         } else {
-          onAmbassadorAdded({ ...data.ambassador, name: fullName });
+          onAmbassadorAdded({
+            ...data.ambassador,
+            profileImage: submitData.profileImage,
+          });
           toast.success("Ambassador added successfully!", {
             position: "top-right",
             autoClose: 3000,
@@ -488,10 +562,18 @@ const AddAmbassadorForm = ({
         setImagePreview(null);
         onClose();
       } else {
-        toast.error(data.message || "Failed to save ambassador", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to save ambassador", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error saving ambassador:", err);
@@ -504,27 +586,32 @@ const AddAmbassadorForm = ({
 
   const fetchAllContacts = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/get-contacts`,
-        { credentials: "include" }
-      );
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (err) {
-        console.error("JSON parse error for contacts:", err);
-        toast.error("Invalid server response for contacts");
-        return;
-      }
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts`, {
+        credentials: "include",
+      });
+      const data = await response.json();
       if (data.success) {
         setAllContacts(data.contacts);
       } else {
-        toast.error(data.message);
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to fetch contacts", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error fetching contacts:", err);
-      toast.error("Error fetching contacts");
+      toast.error("Error fetching contacts. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   };
 
@@ -566,24 +653,17 @@ const AddAmbassadorForm = ({
     }),
   };
 
-  const contacts = allContacts?.map((item) => {
-    const nameParts = item.name.trim().split(" ");
-    const fName = nameParts[0] || "";
-    const mName = nameParts.length === 3 ? nameParts[1] : "";
-    const lName = nameParts.length >= 2 ? nameParts[nameParts.length - 1] : "";
-
-    return {
-      value: item.phone_number,
-      label: item.name,
-      fName,
-      mName,
-      lName,
-      email: item.email || "",
-      phone: item.phone_number,
-      category: item.category,
-      relation: item.relation,
-    };
-  });
+  const contacts = allContacts?.map((item) => ({
+    value: item.phone_number,
+    label: [item.first_name, item.middle_name, item.last_name].filter(Boolean).join(" "),
+    fName: item.first_name,
+    mName: item.middle_name || "",
+    lName: item.last_name || "",
+    email: item.email || "",
+    phone: item.phone_number,
+    category: item.category || "",
+    relation: item.relation || "",
+  }));
 
   if (!isOpen) return null;
 
@@ -596,7 +676,7 @@ const AddAmbassadorForm = ({
         <div className="ambassador-add-form-line-add-ambassador"></div>
         <div className="ambassador-add-form-layout">
           <div className="ambassador-add-form-fields-add-ambassador">
-            <div className="ambassador-add-field-group">
+            <div className="ambassador-add-field-group full-width">
               <label className="ambassador-add-form-label-add-ambassador">Search Contact</label>
               <Select
                 options={contacts}
@@ -609,10 +689,12 @@ const AddAmbassadorForm = ({
                     ...prev,
                     contact: selectedOption,
                     firstName: selectedOption?.fName || "",
-                    lastName: selectedOption?.lName || "",
                     middleName: selectedOption?.mName || "",
+                    lastName: selectedOption?.lName || "",
                     email: selectedOption?.email || "",
                     phone_number: selectedOption?.phone || "",
+                    category: selectedOption?.category || "",
+                    relation: selectedOption?.relation || "",
                   }));
                 }}
               />
@@ -672,6 +754,21 @@ const AddAmbassadorForm = ({
                 disableDropdown={false}
               />
             </div>
+            <div className="ambassador-add-field-group">
+              <label className="ambassador-add-form-label-add-ambassador">Category</label>
+              <select
+                name="category"
+                className="ambassador-add-input-field-add-ambassador"
+                value={formData.category}
+                onChange={(e) => handleInputChange("category", e.target.value)}
+                required
+              >
+                <option value="">Select Category</option>
+                <option value="Family">Family</option>
+                <option value="Friends">Friends</option>
+                <option value="Work">Work</option>
+              </select>
+            </div>
             {showPhone1 && (
               <div className="ambassador-add-field-group">
                 <label className="ambassador-add-form-label-add-ambassador">Phone Number 1</label>
@@ -711,21 +808,6 @@ const AddAmbassadorForm = ({
                 </button>
               </div>
             )}
-            <div className="ambassador-add-field-group">
-              <label className="ambassador-add-form-label-add-ambassador">Category</label>
-              <select
-                name="category"
-                className="ambassador-add-input-field-add-ambassador"
-                value={formData.category}
-                onChange={(e) => handleInputChange("category", e.target.value)}
-                required
-              >
-                <option value="">Select Category</option>
-                <option value="Family">Family</option>
-                <option value="Friends">Friends</option>
-                <option value="Work">Work</option>
-              </select>
-            </div>
             {showRelationInput && (
               <div className="ambassador-add-field-group">
                 <label className="ambassador-add-form-label-add-ambassador">Relationship</label>
@@ -851,42 +933,56 @@ const Ambassador = () => {
   const [ambassadors, setAmbassadors] = useState([]);
   const [editAmbassador, setEditAmbassador] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
 
   const ensureAmbassadorTypes = (ambassadorsList) => {
     return ambassadorsList.map((ambassador) => ({
       ...ambassador,
       ambassador_type: ambassador.ambassador_type || "",
+      firstName: ambassador.first_name || "",
+      middleName: ambassador.middle_name || "",
+      lastName: ambassador.last_name || "",
+      profileImage: ambassador.profile_image || "",
     }));
   };
 
   const fetchAmbassadors = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/get-ambassadors`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/ambassadors`;
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+      }
       const data = await response.json();
       if (data.success) {
         const updatedAmbassadors = ensureAmbassadorTypes(data.ambassadors || []);
         setAmbassadors(updatedAmbassadors);
       } else {
-        toast.error(data.message || "Failed to fetch ambassadors", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to fetch ambassadors", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
-      console.error("Error fetching ambassadors:", err);
-      toast.error("Error fetching ambassadors. Please try again.", {
+      console.error("Error fetching ambassadors:", err.message);
+      toast.error(`Error fetching ambassadors: ${err.message}. Please try again.`, {
         position: "top-right",
         autoClose: 3000,
       });
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     fetchAmbassadors();
@@ -911,7 +1007,7 @@ const Ambassador = () => {
   const handleRemoveAmbassador = async (id) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/remove-ambassador/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/ambassadors/${id}`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
@@ -926,10 +1022,18 @@ const Ambassador = () => {
           autoClose: 3000,
         });
       } else {
-        toast.error(data.message || "Failed to remove ambassador", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to remove ambassador", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
     } catch (err) {
       console.error("Error removing ambassador:", err);
@@ -944,9 +1048,7 @@ const Ambassador = () => {
     const { id, imagePath } = data;
     setAmbassadors((prev) =>
       prev.map((ambassador) =>
-        ambassador.id === id
-          ? { ...ambassador, profile_image: imagePath }
-          : ambassador
+        ambassador.id === id ? { ...ambassador, profileImage: imagePath } : ambassador
       )
     );
   };
@@ -967,10 +1069,27 @@ const Ambassador = () => {
     setShowForm(true);
   };
 
-  const ambassadorSlots = [
-    ambassadors.find((a) => a.ambassador_type === "Primary") || {},
-    ambassadors.find((a) => a.ambassador_type === "Secondary") || {},
-  ];
+  const ambassadorSlots = Array(2).fill({}); // Initialize two empty slots
+  let availableAmbassadors = [...ambassadors]; // Copy ambassadors to manipulate
+
+  // Assign Primary ambassador to the first slot if it exists
+  const primaryIndex = availableAmbassadors.findIndex((a) => a.ambassador_type === "Primary");
+  if (primaryIndex !== -1) {
+    ambassadorSlots[0] = availableAmbassadors.splice(primaryIndex, 1)[0];
+  }
+
+  // Assign Secondary ambassador to the second slot if it exists
+  const secondaryIndex = availableAmbassadors.findIndex((a) => a.ambassador_type === "Secondary");
+  if (secondaryIndex !== -1) {
+    ambassadorSlots[1] = availableAmbassadors.splice(secondaryIndex, 1)[0];
+  }
+
+  // Fill any remaining empty slots with remaining ambassadors (if any)
+  for (let i = 0; i < ambassadorSlots.length; i++) {
+    if (!ambassadorSlots[i].id && availableAmbassadors.length > 0) {
+      ambassadorSlots[i] = availableAmbassadors.shift();
+    }
+  }
 
   return (
     <div className="ambassador-add-contact-container-add-ambassador">
@@ -981,7 +1100,7 @@ const Ambassador = () => {
           className="ambassador-add-button-add-ambassador ambassador-add-button-submit-add-ambassador"
           onClick={handleAddAmbassadorClick}
         >
-          Add Ambassador
+          + Add
         </button>
       </div>
       <p className="ambassador-add-page-description-add-ambassador">
@@ -997,14 +1116,16 @@ const Ambassador = () => {
               key={index}
               id={ambassador.id}
               type={ambassador.ambassador_type}
-              name={ambassador.first_name}
+              firstName={ambassador.firstName}
+              middleName={ambassador.middleName}
+              lastName={ambassador.lastName}
               email={ambassador.email}
               phone_number={ambassador.phone_number}
               phone_number1={ambassador.phone_number1}
               phone_number2={ambassador.phone_number2}
               category={ambassador.category}
               relation={ambassador.relation}
-              profileImage={ambassador.profile_image}
+              profileImage={ambassador.profileImage}
               onEdit={handleEditAmbassador}
               onRemove={handleRemoveAmbassador}
               onImageUpload={handleImageUpload}
