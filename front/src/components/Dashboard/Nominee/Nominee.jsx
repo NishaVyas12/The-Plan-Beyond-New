@@ -152,7 +152,7 @@ const NomineeCard = ({
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
-                : {}
+        : {}
             }
           >
             <label htmlFor={`avatar-upload-${id}`} className="nominee-add-avatar-upload">
@@ -172,7 +172,6 @@ const NomineeCard = ({
           <div className="nominee-add-name-relation-add-nominee">
             <div>
               <h3 className="nominee-add-name-add-nominee">{fullName}</h3>
-              <p className="nominee-add-type-add-nominee">{type || "No Type Assigned"}</p>
               <p className="nominee-add-info-add-nominee">{relationshipDisplay}</p>
             </div>
             <div
@@ -223,11 +222,10 @@ const NomineeCard = ({
           </p>
         </div>
       </div>
-
       {isPopupOpen && (
         <div className="nominee-add-popup-overlay nominee-add">
           <div className="nominee-add-popup-content nominee-add">
-            <div className="nominee-add-popup-header">
+            <div className="nominee-header">
               <h2 className="nominee-add-asset-title">Assets for {fullName}</h2>
               <span className="nominee-add-asset-count">0 Assets</span>
             </div>
@@ -289,71 +287,9 @@ const AddNomineeForm = ({
   ];
 
   useEffect(() => {
-    if (editNominee) {
-      const contactLabel = [editNominee.firstName, editNominee.middleName, editNominee.lastName]
-        .filter(Boolean)
-        .join(" ")
-        .trim();
-      const imageUrl = editNominee.profileImage
-        ? `${import.meta.env.VITE_API_URL}${editNominee.profileImage}`
-        : null;
-
-      // Find matching contact in allContacts
-      const matchingContact = allContacts.find(
-        (contact) =>
-          contact.phone_number === editNominee.phone_number ||
-          contact.email === editNominee.email
-      );
-
-      console.log("Edit Nominee:", editNominee);
-      console.log("Matching Contact:", matchingContact);
-      console.log("Image URL:", imageUrl);
-
-      setFormData({
-        contact: matchingContact
-          ? {
-              value: matchingContact.phone_number,
-              label: [matchingContact.first_name, matchingContact.middle_name, matchingContact.last_name]
-                .filter(Boolean)
-                .join(" ")
-                .trim(),
-              fName: matchingContact.first_name || "",
-              mName: matchingContact.middle_name || "",
-              lName: matchingContact.last_name || "",
-              email: matchingContact.email || "",
-              phone: matchingContact.phone_number || "",
-              category: matchingContact.category || "",
-              relation: matchingContact.relation || "",
-            }
-          : {
-              value: editNominee.phone_number,
-              label: contactLabel || editNominee.phone_number,
-              fName: editNominee.firstName || "",
-              mName: editNominee.middleName || "",
-              lName: editNominee.lastName || "",
-              email: editNominee.email || "",
-              phone: editNominee.phone_number || "",
-              category: editNominee.category || "",
-              relation: editNominee.relation || "",
-            },
-        firstName: editNominee.firstName || "",
-        middleName: editNominee.middleName || "",
-        lastName: editNominee.lastName || "",
-        email: editNominee.email || "",
-        phone_number: editNominee.phone_number || "",
-        phone_number1: editNominee.phone_number1 || "",
-        phone_number2: editNominee.phone_number2 || "",
-        category: editNominee.category || "",
-        relation: editNominee.relation || "",
-        profileImage: null,
-      });
-      setShowPhone1(!!editNominee.phone_number1);
-      setShowPhone2(!!editNominee.phone_number2);
-      setShowRelationInput(editNominee.category === "Family");
-      setIsCustomRelation(editNominee.relation && !relationOptions.includes(editNominee.relation));
-      setCustomRelation(editNominee.relation || "");
-      setImagePreview(imageUrl);
-    } else {
+    console.log("AddNomineeForm useEffect triggered", { editNominee, allContacts });
+    if (!editNominee) {
+      console.log("Resetting form for add mode");
       setFormData({
         contact: null,
         firstName: "",
@@ -373,6 +309,87 @@ const AddNomineeForm = ({
       setIsCustomRelation(false);
       setCustomRelation("");
       setImagePreview(null);
+      return;
+    }
+
+    try {
+      console.log("Setting form for edit mode", editNominee);
+      const contactLabel = [
+        editNominee.firstName || "",
+        editNominee.middleName || "",
+        editNominee.lastName || "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      const imageUrl = editNominee.profileImage
+        ? `${import.meta.env.VITE_API_URL}${editNominee.profileImage.startsWith("/") ? "" : "/"}${editNominee.profileImage}`
+        : null;
+
+      const matchingContact = allContacts.find(
+        (contact) =>
+          (editNominee.phone_number && contact.phone_number === editNominee.phone_number) ||
+          (editNominee.email && contact.email === editNominee.email)
+      );
+      console.log("Matching contact:", matchingContact);
+
+      setFormData({
+        contact: matchingContact
+          ? {
+              value: matchingContact.phone_number || "",
+              label: [
+                matchingContact.first_name || "",
+                matchingContact.middle_name || "",
+                matchingContact.last_name || "",
+              ]
+                .filter(Boolean)
+                .join(" ")
+                .trim() || matchingContact.phone_number,
+              fName: matchingContact.first_name || "",
+              mName: matchingContact.middle_name || "",
+              lName: matchingContact.last_name || "",
+              email: matchingContact.email || "",
+              phone: matchingContact.phone_number || "",
+              category: matchingContact.category || "",
+              relation: matchingContact.relation || "",
+            }
+          : {
+              value: editNominee.phone_number || "",
+              label: contactLabel || editNominee.phone_number || "",
+              fName: editNominee.firstName || "",
+              mName: editNominee.middleName || "",
+              lName: editNominee.lastName || "",
+              email: editNominee.email || "",
+              phone: editNominee.phone_number || "",
+              category: editNominee.category || "",
+              relation: editNominee.relation || "",
+            },
+        firstName: editNominee.firstName || "",
+        middleName: editNominee.middleName || "",
+        lastName: editNominee.lastName || "",
+        email: editNominee.email || "",
+        phone_number: editNominee.phone_number || "",
+        phone_number1: editNominee.phone_number1 || "",
+        phone_number2: editNominee.phone_number2 || "",
+        category: editNominee.category || "",
+        relation: editNominee.relation || "",
+        profileImage: null,
+      });
+
+      setShowPhone1(!!editNominee.phone_number1);
+      setShowPhone2(!!editNominee.phone_number2);
+      setShowRelationInput(editNominee.category === "Family");
+      setIsCustomRelation(
+        editNominee.relation && !relationOptions.includes(editNominee.relation)
+      );
+      setCustomRelation(editNominee.relation || "");
+      setImagePreview(imageUrl);
+    } catch (err) {
+      console.error("Error in useEffect for editNominee:", err);
+      toast.error("Error loading nominee data. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   }, [editNominee, allContacts]);
 
@@ -477,7 +494,10 @@ const AddNomineeForm = ({
     submitData.append("phone_number1", formData.phone_number1);
     submitData.append("phone_number2", formData.phone_number2);
     submitData.append("category", formData.category);
-    submitData.append("relation", formData.category === "Family" ? formData.relation : "");
+    submitData.append(
+      "relation",
+      formData.category === "Family" ? formData.relation : ""
+    );
     if (formData.profileImage) {
       submitData.append("profileImage", formData.profileImage);
     }
@@ -506,9 +526,11 @@ const AddNomineeForm = ({
           phone_number2: formData.phone_number2,
           category: formData.category,
           relation: formData.relation,
-          nominee_type: editNominee ? editNominee.type : data.nominee.nominee_type,
+          nominee_type: editNominee ? editNominee.type : data.nominee.nominee_type || "",
           profile_image: data.nominee.profile_image || editNominee?.profileImage,
-          created_at: editNominee ? editNominee.created_at : data.nominee.created_at,
+          created_at: editNominee
+            ? editNominee.created_at
+            : data.nominee.created_at,
         };
 
         if (editNominee) {
@@ -542,6 +564,7 @@ const AddNomineeForm = ({
         setShowPhone2(false);
         setShowRelationInput(false);
         setCustomRelation("");
+        setIsCustomRelation(false);
         setImagePreview(null);
         onClose();
       } else {
@@ -602,6 +625,7 @@ const AddNomineeForm = ({
   };
 
   useEffect(() => {
+    console.log("Fetching contacts");
     fetchAllContacts();
   }, []);
 
@@ -621,7 +645,11 @@ const AddNomineeForm = ({
     }),
     option: (provided, state) => ({
       ...provided,
-      backgroundColor: state.isSelected ? "#2684FF" : state.isFocused ? "#f0f8ff" : "#fff",
+      backgroundColor: state.isSelected
+        ? "#2684FF"
+        : state.isFocused
+        ? "#f0f8ff"
+        : "#fff",
       color: state.isSelected ? "#fff" : "#333",
       padding: 10,
     }),
@@ -635,19 +663,30 @@ const AddNomineeForm = ({
     }),
   };
 
-  const contacts = allContacts?.map((item) => ({
-    value: item.phone_number,
-    label: [item.first_name, item.middle_name, item.last_name].filter(Boolean).join(" "),
-    fName: item.first_name,
+  const contacts = allContacts.map((item) => ({
+    value: item.phone_number || "",
+    label: [
+      item.first_name || "",
+      item.middle_name || "",
+      item.last_name || "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+    fName: item.first_name || "",
     mName: item.middle_name || "",
     lName: item.last_name || "",
     email: item.email || "",
-    phone: item.phone_number,
+    phone: item.phone_number || "",
     category: item.category || "",
     relation: item.relation || "",
   }));
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log("Form not open, rendering null");
+    return null;
+  }
+
+  console.log("Rendering AddNomineeForm", { formData, imagePreview });
 
   return (
     <div className="nominee-add-popup-overlay nominee-add">
@@ -659,7 +698,9 @@ const AddNomineeForm = ({
         <div className="nominee-add-form-layout">
           <div className="nominee-add-form-fields-add-nominee">
             <div className="nominee-add-field-group full-width">
-              <label className="nominee-add-form-label-add-nominee">Search Contact</label>
+              <label className="nominee-add-form-label-add-nominee">
+                Search Contact
+              </label>
               <Select
                 options={contacts}
                 value={formData.contact}
@@ -682,7 +723,9 @@ const AddNomineeForm = ({
               />
             </div>
             <div className="nominee-add-field-group">
-              <label className="nominee-add-form-label-add-nominee">First Name</label>
+              <label className="nominee-add-form-label-add-nominee">
+                First Name
+              </label>
               <input
                 type="text"
                 name="firstName"
@@ -693,7 +736,9 @@ const AddNomineeForm = ({
               />
             </div>
             <div className="nominee-add-field-group">
-              <label className="nominee-add-form-label-add-nominee">Middle Name</label>
+              <label className="nominee-add-form-label-add-nominee">
+                Middle Name
+              </label>
               <input
                 type="text"
                 name="middleName"
@@ -703,7 +748,9 @@ const AddNomineeForm = ({
               />
             </div>
             <div className="nominee-add-field-group">
-              <label className="nominee-add-form-label-add-nominee">Last Name</label>
+              <label className="nominee-add-form-label-add-nominee">
+                Last Name
+              </label>
               <input
                 type="text"
                 name="lastName"
@@ -713,7 +760,9 @@ const AddNomineeForm = ({
               />
             </div>
             <div className="nominee-add-field-group">
-              <label className="nominee-add-form-label-add-nominee">Email Address</label>
+              <label className="nominee-add-form-label-add-nominee">
+                Email Address
+              </label>
               <input
                 type="email"
                 name="email"
@@ -724,7 +773,9 @@ const AddNomineeForm = ({
               />
             </div>
             <div className="nominee-add-field-group">
-              <label className="nominee-add-form-label-add-nominee">Phone Number</label>
+              <label className="nominee-add-form-label-add-nominee">
+                Phone Number
+              </label>
               <PhoneInput
                 country="in"
                 value={formData.phone_number}
@@ -737,7 +788,9 @@ const AddNomineeForm = ({
               />
             </div>
             <div className="nominee-add-field-group">
-              <label className="nominee-add-form-label-add-nominee">Category</label>
+              <label className="nominee-add-form-label-add-nominee">
+                Category
+              </label>
               <select
                 name="category"
                 className="nominee-add-input-field-add-nominee"
@@ -753,11 +806,15 @@ const AddNomineeForm = ({
             </div>
             {showPhone1 && (
               <div className="nominee-add-field-group">
-                <label className="nominee-add-form-label-add-nominee">Phone Number 1</label>
+                <label className="nominee-add-form-label-add-nominee">
+                  Phone Number 1
+                </label>
                 <PhoneInput
                   country="in"
                   value={formData.phone_number1}
-                  onChange={(phone) => handleInputChange("phone_number1", phone)}
+                  onChange={(phone) =>
+                    handleInputChange("phone_number1", phone)
+                  }
                   inputClass="nominee-add-input-field-add-nominee"
                   containerClass="nominee-add-phone-input-container"
                   enableSearch
@@ -767,11 +824,15 @@ const AddNomineeForm = ({
             )}
             {showPhone2 && (
               <div className="nominee-add-field-group">
-                <label className="nominee-add-form-label-add-nominee">Phone Number 2</label>
+                <label className="nominee-add-form-label-add-nominee">
+                  Phone Number 2
+                </label>
                 <PhoneInput
                   country="in"
                   value={formData.phone_number2}
-                  onChange={(phone) => handleInputChange("phone_number2", phone)}
+                  onChange={(phone) =>
+                    handleInputChange("phone_number2", phone)
+                  }
                   inputClass="nominee-add-input-field-add-nominee"
                   containerClass="nominee-add-phone-input-container"
                   enableSearch
@@ -792,7 +853,9 @@ const AddNomineeForm = ({
             )}
             {showRelationInput && (
               <div className="nominee-add-field-group">
-                <label className="nominee-add-form-label-add-nominee">Relationship</label>
+                <label className="nominee-add-form-label-add-nominee">
+                  Relationship
+                </label>
                 {!isCustomRelation ? (
                   <select
                     name="relation"
@@ -839,7 +902,10 @@ const AddNomineeForm = ({
                     : { backgroundColor: "#DAE8E8" }
                 }
               >
-                <label htmlFor="avatar-upload-form" className="nominee-add-avatar-upload">
+                <label
+                  htmlFor="avatar-upload-form"
+                  className="nominee-add-avatar-upload"
+                >
                   <FaCamera className="nominee-add-camera-icon" />
                   <input
                     type="file"
@@ -883,11 +949,14 @@ const Nominee = () => {
 
   const fetchNominees = useCallback(async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/nominees`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
       if (!response.ok) {
         throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
       }
@@ -901,11 +970,11 @@ const Nominee = () => {
           profile_image: nominee.profile_image || "",
           nominee_type: nominee.nominee_type || "",
         }));
-        setNominees(updatedNominees || []);
+        setNominees(updatedNominees);
       } else {
         if (response.status === 401) {
           toast.error("Session expired. Please log in again.", {
-            position: "top-right",
+            position: "",
             autoClose: 3000,
             onClose: () => navigate("/login"),
           });
@@ -935,20 +1004,8 @@ const Nominee = () => {
   };
 
   const handleEditNominee = (nominee) => {
-    setEditNominee({
-      id: nominee.id,
-      type: nominee.nominee_type,
-      firstName: nominee.first_name,
-      middleName: nominee.middle_name,
-      lastName: nominee.last_name,
-      email: nominee.email,
-      phone_number: nominee.phone_number,
-      phone_number1: nominee.phone_number1,
-      phone_number2: nominee.phone_number2,
-      category: nominee.category,
-      relation: nominee.relation,
-      profileImage: nominee.profile_image,
-    });
+    console.log("Editing nominee:", nominee);
+    setEditNominee(nominee);
     setShowForm(true);
   };
 
@@ -960,11 +1017,14 @@ const Nominee = () => {
 
   const handleRemoveNominee = async (id) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/nominees/${id}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
       if (!response.ok) {
         throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
       }
@@ -1029,7 +1089,9 @@ const Nominee = () => {
 
   const typeOrder = ["Primary", "Secondary", "Tertiary", "Quaternary", "Quinary"];
   typeOrder.forEach((type, index) => {
-    const nomineeIndex = availableNominees.findIndex((n) => n.nominee_type === type);
+    const nomineeIndex = availableNominees.findIndex(
+      (n) => n.nominee_type === type
+    );
     if (nomineeIndex !== -1) {
       nomineeSlots[index] = availableNominees.splice(nomineeIndex, 1)[0];
     }
@@ -1054,7 +1116,8 @@ const Nominee = () => {
         </button>
       </div>
       <p className="nominee-add-page-description-add-nominee">
-        Manage your trusted contacts who can access your information in case of an emergency
+        Manage your trusted contacts who can access your information in case of an
+        emergency
       </p>
       <div className="nominee-add-layout-add-nominee">
         <div
