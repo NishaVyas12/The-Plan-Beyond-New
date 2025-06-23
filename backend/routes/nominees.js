@@ -3,18 +3,8 @@ const router = express.Router();
 const { pool } = require("../config/database");
 const upload = require("../utils/fileUpload");
 const { checkTableExists, createUserContactsTable } = require("../database/schema");
-const nodemailer = require("nodemailer");
 
-// Configure Nodemailer
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
-// Middleware to check authentication
 const checkAuth = (req, res, next) => {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ success: false, message: "Session timed out, login again." });
@@ -22,13 +12,11 @@ const checkAuth = (req, res, next) => {
   next();
 };
 
-// Error handling utility
 const sendError = (res, status, message) => {
   console.error(message);
   res.status(status).json({ success: false, message });
 };
 
-// GET /api/nominees - Fetch all nominees
 router.get("/nominees", checkAuth, async (req, res) => {
   try {
     const [nominees] = await pool.query(
@@ -43,7 +31,6 @@ router.get("/nominees", checkAuth, async (req, res) => {
   }
 });
 
-// POST /api/nominees - Add a new nominee
 router.post("/nominees", checkAuth, upload, async (req, res) => {
   const {
     firstName,
@@ -59,7 +46,6 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
   } = req.body;
   const profileImage = req.files?.profileImage?.[0];
 
-  // Manual validation
   if (!firstName || !email || !phone_number || !category) {
     return sendError(res, 400, "First name, email, primary phone number, and category are required.");
   }
@@ -202,7 +188,6 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
   }
 });
 
-// PUT /api/nominees/:id - Update a nominee
 router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
   const { id } = req.params;
   const {
@@ -219,7 +204,6 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
   } = req.body;
   const profileImage = req.files?.profileImage?.[0];
 
-  // Manual validation
   if (!firstName || !email || !phone_number || !category) {
     return sendError(res, 400, "First name, email, primary phone number, and category are required.");
   }
@@ -375,7 +359,6 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
   }
 });
 
-// DELETE /api/nominees/:id - Remove a nominee
 router.delete("/nominees/:id", checkAuth, async (req, res) => {
   const { id } = req.params;
   const userId = req.session.userId;
@@ -440,7 +423,6 @@ router.delete("/nominees/:id", checkAuth, async (req, res) => {
   }
 });
 
-// POST /api/nominees/upload-image - Upload profile image
 router.post("/nominees/upload-image", checkAuth, upload, async (req, res) => {
   const { nomineeId } = req.body;
   const profileImage = req.files?.profileImage?.[0];
@@ -506,55 +488,6 @@ router.post("/nominees/upload-image", checkAuth, upload, async (req, res) => {
     }
   } catch (err) {
     sendError(res, 500, `Error uploading nominee image: ${err.message}`);
-  }
-});
-
-// POST /api/nominees/send-invite - Send nominee invite
-router.post("/nominees/send-invite", checkAuth, async (req, res) => {
-  const { nomineeId } = req.body;
-
-  if (!nomineeId) {
-    return sendError(res, 400, "Nominee ID is required.");
-  }
-
-  try {
-    const [nominees] = await pool.query(
-      `SELECT id, email, first_name, nominee_type FROM nominees WHERE id = ? AND user_id = ?`,
-      [nomineeId, req.session.userId]
-    );
-
-    if (nominees.length === 0) {
-      return sendError(res, 404, "Nominee not found.");
-    }
-
-    const nominee = nominees[0];
-    if (!nominee.nominee_type) {
-      return sendError(res, 400, "Cannot send invite without a nominee type.");
-    }
-
-    const inviteLink = `${process.env.FRONTEND_URL}/accept-nominee-invite?nomineeId=${nomineeId}&userId=${req.session.userId}`;
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: nominee.email,
-      subject: `Nominee Invitation from Plan Beyond`,
-      html: `
-        <p>Hello ${nominee.first_name},</p>
-        <p>You have been invited to be a ${nominee.nominee_type} Nominee for asset management.</p>
-        <p>Please click the link below to accept the invitation:</p>
-        <a href="${inviteLink}">Accept Invitation</a>
-        <p>Thank you!</p>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    res.json({
-      success: true,
-      message: `Invite sent to ${nominee.first_name} (${nominee.email})`,
-    });
-  } catch (err) {
-    sendError(res, 500, `Error sending nominee invite: ${err.message}`);
   }
 });
 

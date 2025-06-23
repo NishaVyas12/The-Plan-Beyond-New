@@ -187,6 +187,9 @@ const CategorizeDropdown = ({
     );
   };
 
+
+  
+
   return (
     <div className="add-contact-action-dropdown" ref={categoryDropdownRef}>
       <button
@@ -1649,9 +1652,7 @@ const getPhoneNumbersDisplay = (contact) => {
                     </svg>
                   </button>
                 </div>
-                <button className="contact-header-button">
-                  Filters <span className="dropdown-icon">⏷</span>
-                </button>
+               
               </div>
               <div className="contact-header-buttons">
                 <button

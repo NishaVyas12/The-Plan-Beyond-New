@@ -3,18 +3,8 @@ const router = express.Router();
 const { pool } = require("../config/database");
 const upload = require("../utils/fileUpload");
 const { checkTableExists, createUserContactsTable } = require("../database/schema");
-const nodemailer = require("nodemailer");
+const { transporter } = require("../config/email");
 
-// Configure Nodemailer
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// Middleware to check authentication
 const checkAuth = (req, res, next) => {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ success: false, message: "Session timed out, login again." });
@@ -22,30 +12,8 @@ const checkAuth = (req, res, next) => {
   next();
 };
 
-// Utility function to update ambassadors table schema
-const updateAmbassadorsTableSchema = async () => {
-  const query = `
-    ALTER TABLE ambassadors
-    ADD COLUMN IF NOT EXISTS first_name VARCHAR(255) NOT NULL,
-    ADD COLUMN IF NOT EXISTS middle_name VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS last_name VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS category VARCHAR(100) NOT NULL,
-    ADD COLUMN IF NOT EXISTS relationship VARCHAR(100) NOT NULL,
-    ADD COLUMN IF NOT EXISTS ambassador_accept BOOLEAN DEFAULT FALSE,
-    MODIFY COLUMN ambassador_type ENUM('Primary', 'Secondary', '') NOT NULL DEFAULT ''
-  `;
-  try {
-    await pool.query(query);
-  } catch (err) {
-    console.error("Error updating ambassadors table schema:", err);
-    throw err;
-  }
-};
-
-// GET /api/ambassadors - Fetch all ambassadors
 router.get("/", checkAuth, async (req, res) => {
   try {
-    await updateAmbassadorsTableSchema();
     const [ambassadors] = await pool.query(
       `SELECT id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, category, relationship AS relation, ambassador_type, profile_image, created_at
        FROM ambassadors WHERE user_id = ?`,
@@ -58,7 +26,6 @@ router.get("/", checkAuth, async (req, res) => {
   }
 });
 
-// POST /api/ambassadors - Add a new ambassador
 router.post("/", checkAuth, async (req, res) => {
   const {
     firstName,
@@ -92,8 +59,6 @@ router.post("/", checkAuth, async (req, res) => {
   }
 
   try {
-    await updateAmbassadorsTableSchema();
-
     const [existingAmbassador] = await pool.query(
       `SELECT id FROM ambassadors WHERE user_id = ? AND ambassador_type = ?`,
       [req.session.userId, ambassadorType]
@@ -225,7 +190,6 @@ router.post("/", checkAuth, async (req, res) => {
   }
 });
 
-// PUT /api/ambassadors/:id - Update an ambassador
 router.put("/:id", checkAuth, upload, async (req, res) => {
   const { id } = req.params;
   const {
@@ -261,8 +225,6 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
   }
 
   try {
-    await updateAmbassadorsTableSchema();
-
     const [existing] = await pool.query(
       `SELECT id, ambassador_type FROM ambassadors WHERE id = ? AND user_id = ?`,
       [id, req.session.userId]
@@ -451,7 +413,6 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
   }
 });
 
-// DELETE /api/ambassadors/:id - Remove an ambassador
 router.delete("/:id", checkAuth, async (req, res) => {
   const { id } = req.params;
   const userId = req.session.userId;
@@ -466,8 +427,6 @@ router.delete("/:id", checkAuth, async (req, res) => {
   const parsedAmbassadorId = parseInt(id, 10);
 
   try {
-    await updateAmbassadorsTableSchema();
-
     const [ambassadors] = await pool.query(
       "SELECT email, phone_number, phone_number1, phone_number2 FROM ambassadors WHERE id = ? AND user_id = ?",
       [parsedAmbassadorId, userId]
@@ -551,7 +510,6 @@ router.delete("/:id", checkAuth, async (req, res) => {
   }
 });
 
-// POST /api/ambassadors/upload-image - Upload profile image
 router.post("/upload-image", checkAuth, upload, async (req, res) => {
   const { ambassadorId } = req.body;
   const profileImage = req.files?.profileImage?.[0];
@@ -627,7 +585,6 @@ router.post("/upload-image", checkAuth, upload, async (req, res) => {
   }
 });
 
-// POST /api/ambassadors/send-invite - Send ambassador invite
 router.post("/send-invite", checkAuth, async (req, res) => {
   const { ambassadorId } = req.body;
 

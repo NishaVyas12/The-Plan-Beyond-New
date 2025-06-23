@@ -152,7 +152,7 @@ const NomineeCard = ({
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
-        : {}
+                : {}
             }
           >
             <label htmlFor={`avatar-upload-${id}`} className="nominee-add-avatar-upload">
@@ -392,6 +392,23 @@ const AddNomineeForm = ({
       });
     }
   }, [editNominee, allContacts]);
+
+  // Added useEffect for Escape key handling
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const handleInputChange = (name, value) => {
     setFormData((prev) => ({

@@ -47,157 +47,7 @@ const validateContact = (contact) => {
   return null;
 };
 
-// Helper function to update contacts table schema
-const updateUserContactsTableSchema = async (userId) => {
-  const tableName = `contacts_user_${userId}`;
-  const checkColumnsQuery = `
-    SELECT COLUMN_NAME
-    FROM INFORMATION_SCHEMA.COLUMNS 
-    WHERE TABLE_NAME = ? 
-    AND COLUMN_NAME IN ('first_name', 'middle_name', 'last_name', 'company', 'job_type', 'website', 'category', 'relation', 'phone_number', 'phone_number1', 'phone_number2', 'phone_number3', 'email', 'flat_building_no', 'street', 'country', 'state', 'city', 'postal_code', 'date_of_birth', 'anniversary', 'notes', 'contact_image', 'release_on_pass', 'is_ambassador', 'is_nominee')
-    AND TABLE_SCHEMA = ?
-  `;
-  try {
-    const [columns] = await pool.query(checkColumnsQuery, [
-      tableName,
-      process.env.DB_NAME || "plan_beyond",
-    ]);
 
-    const columnNames = columns.map((col) => col.COLUMN_NAME);
-
-    const addColumnQueries = [
-      {
-        name: "first_name",
-        query: `ALTER TABLE ${tableName} ADD COLUMN first_name VARCHAR(255) NOT NULL AFTER user_id`,
-      },
-      {
-        name: "middle_name",
-        query: `ALTER TABLE ${tableName} ADD COLUMN middle_name VARCHAR(255) DEFAULT '' AFTER first_name`,
-      },
-      {
-        name: "last_name",
-        query: `ALTER TABLE ${tableName} ADD COLUMN last_name VARCHAR(255) DEFAULT '' AFTER middle_name`,
-      },
-      {
-        name: "company",
-        query: `ALTER TABLE ${tableName} ADD COLUMN company VARCHAR(255) DEFAULT '' AFTER last_name`,
-      },
-      {
-        name: "job_type",
-        query: `ALTER TABLE ${tableName} ADD COLUMN job_type VARCHAR(255) DEFAULT '' AFTER company`,
-      },
-      {
-        name: "website",
-        query: `ALTER TABLE ${tableName} ADD COLUMN website VARCHAR(255) DEFAULT '' AFTER job_type`,
-      },
-      {
-        name: "category",
-        query: `ALTER TABLE ${tableName} ADD COLUMN category VARCHAR(50) DEFAULT '' AFTER website`,
-      },
-      {
-        name: "relation",
-        query: `ALTER TABLE ${tableName} ADD COLUMN relation VARCHAR(50) DEFAULT '' AFTER category`,
-      },
-      {
-        name: "phone_number1",
-        query: `ALTER TABLE ${tableName} ADD COLUMN phone_number1 VARCHAR(20) DEFAULT '' AFTER phone_number`,
-      },
-      {
-        name: "phone_number2",
-        query: `ALTER TABLE ${tableName} ADD COLUMN phone_number2 VARCHAR(20) DEFAULT '' AFTER phone_number1`,
-      },
-      {
-        name: "phone_number3",
-        query: `ALTER TABLE ${tableName} ADD COLUMN phone_number3 VARCHAR(20) DEFAULT '' AFTER phone_number2`,
-      },
-      {
-        name: "email",
-        query: `ALTER TABLE ${tableName} ADD COLUMN email VARCHAR(255) DEFAULT NULL AFTER phone_number3`,
-      },
-      {
-        name: "flat_building_no",
-        query: `ALTER TABLE ${tableName} ADD COLUMN flat_building_no VARCHAR(100) DEFAULT '' AFTER email`,
-      },
-      {
-        name: "street",
-        query: `ALTER TABLE ${tableName} ADD COLUMN street TEXT DEFAULT '' AFTER flat_building_no`,
-      },
-      {
-        name: "country",
-        query: `ALTER TABLE ${tableName} ADD COLUMN country VARCHAR(100) DEFAULT '' AFTER street`,
-      },
-      {
-        name: "state",
-        query: `ALTER TABLE ${tableName} ADD COLUMN state VARCHAR(100) DEFAULT '' AFTER country`,
-      },
-      {
-        name: "city",
-        query: `ALTER TABLE ${tableName} ADD COLUMN city VARCHAR(100) DEFAULT '' AFTER state`,
-      },
-      {
-        name: "postal_code",
-        query: `ALTER TABLE ${tableName} ADD COLUMN postal_code VARCHAR(20) DEFAULT '' AFTER city`,
-      },
-      {
-        name: "date_of_birth",
-        query: `ALTER TABLE ${tableName} ADD COLUMN date_of_birth VARCHAR(10) DEFAULT '' AFTER postal_code`,
-      },
-      {
-        name: "anniversary",
-        query: `ALTER TABLE ${tableName} ADD COLUMN anniversary VARCHAR(10) DEFAULT '' AFTER date_of_birth`,
-      },
-      {
-        name: "notes",
-        query: `ALTER TABLE ${tableName} ADD COLUMN notes TEXT DEFAULT NULL AFTER anniversary`,
-      },
-      {
-        name: "contact_image",
-        query: `ALTER TABLE ${tableName} ADD COLUMN contact_image VARCHAR(255) DEFAULT '' AFTER notes`,
-      },
-      {
-        name: "release_on_pass",
-        query: `ALTER TABLE ${tableName} ADD COLUMN release_on_pass BOOLEAN DEFAULT FALSE AFTER contact_image`,
-      },
-      {
-        name: "is_ambassador",
-        query: `ALTER TABLE ${tableName} ADD COLUMN is_ambassador BOOLEAN DEFAULT FALSE AFTER release_on_pass`,
-      },
-      {
-        name: "is_nominee",
-        query: `ALTER TABLE ${tableName} ADD COLUMN is_nominee BOOLEAN DEFAULT FALSE AFTER is_ambassador`,
-      },
-    ];
-
-    for (const { name, query } of addColumnQueries) {
-      if (!columnNames.includes(name)) {
-        await pool.query(query);
-      }
-    }
-
-    // Remove legacy columns if present
-    if (columnNames.includes("name")) {
-      await pool.query(
-        `ALTER TABLE ${tableName} ADD COLUMN first_name VARCHAR(255) NOT NULL DEFAULT '' AFTER user_id`
-      );
-      await pool.query(
-        `UPDATE ${tableName} SET first_name = name WHERE first_name = ''`
-      );
-      await pool.query(`ALTER TABLE ${tableName} DROP COLUMN name`);
-    }
-    if (columnNames.includes("address")) {
-      await pool.query(
-        `ALTER TABLE ${tableName} ADD COLUMN flat_building_no VARCHAR(100) DEFAULT '' AFTER email`
-      );
-      await pool.query(
-        `UPDATE ${tableName} SET flat_building_no = address WHERE flat_building_no = ''`
-      );
-      await pool.query(`ALTER TABLE ${tableName} DROP COLUMN address`);
-    }
-  } catch (err) {
-    console.error(`Error updating contacts table schema for user ${userId}:`, err);
-    throw err;
-  }
-};
 
 // POST /api/contacts/save
 router.post(
@@ -260,7 +110,6 @@ router.post(
       if (!tableExists) {
         await createUserContactsTable(req.session.userId);
       }
-      await updateUserContactsTableSchema(req.session.userId);
       await createUploadedFilesTable();
 
       const importantDatesTableExists = await checkTableExists("important_dates");
@@ -1202,8 +1051,33 @@ router.post("/categorize-contacts", auth, async (req, res) => {
       `SELECT id FROM ${tableName} WHERE is_ambassador = TRUE`
     );
 
-    const newNomineeCount = contactIds.filter((id) => isNominee).length;
-    const newAmbassadorCount = contactIds.filter((id) => isAmbassador).length;
+    // Calculate new nominee count, excluding already nominated contacts
+    let newNomineeCount = 0;
+    if (isNominee) {
+      const [contactsToCheck] = await pool.query(
+        `SELECT id, is_nominee FROM ${tableName} WHERE id IN (${contactIds
+          .map(() => "?")
+          .join(",")})`,
+        contactIds
+      );
+      newNomineeCount = contactsToCheck.filter(
+        (contact) => !contact.is_nominee
+      ).length;
+    }
+
+    // Calculate new ambassador count, excluding already ambassador contacts
+    let newAmbassadorCount = 0;
+    if (isAmbassador) {
+      const [contactsToCheck] = await pool.query(
+        `SELECT id, is_ambassador FROM ${tableName} WHERE id IN (${contactIds
+          .map(() => "?")
+          .join(",")})`,
+        contactIds
+      );
+      newAmbassadorCount = contactsToCheck.filter(
+        (contact) => !contact.is_ambassador
+      ).length;
+    }
 
     if (isNominee && nomineeContacts.length + newNomineeCount > 5) {
       return res
@@ -1262,7 +1136,7 @@ router.post("/categorize-contacts", auth, async (req, res) => {
           );
         }
 
-        if (isNominee) {
+        if (isNominee && !contact.is_nominee) {
           const existingQuery = `
             SELECT id FROM nominees WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))
           `;
@@ -1294,7 +1168,7 @@ router.post("/categorize-contacts", auth, async (req, res) => {
             );
           }
         }
-        if (isAmbassador) {
+        if (isAmbassador && !contact.is_ambassador) {
           const existingQuery = `
             SELECT id FROM ambassadors WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))
           `;
