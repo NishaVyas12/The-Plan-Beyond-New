@@ -6,7 +6,7 @@ import {
   GoogleAuthProvider,
 } from "firebase/auth";
 import axios from "axios";
-import vCard from "vcf";
+import vCard from 'vcards-js';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PhoneInput from "react-phone-input-2";
@@ -821,172 +821,188 @@ const Contact = () => {
   };
 
   const syncPhoneViaVcf = async (event) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) {
-      setError("No file selected.");
-      toast.error("No file selected.", { autoClose: 3000 });
-      return;
-    }
+  const files = event.target.files;
+  if (!files || files.length === 0) {
+    setError("No file selected.");
+    toast.error("No file selected.", { autoClose: 3000 });
+    return;
+  }
 
-    try {
-      const tempContact = {
-        first_name: "Temp VCF Contact",
-        phone_number: "+91TEMP",
-        email: "temp@vcf.com",
-      };
-      const saveResponse = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/contacts/save`,
-        { contacts: [tempContact], source: "vcf" },
-        { withCredentials: true }
-      );
+  const file = files[0]; // Process only the first file
+  try {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const vcfText = e.target.result;
+        console.log("Raw VCF file content:", vcfText.substring(0, 500));
 
-      if (!saveResponse.data.success) {
-        throw new Error(saveResponse.data.message);
-      }
+        // Normalize line endings and unfold lines
+        let normalizedText = vcfText.replace(/\r\n|\r/g, '\n');
+        normalizedText = normalizedText.replace(/\n\s+/g, '');
 
-      const contactId = saveResponse.data.contacts?.[0]?.id;
-      if (!contactId) {
-        throw new Error("Failed to retrieve contact ID for VCF upload.");
-      }
+        // Split into vCard entries
+        const vcfCards = normalizedText
+          .split('BEGIN:VCARD\n')
+          .filter(card => card.trim() && card.includes('END:VCARD'))
+          .map(card => `BEGIN:VCARD\n${card.trim()}`);
 
-      const formData = new FormData();
-      formData.append("contactId", contactId);
-      for (const file of files) {
-        formData.append("files", file);
-      }
-
-      const uploadResponse = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/contacts/upload`,
-        formData,
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "multipart/form-data" },
+        if (vcfCards.length === 0) {
+          throw new Error("No valid vCard entries found in the VCF file. Ensure each vCard has BEGIN:VCARD and END:VCARD.");
         }
-      );
 
-      if (uploadResponse.data.success) {
-        toast.success(uploadResponse.data.message, { autoClose: 3000 });
-        const file = files[0];
-        const reader = new FileReader();
-        reader.onload = async (e) => {
+        console.log(`Found ${vcfCards.length} vCard entries`);
+
+        let phoneContactsData = [];
+        for (let i = 0; i < vcfCards.length; i++) {
+          let cardText = vcfCards[i];
           try {
-            const vcfText = e.target.result;
-            let phoneContactsData = [];
-            const vcfCards = vcfText.split("BEGIN:VCARD").slice(1);
+            console.log(`vCard ${i + 1} content:`, cardText);
 
-            if (vcfCards.length === 0) {
-              throw new Error("No valid vCard entries found in the VCF file.");
-            }
+            // Extract version for validation
+            let versionMatch = cardText.match(/VERSION:([^\n\r]*)/i);
+            let version = versionMatch ? versionMatch[1].trim() : null;
 
-            for (const cardText of vcfCards) {
-              const fullCard = `BEGIN:VCARD${cardText}`;
-              try {
-                const parsed = new vCard().parse(fullCard);
-                const name = parsed.get("fn")?.valueOf() || "";
-                let phoneNumbers = parsed.get("tel")
-                  ? Array.isArray(parsed.get("tel"))
-                    ? parsed.get("tel").map((tel) => tel.valueOf())
-                    : [parsed.get("tel").valueOf()]
-                  : [];
-                const email = parsed.get("email")?.valueOf() || "";
-                const addressComponents = parsed.get("adr")?.valueOf().split(";") || [];
-                const org = parsed.get("org")?.valueOf() || "";
-                const website = parsed.get("url")?.valueOf() || "";
-
-                phoneNumbers = phoneNumbers
-                  .filter((tel) => tel && typeof tel === "string" && tel.trim() !== "")
-                  .map((tel) => {
-                    let number = tel.replace(/[\s-()]/g, "");
-                    const parsedNumber = parsePhoneNumberFromString(number, "IN");
-                    if (parsedNumber && parsedNumber.isValid()) {
-                      return parsedNumber.formatInternational();
-                    }
-                    return number.startsWith("+") ? number : `+91${number}`;
-                  });
-
-                if (phoneNumbers.length > 0) {
-                  const nameParts = name.split(" ");
-                  phoneContactsData.push({
-                    first_name: nameParts[0] || "Unknown",
-                    middle_name:
-                      nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "",
-                    last_name:
-                      nameParts.length > 1 ? nameParts[nameParts.length - 1] : "",
-                    company: org,
-                    job_type: "",
-                    website,
-                    category: "",
-                    relation: "",
-                    phone_number: phoneNumbers[0] || "",
-                    phone_number1: phoneNumbers[1] || "",
-                    phone_number2: phoneNumbers[2] || "",
-                    phone_number3: phoneNumbers[3] || "",
-                    email,
-                    flat_building_no: addressComponents[0] || "",
-                    street: addressComponents[1] || "",
-                    city: addressComponents[2] || "",
-                    state: addressComponents[3] || "",
-                    country: addressComponents[4] || "",
-                    postal_code: addressComponents[5] || "",
-                    date_of_birth: "",
-                    anniversary: "",
-                    notes: "",
-                    contact_image: "",
-                    release_on_pass: false,
-                    is_ambassador: false,
-                    is_nominee: false,
-                  });
-                }
-              } catch {
-                continue;
-              }
-            }
-
-            if (phoneContactsData.length > 0) {
-              const vcfSaveResponse = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/contacts/save`,
-                { contacts: phoneContactsData, source: "vcf" },
-                { withCredentials: true }
-              );
-
-              if (vcfSaveResponse.data.success) {
-                toast.success(vcfSaveResponse.data.message, { autoClose: 3000 });
-                if (vcfSaveResponse.data.skipped?.length > 0) {
-                  vcfSaveResponse.data.skipped.forEach((skipped) => {
-                    toast.error(skipped.reason, { autoClose: 3000 });
-                  });
-                }
-                await fetchContacts();
+            // Handle invalid or missing version
+            if (!['2.1', '3.0', '4.0'].includes(version)) {
+              console.warn(`Invalid or missing version "${version || 'none'}" in vCard ${i + 1}. Defaulting to 3.0.`);
+              toast.warn(`vCard ${i + 1} has invalid version "${version || 'none'}". Proceeding with manual parsing.`, { autoClose: 3000 });
+              if (version) {
+                cardText = cardText.replace(/VERSION:[^\n\r]*/, 'VERSION:3.0');
               } else {
-                toast.error(vcfSaveResponse.data.message, { autoClose: 3000 });
+                cardText = cardText.replace('BEGIN:VCARD\n', 'BEGIN:VCARD\nVERSION:3.0\n');
               }
             }
-          } catch (err) {
-            setError("Failed to parse VCF file: " + err.message);
-            toast.error("Failed to parse VCF file: " + err.message, {
-              autoClose: 3000,
+
+            // Manual parsing
+            const lines = cardText.split('\n');
+            let name = "", phoneNumbers = [], email = "", org = "", title = "", addressComponents = [], website = "", dateOfBirth = "", anniversary = "";
+            for (const line of lines) {
+              if (line.startsWith('FN:')) {
+                name = line.slice(3).trim();
+              } else if (line.startsWith('N:')) {
+                const nParts = line.slice(2).split(';').filter(part => part.trim());
+                name = nParts.reverse().join(" ").trim() || name;
+              } else if (line.startsWith('TEL')) {
+                const tel = line.split(':')[1]?.trim();
+                if (tel) phoneNumbers.push(tel);
+              } else if (line.startsWith('EMAIL')) {
+                email = line.split(':')[1]?.trim() || "";
+              } else if (line.startsWith('ORG')) {
+                org = line.split(':')[1]?.trim() || "";
+              } else if (line.startsWith('TITLE')) {
+                title = line.split(':')[1]?.trim() || "";
+              } else if (line.startsWith('ADR')) {
+                addressComponents = line.split(':')[1]?.split(';') || [];
+              } else if (line.startsWith('URL')) {
+                website = line.split(':')[1]?.trim() || "";
+              } else if (line.startsWith('BDAY')) {
+                dateOfBirth = line.split(':')[1]?.trim() || "";
+              } else if (line.startsWith('ANNIVERSARY')) {
+                anniversary = line.split(':')[1]?.trim() || "";
+              }
+            }
+
+            phoneNumbers = phoneNumbers
+              .filter((tel) => tel && typeof tel === "string" && tel.trim() !== "")
+              .map((tel) => {
+                let number = tel.replace(/[\s-()]/g, "");
+                const parsedNumber = parsePhoneNumberFromString(number);
+                if (parsedNumber && parsedNumber.isValid()) {
+                  return parsedNumber.formatInternational();
+                } else {
+                  console.warn(`Invalid phone number "${number}" in vCard ${i + 1}. Using as-is.`);
+                  toast.warn(`vCard ${i + 1} phone number "${number}" is invalid. Using as-is.`, { autoClose: 3000 });
+                  return number;
+                }
+              });
+
+            if (phoneNumbers.length > 0) {
+              const nameParts = name.split(" ").filter(part => part.trim());
+              phoneContactsData.push({
+                first_name: nameParts[0] || "Unknown",
+                middle_name: nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "",
+                last_name: nameParts.length > 1 ? nameParts[nameParts.length - 1] : "",
+                company: org,
+                job_type: title,
+                website,
+                category: "",
+                relation: "",
+                phone_number: phoneNumbers[0] || "",
+                phone_number1: phoneNumbers[1] || "",
+                phone_number2: phoneNumbers[2] || "",
+                phone_number3: phoneNumbers[3] || "",
+                email,
+                flat_building_no: addressComponents[0] || "",
+                street: addressComponents[1] || "",
+                city: addressComponents[2] || "",
+                state: addressComponents[3] || "",
+                country: addressComponents[4] || "",
+                postal_code: addressComponents[5] || "",
+                date_of_birth: dateOfBirth,
+                anniversary: anniversary,
+                notes: "",
+                contact_image: "",
+                release_on_pass: false,
+                is_ambassador: false,
+                is_nominee: false,
+              });
+              console.log(`Successfully parsed vCard ${i + 1}`);
+            } else {
+              console.warn(`Skipping vCard ${i + 1}: No valid phone numbers found.`);
+              toast.warn(`Skipped vCard ${i + 1}: No valid phone numbers.`, { autoClose: 3000 });
+            }
+          } catch (parseErr) {
+            console.error(`Error parsing vCard ${i + 1}:`, parseErr.message, cardText);
+            toast.warn(`Skipped vCard ${i + 1}: ${parseErr.message}`, { autoClose: 3000 });
+            continue;
+          }
+        }
+
+        if (phoneContactsData.length === 0) {
+          toast.info("No valid contacts with phone numbers found in the VCF file.", { autoClose: 3000 });
+          toggleDrawer();
+          return;
+        }
+
+        const saveResponse = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/contacts/save`,
+          { contacts: phoneContactsData, source: "vcf" },
+          { withCredentials: true }
+        );
+
+        if (saveResponse.data.success) {
+          toast.success(`Successfully imported ${saveResponse.data.contacts?.length || 0} contacts`, { autoClose: 3000 });
+          if (saveResponse.data.skipped?.length > 0) {
+            saveResponse.data.skipped.forEach((skipped) => {
+              const contactName = [skipped.contact.first_name, skipped.contact.middle_name, skipped.contact.last_name]
+                .filter(Boolean)
+                .join(" ") || "Unknown";
+              toast.error(`Skipped ${contactName}: ${skipped.reason}`, { autoClose: 5000 });
             });
           }
-        };
-        reader.onerror = () => {
-          setError("Failed to read the VCF file.");
-          toast.error("Failed to read the VCF file.", { autoClose: 3000 });
-        };
-        reader.readAsText(file);
-      } else {
-        toast.error(uploadResponse.data.message, { autoClose: 3000 });
+          await fetchContacts();
+          toggleDrawer();
+        } else {
+          throw new Error(saveResponse.data.message || "Failed to save contacts");
+        }
+      } catch (err) {
+        setError("Failed to process VCF file: " + err.message);
+        toast.error("Failed to process VCF file: " + err.message, { autoClose: 3000 });
       }
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    } catch (err) {
-      setError("Failed to sync VCF contacts: " + err.message);
-      toast.error("Failed to sync VCF contacts: " + err.message, {
-        autoClose: 3000,
-      });
+    };
+    reader.onerror = () => {
+      setError("Failed to read the VCF file.");
+      toast.error("Failed to read the VCF file.", { autoClose: 3000 });
+    };
+    reader.readAsText(file, 'UTF-8');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
-  };
+  } catch (err) {
+    setError("Failed to sync VCF contacts: " + err.message);
+    toast.error("Failed to sync VCF contacts: " + err.message, { autoClose: 3000 });
+  }
+};
 
   const validateContact = (contact) => {
     if (!contact.first_name?.trim()) {
@@ -1184,41 +1200,45 @@ const Contact = () => {
   };
 
   const handleDeleteSelected = async () => {
-    if (selectedContacts.length === 0) {
-      toast.error("Please select at least one contact to delete.", {
-        autoClose: 3000,
-      });
-      return;
-    }
+  if (selectedContacts.length === 0) {
+    toast.error("Please select at least one contact to delete.", {
+      autoClose: 3000,
+    });
+    return;
+  }
 
-    if (
-      !window.confirm(
-        `Are you sure you want to delete ${selectedContacts.length} contact(s)?`
-      )
-    ) {
-      return;
-    }
+  if (
+    !window.confirm(
+      `Are you sure you want to delete ${selectedContacts.length} contact(s)?`
+    )
+  ) {
+    return;
+  }
 
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/delete-contacts`,
-        { contactIds: selectedContacts },
-        { withCredentials: true }
-      );
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/contacts/delete-contacts`, // Updated endpoint
+      { contactIds: selectedContacts },
+      { withCredentials: true }
+    );
 
-      if (response.data.success) {
-        toast.success(response.data.message, { autoClose: 3000 });
-        await fetchContacts();
-        setSelectedContacts([]);
-      } else {
-        toast.error(response.data.message, { autoClose: 3000 });
-      }
-    } catch (err) {
-      toast.error("Failed to delete selected contacts: " + err.message, {
+    if (response.data.success) {
+      toast.success(response.data.message, { autoClose: 3000 });
+      await fetchContacts();
+      setSelectedContacts([]);
+    } else {
+      toast.error(response.data.message || "Failed to delete contacts.", {
         autoClose: 3000,
       });
     }
-  };
+  } catch (err) {
+    console.error("Error deleting selected contacts:", err);
+    toast.error(
+      `Failed to delete contacts: ${err.response?.data?.message || err.message}`,
+      { autoClose: 3000 }
+    );
+  }
+};
 
   const handleEditContact = (contact) => {
     setEditingContactId(contact.id);

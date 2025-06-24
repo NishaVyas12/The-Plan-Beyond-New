@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import "./navbar.css";
 import logo from "../../../assets/images/dash_icon/logo.svg";
 import { useSidebar } from "../../../context/SidebarContext";
-import dashUser from "../../../assets/images/icons/dashUser.svg"
-import dashNotify from "../../../assets/images/icons/dashNotify.svg"
-import notificationDot from "../../../assets/images/icons/notificationDot.svg"
-import down from "../../../assets/images/icons/down.svg"
-import Search from "../../../assets/images/icons/Search.svg"
+import dashNotify from "../../../assets/images/icons/dashNotify.svg";
+import notificationDot from "../../../assets/images/icons/notificationDot.svg";
+import down from "../../../assets/images/icons/down.svg";
+import Search from "../../../assets/images/icons/Search.svg";
 
 const Navbar = () => {
     const { toggleSidebar } = useSidebar();
@@ -35,9 +34,9 @@ const Navbar = () => {
                         .trim();
 
                     setProfile({
-                        full_name: fullName || "Name",
+                        full_name: fullName || "Anonymous",
                         profile_image: data.profile.profile_image
-                            ? `${import.meta.env.VITE_API_URL}/${data.profile.profile_image}`
+                            ? `${import.meta.env.VITE_API_URL}${data.profile.profile_image}?t=${Date.now()}`
                             : null,
                     });
                 }
@@ -48,6 +47,17 @@ const Navbar = () => {
 
         fetchProfile();
     }, []);
+
+    // Derive initials from full_name
+    const getInitials = (name) => {
+        const nameParts = name.trim().split(" ").filter(Boolean);
+        if (nameParts.length >= 2) {
+            return `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase();
+        } else if (nameParts.length === 1) {
+            return nameParts[0][0].toUpperCase();
+        }
+        return "AN"; // Fallback for "Anonymous"
+    };
 
     return (
         <nav className="dash-navbar">
@@ -75,11 +85,7 @@ const Navbar = () => {
                 <img src={Search} alt="Search" className="search-icon" />
             </div>
 
-
             <div className="dash-nav-right">
-                {/* <span className="dash-user-name">Security</span>
-                <span className="dash-user-name">Help</span> */}
-
                 <div className="dash-notification">
                     <img src={dashNotify} alt="Notify" />
                     {/* <img className="new-notify" src={notificationDot} alt="New Notification" /> */}
@@ -96,12 +102,8 @@ const Navbar = () => {
                             className="dash-user-avatar"
                         />
                     ) : (
-                        <div className="dash-user-avatar">
-                            <img
-                                src={dashUser}
-                                alt="User Avatar"
-                                className="dash-user-avatar"
-                            />
+                        <div className="dash-user-initials">
+                            {getInitials(profile.full_name)}
                         </div>
                     )}
                     <span className="dash-user-name">{profile.full_name}</span>

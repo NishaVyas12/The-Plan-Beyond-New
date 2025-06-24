@@ -26,6 +26,10 @@ initializeDatabase().then(() => {
   );
   app.use(configureSession());
 
+  // Static file serving
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+  app.use("/images", express.static(path.join(__dirname, "images"))); // Add this line
+
   // Routes
   app.use("/api", authRoutes);
   app.use("/api", userRoutes);
@@ -33,8 +37,6 @@ initializeDatabase().then(() => {
   app.use("/api/contacts", contactsRoutes);
   app.use("/api/ambassadors", ambassadorsRoutes);
   app.use("/api", nomineesRoutes);
-
-  app.use("/uploads", express.static(path.join(__dirname, "Uploads")));
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

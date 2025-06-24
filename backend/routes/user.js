@@ -1,8 +1,13 @@
 const express = require("express");
 const { pool } = require("../config/database");
 const { checkAuth } = require("../middleware/auth");
-
+const { profileImageUpload } = require("../middleware/multer"); 
+const path = require("path");
+const fs = require("fs");
 const router = express.Router();
+
+
+router.use("/images", express.static(path.join(__dirname, "../images")));
 
 router.get("/user", checkAuth, async (req, res) => {
   try {
@@ -147,6 +152,47 @@ router.put("/update-profile", checkAuth, async (req, res) => {
   }
 });
 
+router.post("/upload-image", checkAuth, profileImageUpload, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "No profile image uploaded." });
+  }
+
+  try {
+    const userId = req.session.userId;
+    const imagePath = `/images/${req.file.filename}`; // e.g., /images/10.png
+    const fullPath = path.join(__dirname, "../images", req.file.filename); // Absolute path to file
+
+    // Log the file path for debugging
+    console.log("Profile image saved at:", fullPath);
+    console.log("File exists:", fs.existsSync(fullPath));
+
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      await connection.query(
+        `INSERT INTO profile (user_id, profile_image) VALUES (?, ?) 
+         ON DUPLICATE KEY UPDATE profile_image = ?`,
+        [userId, imagePath, imagePath]
+      );
+
+      await connection.commit();
+      res.json({
+        success: true,
+        message: "User profile image uploaded successfully.",
+        imagePath,
+      });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    console.error("Error uploading user image:", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+});
 
 router.post("/popup/submit", checkAuth, async (req, res) => {
   const { responses } = req.body;
@@ -215,6 +261,28 @@ router.post("/popup/submit", checkAuth, async (req, res) => {
   } catch (err) {
     console.error("Error saving popup responses:", err);
     res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+router.get("/popup/status", checkAuth, async (req, res) => {
+  const userId = req.session.userId;
+
+  try {
+    const [responses] = await pool.query(
+      "SELECT id FROM user_popup_responses WHERE user_id = ?",
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      hasResponses: responses.length > 0,
+    });
+  } catch (err) {
+    console.error("Error checking popup status:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error.",
+    });
   }
 });
 

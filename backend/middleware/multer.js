@@ -36,6 +36,24 @@ const imageStorage = multer.diskStorage({
   },
 });
 
+// New storage for profile images
+const profileImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const userId = req.session.userId;
+    if (!userId) {
+      return cb(new Error("Session timed out, login again."));
+    }
+    const uploadPath = path.join(__dirname, "../images"); // Store directly in images/
+    fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const userId = req.session.userId;
+    const ext = path.extname(file.originalname); // Preserve original extension
+    cb(null, `${userId}${ext}`); // Filename as user.id (e.g., 123.jpg)
+  },
+});
+
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -50,4 +68,16 @@ const imageUpload = multer({
   },
 });
 
-module.exports = { upload, imageUpload };
+// New multer instance for profile images
+const profileImageUpload = multer({
+  storage: profileImageStorage,
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed."));
+    }
+    cb(null, true);
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+}).single("profileImage"); // Expect single file with field name 'profileImage'
+
+module.exports = { upload, imageUpload, profileImageUpload };

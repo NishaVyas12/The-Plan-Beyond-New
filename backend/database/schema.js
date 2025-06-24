@@ -137,7 +137,7 @@ const createUserContactsTable = async (userId) => {
       phone_number3 VARCHAR(20) DEFAULT '',
       email VARCHAR(255) DEFAULT NULL,
       flat_building_no VARCHAR(100) DEFAULT '',
-      street TEXT DEFAULT '',
+      street TEXT DEFAULT NULL,
       country VARCHAR(100) DEFAULT '',
       state VARCHAR(100) DEFAULT '',
       city VARCHAR(100) DEFAULT '',

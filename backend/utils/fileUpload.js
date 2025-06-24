@@ -32,12 +32,30 @@ const storage = multer.diskStorage({
       cb(err);
     }
   },
-  filename: (req, file, cb) => {
+  filename: async (req, file, cb) => {
     const sanitizedFilename = sanitize(file.originalname);
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = path.extname(sanitizedFilename);
     const basename = path.basename(sanitizedFilename, ext);
-    cb(null, `${basename}-${uniqueSuffix}${ext}`);
+    let finalName = sanitizedFilename;
+    let counter = 0;
+    const destination = file.fieldname === "profileImage"
+      ? path.join("uploads", `contact_image-${req.session.userId}`)
+      : path.join("uploads", "send_file", `${req.session.userId}`, req.body.contactId || (req.body.contacts ? JSON.parse(req.body.contacts)?.id : "temp"));
+
+    // Check for existing files and append counter if necessary
+    while (true) {
+      try {
+        await fs.access(path.join(destination, finalName));
+        // File exists, increment counter
+        counter++;
+        finalName = `${basename}${counter}${ext}`;
+      } catch (err) {
+        // File does not exist, use this name
+        break;
+      }
+    }
+
+    cb(null, finalName);
   },
 });
 
@@ -69,7 +87,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 }).fields([
   { name: "profileImage", maxCount: 1 },
-  { name: "additionalFiles", maxCount: 15 }, // Increased to 15
+  { name: "additionalFiles", maxCount: 15 },
 ]);
 
 module.exports = upload;

@@ -299,7 +299,7 @@
   background: transparent;
   color: var(--primary-color);
   padding: 0 !important;
-  margin: 1rem 0;
+  margin: 0 0 1rem;
 }
 
 .ambassador-add-form-actions-add-ambassador {
@@ -326,7 +326,7 @@
 .ambassador-add-type-radio-add-ambassador {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1rem;
 }
 
 .ambassador-add-type-radio-add-ambassador label {
@@ -365,4 +365,20 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+
+
+.ambassador-add-avatar-initials {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px; /* Adjusted for 60px avatar */
+  font-weight: 600; /* Match Profile.css boldness */
+  color: var(--primary-color); /* Dark text for readability */
+  text-transform: uppercase;
+  border: 1px solid #DAE8E8; /* Match Profile.css border */
 }

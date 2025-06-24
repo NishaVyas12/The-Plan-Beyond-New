@@ -177,8 +177,8 @@
 
 .add-contact-sub-options {
     position: absolute;
-    top: 0;
-    left: 100%;
+    top: 100%;
+    right: 100%;
     background: #fff;
     border: 1px solid #EBEBEB;
     border-radius: 10px;
@@ -188,8 +188,8 @@
 }
 
 .add-contact-sub-sub-options {
-    top: 0;
-    left: 100%;
+    top: 100%;
+    right: 100%;
 }
 
 .add-contact-custom-relation-container {

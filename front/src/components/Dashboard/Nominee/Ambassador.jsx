@@ -32,6 +32,14 @@ const AmbassadorCard = ({
 
   const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim() || "Not Assigned";
 
+  const getInitials = () => {
+    if (isEmpty) return "NA"; // Fallback for empty card
+    if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    if (firstName) return firstName[0].toUpperCase();
+    if (lastName) return lastName[0].toUpperCase();
+    return "NA"; // Fallback for missing names
+  };
+  
   const handleInvite = async () => {
     if (isEmpty) return;
     if (!type || type === "") {

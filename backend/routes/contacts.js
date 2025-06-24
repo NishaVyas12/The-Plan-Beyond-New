@@ -31,9 +31,9 @@ const validateContact = (contact) => {
   if (!contact.phone_number?.trim()) {
     return "At least one phone number is required.";
   }
-  const parsedNumber = parsePhoneNumberFromString(contact.phone_number, "IN");
-  if (!parsedNumber || !parsedNumber.isValid()) {
-    return "Phone number must be in a valid international format.";
+  // Allow phone numbers starting with '+' followed by digits, hyphens, or spaces
+  if (!contact.phone_number.match(/^\+\d[\d\s-]{6,}$/)) {
+    return "Phone number must start with '+' followed by at least 7 digits (may include spaces or hyphens).";
   }
   if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
     return "Invalid email format.";
@@ -46,7 +46,6 @@ const validateContact = (contact) => {
   }
   return null;
 };
-
 
 
 // POST /api/contacts/save
@@ -113,6 +112,8 @@ router.post(
       await createUploadedFilesTable();
 
       const importantDatesTableExists = await checkTableExists("important_dates");
+      const ambassadorsTableExists = await checkTableExists("ambassadors");
+      const nomineesTableExists = await checkTableExists("nominees");
 
       const skipped = [];
       let savedCount = 0;
@@ -190,8 +191,8 @@ router.post(
             notes,
             contact_image: frontendContactImage,
             release_on_pass,
-            is_ambassador,
-            is_nominee,
+            is_ambassador: frontendIsAmbassador,
+            is_nominee: frontendIsNominee,
           } = contact;
 
           const name = [first_name, middle_name, last_name]
@@ -242,7 +243,7 @@ router.post(
           // Handle profile image
           if (files.profileImage.length > 0) {
             const profileImage = files.profileImage[0];
-            contactImagePath = `/Uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
+            contactImagePath = `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
             if (contactImagePath.length > 255) {
               throw new Error("Profile image path exceeds 255 characters");
             }
@@ -254,6 +255,20 @@ router.post(
             );
             if (existing.length > 0 && existing[0].contact_image) {
               contactImagePath = existing[0].contact_image;
+            }
+          }
+
+          // Fetch existing is_ambassador and is_nominee for updates
+          let isAmbassador = frontendIsAmbassador || false;
+          let isNominee = frontendIsNominee || false;
+          if (id) {
+            const [existingContact] = await connection.query(
+              `SELECT is_ambassador, is_nominee FROM ${tableName} WHERE id = ? AND user_id = ?`,
+              [id, req.session.userId]
+            );
+            if (existingContact.length > 0) {
+              isAmbassador = existingContact[0].is_ambassador;
+              isNominee = existingContact[0].is_nominee;
             }
           }
 
@@ -314,15 +329,123 @@ router.post(
                     notes || null,
                     contactImagePath,
                     release_on_pass || false,
-                    is_ambassador || false,
-                    is_nominee || false,
+                    isAmbassador,
+                    isNominee,
                     id,
                   ]
                 );
                 savedCount++;
                 console.log(
-                  `Updated contact ${id} with image: ${contactImagePath}`
+                  `Updated contact ${id} with image: ${contactImagePath}, is_ambassador: ${isAmbassador}, is_nominee: ${isNominee}`
                 );
+
+                // Update ambassadors table if contact is an ambassador
+                if (isAmbassador && ambassadorsTableExists) {
+                  const [existingAmbassador] = await connection.query(
+                    `SELECT id FROM ambassadors WHERE user_id = ? AND (email = ? OR phone_number IN (?, ?, ?, ?))`,
+                    [
+                      req.session.userId,
+                      email || null,
+                      phone_number || "",
+                      phone_number1 || "",
+                      phone_number2 || "",
+                      phone_number3 || "",
+                    ]
+                  );
+                  if (existingAmbassador.length > 0) {
+                    await connection.query(
+                      `UPDATE ambassadors SET first_name = ?, middle_name = ?, last_name = ?, email = ?, phone_number = ?, phone_number1 = ?, phone_number2 = ?, relationship = ?, category = ?, profile_image = ? WHERE id = ?`,
+                      [
+                        first_name || "",
+                        middle_name || "",
+                        last_name || "",
+                        email || null,
+                        phone_number || "",
+                        phone_number1 || "",
+                        phone_number2 || "",
+                        relation || "",
+                        category || "",
+                        contactImagePath || null,
+                        existingAmbassador[0].id,
+                      ]
+                    );
+                    console.log(`Updated ambassador record for contact ${id}`);
+                  } else {
+                    await connection.query(
+                      `INSERT INTO ambassadors (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, relationship, category, ambassador_type, profile_image)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                      [
+                        req.session.userId,
+                        first_name || "",
+                        middle_name || "",
+                        last_name || "",
+                        email || null,
+                        phone_number || "",
+                        phone_number1 || "",
+                        phone_number2 || "",
+                        relation || "",
+                        category || "",
+                        "",
+                        contactImagePath || null,
+                      ]
+                    );
+                    console.log(`Inserted new ambassador record for contact ${id}`);
+                  }
+                }
+
+                // Update nominees table if contact is a nominee
+                if (isNominee && nomineesTableExists) {
+                  const [existingNominee] = await connection.query(
+                    `SELECT id FROM nominees WHERE user_id = ? AND (email = ? OR phone_number IN (?, ?, ?, ?))`,
+                    [
+                      req.session.userId,
+                      email || null,
+                      phone_number || "",
+                      phone_number1 || "",
+                      phone_number2 || "",
+                      phone_number3 || "",
+                    ]
+                  );
+                  if (existingNominee.length > 0) {
+                    await connection.query(
+                      `UPDATE nominees SET first_name = ?, middle_name = ?, last_name = ?, email = ?, phone_number = ?, phone_number1 = ?, phone_number2 = ?, relationship = ?, category = ?, profile_image = ? WHERE id = ?`,
+                      [
+                        first_name || "",
+                        middle_name || "",
+                        last_name || "",
+                        email || null,
+                        phone_number || "",
+                        phone_number1 || "",
+                        phone_number2 || "",
+                        relation || "",
+                        category || "",
+                        contactImagePath || null,
+                        existingNominee[0].id,
+                      ]
+                    );
+                    console.log(`Updated nominee record for contact ${id}`);
+                  } else {
+                    await connection.query(
+                      `INSERT INTO nominees (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, relationship, category, nominee_type, profile_image)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                      [
+                        req.session.userId,
+                        first_name || "",
+                        middle_name || "",
+                        last_name || "",
+                        email || null,
+                        phone_number || "",
+                        phone_number1 || "",
+                        phone_number2 || "",
+                        relation || "",
+                        category || "",
+                        "",
+                        contactImagePath || null,
+                      ]
+                    );
+                    console.log(`Inserted new nominee record for contact ${id}`);
+                  }
+                }
               } else {
                 skipped.push({ contact, reason: "Contact ID not found" });
                 continue;
@@ -357,21 +480,67 @@ router.post(
                   notes || null,
                   contactImagePath,
                   release_on_pass || false,
-                  is_ambassador || false,
-                  is_nominee || false,
+                  isAmbassador,
+                  isNominee,
                 ]
               );
               contactId = result.insertId;
               savedCount++;
               console.log(
-                `Inserted contact ${contactId} with image: ${contactImagePath}`
+                `Inserted contact ${contactId} with image: ${contactImagePath}, is_ambassador: ${isAmbassador}, is_nominee: ${isNominee}`
               );
+
+              // Insert into ambassadors table if contact is an ambassador
+              if (isAmbassador && ambassadorsTableExists) {
+                await connection.query(
+                  `INSERT INTO ambassadors (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, relationship, category, ambassador_type, profile_image)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                  [
+                    req.session.userId,
+                    first_name || "",
+                    middle_name || "",
+                    last_name || "",
+                    email || null,
+                    phone_number || "",
+                    phone_number1 || "",
+                    phone_number2 || "",
+                    relation || "",
+                    category || "",
+                    "",
+                    contactImagePath || null,
+                  ]
+                );
+                console.log(`Inserted new ambassador record for contact ${contactId}`);
+              }
+
+              // Insert into nominees table if contact is a nominee
+              if (isNominee && nomineesTableExists) {
+                await connection.query(
+                  `INSERT INTO nominees (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, relationship, category, nominee_type, profile_image)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                  [
+                    req.session.userId,
+                    first_name || "",
+                    middle_name || "",
+                    last_name || "",
+                    email || null,
+                    phone_number || "",
+                    phone_number1 || "",
+                    phone_number2 || "",
+                    relation || "",
+                    category || "",
+                    "",
+                    contactImagePath || null,
+                  ]
+                );
+                console.log(`Inserted new nominee record for contact ${contactId}`);
+              }
             }
 
             // Handle additional file uploads
             if (tempFiles.length > 0) {
               const finalDir = path.join(
-                "Uploads",
+                "uploads",
                 "send_file",
                 `${req.session.userId}`,
                 `${contactId}`
@@ -381,7 +550,7 @@ router.post(
               for (const tempFile of tempFiles) {
                 const finalPath = path.join(finalDir, tempFile.filename);
                 await fs.rename(tempFile.originalPath, finalPath);
-                const filePath = `/Uploads/send_file/${req.session.userId}/${contactId}/${tempFile.filename}`;
+                const filePath = `/uploads/send_file/${req.session.userId}/${contactId}/${tempFile.filename}`;
                 if (filePath.length > 255) {
                   throw new Error(
                     `File path ${filePath} exceeds 255 characters`
@@ -444,7 +613,6 @@ router.post(
                   existingImportantDatesSet.add(uniqueKey);
                   importantDatesAdded++;
                 } else if (id) {
-                  // Update existing important dates if contact is being updated
                   await connection.query(
                     `UPDATE important_dates SET
                       occasion_date = ?,
@@ -473,6 +641,8 @@ router.post(
               ...contact,
               contact_image: contactImagePath,
               uploaded_files: uploadedFiles,
+              is_ambassador: isAmbassador,
+              is_nominee: isNominee,
             });
           } catch (err) {
             console.error(`Error processing contact ${name}:`, err);
@@ -485,7 +655,7 @@ router.post(
               const profileImagePath = path.join(
                 __dirname,
                 "..",
-                `/Uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
+                `/uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
               );
               try {
                 await fs.unlink(profileImagePath);
@@ -527,7 +697,7 @@ router.post(
           const profileImagePath = path.join(
             __dirname,
             "..",
-            `/Uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
+            `/uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
           );
           try {
             await fs.unlink(profileImagePath);
@@ -607,7 +777,7 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
       const uploadedFiles = [];
       for (const file of files) {
         const finalDir = path.join(
-          "Uploads",
+          "uploads",
           "send_file",
           `${req.session.userId}`,
           `${contactId}`
@@ -615,7 +785,7 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
         await fs.mkdir(finalDir, { recursive: true });
         const finalPath = path.join(finalDir, file.filename);
         await fs.rename(file.path, finalPath);
-        const filePath = `/Uploads/send_file/${req.session.userId}/${contactId}/${file.filename}`;
+        const filePath = `/uploads/send_file/${req.session.userId}/${contactId}/${file.filename}`;
         if (filePath.length > 255) {
           throw new Error(`File path ${filePath} exceeds 255 characters`);
         }
@@ -1000,6 +1170,8 @@ router.delete("/files/:fileId", auth, async (req, res) => {
     });
   }
 });
+
+
 
 // POST /api/contacts/categorize-contacts
 router.post("/categorize-contacts", auth, async (req, res) => {

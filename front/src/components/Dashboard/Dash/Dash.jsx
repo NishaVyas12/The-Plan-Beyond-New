@@ -23,6 +23,7 @@ import health from "../../../assets/images/sidebar/icon7.svg";
 import Family from "../../../assets/images/sidebar/icon9.svg";
 import Gone from "../../../assets/images/sidebar/icon10.svg";
 import Popups from "../../Popups";
+import sampleVideo from "../../../assets/videos/TPB.mp4";
 
 const Dash = () => {
   const [profile, setProfile] = useState({
@@ -82,10 +83,25 @@ const Dash = () => {
       }
     };
 
-    const checkPopupStatus = () => {
-      const popupCompleted = localStorage.getItem("popupCompleted");
-      if (!popupCompleted || popupCompleted !== "true") {
-        setShowSetupPopup(true);
+    const checkPopupStatus = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/popup/status`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        if (data.success && data.hasResponses) {
+          localStorage.setItem("popupCompleted", "true");
+          setShowSetupPopup(false);
+        } else {
+          setShowSetupPopup(true);
+        }
+      } catch (error) {
+        console.error("Error checking popup status:", error);
+        setShowSetupPopup(true); // Show popup on error to avoid blocking user
       }
     };
 
@@ -132,7 +148,7 @@ const Dash = () => {
     setShowVideoPopup(false);
   };
 
-  const handlePopupComplete = () => {
+  const handlePopupComplete = async () => {
     localStorage.setItem("popupCompleted", "true");
     setShowSetupPopup(false);
   };
@@ -477,7 +493,7 @@ const Dash = () => {
                 <div className="guide-content">
                   <h4 className="guide-title">Let’s Get Started</h4>
                   <p className="guide-description">
-                    Your \nu101 guide to securing information on the platform and
+                    Your 101 guide to securing information on the platform and
                     accessing it whenever you need it.
                   </p>
                 </div>
@@ -499,7 +515,7 @@ const Dash = () => {
                 </button>
                 <video
                   className="video-player"
-                  src={"sampleVideo"}
+                  src={sampleVideo}
                   controls
                   autoPlay
                 ></video>

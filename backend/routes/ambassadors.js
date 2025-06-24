@@ -265,7 +265,7 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
     try {
       let imagePath = null;
       if (profileImage) {
-        imagePath = `/Uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
+        imagePath = `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
         await connection.query(
           `UPDATE ambassadors SET profile_image = ? WHERE id = ? AND user_id = ?`,
           [imagePath, id, req.session.userId]
@@ -539,7 +539,7 @@ router.post("/upload-image", checkAuth, upload, async (req, res) => {
     const { email, phone_number, phone_number1, phone_number2 } = ambassadors[0];
     const phoneNumbers = [phone_number, phone_number1, phone_number2].filter((num) => num);
 
-    const imagePath = `/Uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
+    const imagePath = `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
 
     const connection = await pool.getConnection();
     await connection.beginTransaction();

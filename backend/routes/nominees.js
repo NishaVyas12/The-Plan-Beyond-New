@@ -85,7 +85,7 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
 
     try {
       const imagePath = profileImage
-        ? `/Uploads/contact_image-${req.session.userId}/${profileImage.filename}`
+        ? `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`
         : null;
 
       const [result] = await connection.query(
@@ -251,7 +251,7 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
 
     try {
       const imagePath = profileImage
-        ? `/Uploads/contact_image-${req.session.userId}/${profileImage.filename}`
+        ? `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`
         : null;
 
       await connection.query(
@@ -446,7 +446,7 @@ router.post("/nominees/upload-image", checkAuth, upload, async (req, res) => {
 
     const { email, phone_number, phone_number1, phone_number2 } = nominees[0];
     const phoneNumbers = [phone_number, phone_number1, phone_number2].filter((num) => num);
-    const imagePath = `/Uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
+    const imagePath = `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
 
     const connection = await pool.getConnection();
     await connection.beginTransaction();

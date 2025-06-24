@@ -354,4 +354,33 @@ router.delete("/delete-biometric", checkAuth, async (req, res) => {
     }
 });
 
+
+router.get("/check-biometric", checkAuth, async (req, res) => {
+    const userId = req.session.userId;
+    const { biometricType } = req.query;
+
+    if (!userId) {
+        return res.status(400).json({ success: false, message: "User ID not found." });
+    }
+
+    if (!["face", "fingerprint"].includes(biometricType)) {
+        return res.status(400).json({ success: false, message: "Invalid biometric type." });
+    }
+
+    try {
+        const [credentials] = await pool.query(
+            "SELECT credential_id FROM webauthn_credentials WHERE user_id = ? AND biometric_type = ?",
+            [userId, biometricType]
+        );
+
+        res.json({
+            success: true,
+            isRegistered: credentials.length > 0,
+        });
+    } catch (err) {
+        console.error(`Error checking ${biometricType} biometric status:`, err);
+        res.status(500).json({ success: false, message: "Server error." });
+    }
+});
+
 module.exports = router;

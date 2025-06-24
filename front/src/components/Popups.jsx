@@ -374,7 +374,7 @@ const Popups = ({ onComplete }) => {
                   />
                   <h2 className="popups-title">Legacy Activation</h2>
                   <p className="popups-subtitle">
-                    When you’re gone, your nominee will trigger custom notifications and share your<br />
+                    When you’re gone, your ambassador will trigger custom notifications and share your<br />
                     messages with selected loved ones.
                   </p>
                 </>
