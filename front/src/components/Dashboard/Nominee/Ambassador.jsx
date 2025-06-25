@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { FaCamera } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PhoneInput from "react-phone-input-2";
@@ -23,7 +22,6 @@ const AmbassadorCard = ({
   profileImage = "",
   onEdit,
   onRemove,
-  onImageUpload,
   isEmpty,
 }) => {
   const [isInviting, setIsInviting] = useState(false);
@@ -33,11 +31,11 @@ const AmbassadorCard = ({
   const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim() || "Not Assigned";
 
   const getInitials = () => {
-    if (isEmpty) return "NA"; // Fallback for empty card
+    if (isEmpty) return "NA";
     if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
     if (firstName) return firstName[0].toUpperCase();
     if (lastName) return lastName[0].toUpperCase();
-    return "NA"; // Fallback for missing names
+    return "NA";
   };
   
   const handleInvite = async () => {
@@ -88,55 +86,6 @@ const AmbassadorCard = ({
         position: "top-right",
         autoClose: 3000,
         onClose: () => setIsInviting(false),
-      });
-    }
-  };
-
-  const handleImageUpload = async (event) => {
-    if (isEmpty) return;
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("profileImage", file);
-    formData.append("ambassadorId", id);
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/ambassadors/upload-image`,
-        {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-      if (data.success) {
-        onImageUpload({ id, imagePath: data.imagePath });
-        toast.success("Profile image uploaded successfully!", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      } else {
-        if (response.status === 401) {
-          toast.error("Session expired. Please log in again.", {
-            position: "top-right",
-            autoClose: 3000,
-            onClose: () => navigate("/login"),
-          });
-        } else {
-          toast.error(data.message || "Failed to upload image.", {
-            position: "top-right",
-            autoClose: 3000,
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Error uploading image:", err);
-      toast.error("Error uploading image. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
       });
     }
   };
@@ -198,20 +147,7 @@ const AmbassadorCard = ({
                 : {}
             }
           >
-            <label
-              htmlFor={`avatar-upload-${id}`}
-              className="ambassador-add-avatar-upload"
-            >
-              <FaCamera className="ambassador-add-camera-icon" />
-              <input
-                type="file"
-                id={`avatar-upload-${id}`}
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={handleImageUpload}
-                disabled={isEmpty}
-              />
-            </label>
+            {!profileImage && <span>{getInitials()}</span>}
           </div>
         </div>
         <div className="ambassador-add-details-add-ambassador">
@@ -300,7 +236,7 @@ const AddAmbassadorForm = ({
     category: "",
     relation: "",
     ambassadorType: ambassadors.length === 0 ? "Primary" : "Secondary",
-    profileImage: "",
+    profileImage: null,
   });
   const [showPhone1, setShowPhone1] = useState(false);
   const [showPhone2, setShowPhone2] = useState(false);
@@ -343,7 +279,7 @@ const AddAmbassadorForm = ({
         category: editAmbassador.category || "",
         relation: editAmbassador.relation || "",
         ambassadorType: editAmbassador.type || "",
-        profileImage: editAmbassador.profileImage || "",
+        profileImage: null,
       });
       setShowPhone1(!!editAmbassador.phone_number1);
       setShowPhone2(!!editAmbassador.phone_number2);
@@ -367,7 +303,7 @@ const AddAmbassadorForm = ({
         category: "",
         relation: "",
         ambassadorType: ambassadors.length === 0 ? "Primary" : "Secondary",
-        profileImage: "",
+        profileImage: null,
       });
       setShowPhone1(false);
       setShowPhone2(false);
@@ -495,18 +431,22 @@ const AddAmbassadorForm = ({
       });
       return;
     }
-    const submitData = {
-      firstName: formData.firstName,
-      middleName: formData.middleName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone_number: formData.phone_number,
-      phone_number1: formData.phone_number1,
-      phone_number2: formData.phone_number2,
-      category: formData.category,
-      relation: formData.category === "Family" ? formData.relation : "",
-      ambassadorType: formData.ambassadorType,
-    };
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("firstName", formData.firstName);
+    formDataToSend.append("middleName", formData.middleName);
+    formDataToSend.append("lastName", formData.lastName);
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("phone_number", formData.phone_number);
+    formDataToSend.append("phone_number1", formData.phone_number1);
+    formDataToSend.append("phone_number2", formData.phone_number2);
+    formDataToSend.append("category", formData.category);
+    formDataToSend.append("relation", formData.category === "Family" ? formData.relation : "");
+    formDataToSend.append("ambassadorType", formData.ambassadorType);
+    if (formData.profileImage instanceof File) {
+      formDataToSend.append("profileImage", formData.profileImage);
+    }
+
     try {
       const url = editAmbassador
         ? `${import.meta.env.VITE_API_URL}/api/ambassadors/${editAmbassador.id}`
@@ -514,42 +454,15 @@ const AddAmbassadorForm = ({
       const method = editAmbassador ? "PUT" : "POST";
       const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(submitData),
+        body: formDataToSend,
       });
       const data = await response.json();
       if (data.success) {
-        let ambassadorId = editAmbassador ? editAmbassador.id : data.ambassador.id;
-
-        if (formData.profileImage instanceof File) {
-          const formDataImage = new FormData();
-          formDataImage.append("profileImage", formData.profileImage);
-          formDataImage.append("ambassadorId", ambassadorId);
-          const imageResponse = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/ambassadors/upload-image`,
-            {
-              method: "POST",
-              credentials: "include",
-              body: formDataImage,
-            }
-          );
-          const imageData = await imageResponse.json();
-          if (imageData.success) {
-            submitData.profileImage = imageData.imagePath;
-          } else {
-            toast.warn("Ambassador saved, but failed to upload image.", {
-              position: "top-right",
-              autoClose: 3000,
-            });
-          }
-        }
-
         if (editAmbassador) {
           onEditAmbassador({
-            ...submitData,
-            id: editAmbassador.id,
-            profileImage: submitData.profileImage,
+            ...data.ambassador,
+            profileImage: data.ambassador.profile_image,
           });
           toast.success("Ambassador updated successfully!", {
             position: "top-right",
@@ -558,7 +471,7 @@ const AddAmbassadorForm = ({
         } else {
           onAmbassadorAdded({
             ...data.ambassador,
-            profileImage: submitData.profileImage,
+            profileImage: data.ambassador.profile_image,
           });
           toast.success("Ambassador added successfully!", {
             position: "top-right",
@@ -577,7 +490,7 @@ const AddAmbassadorForm = ({
           category: "",
           relation: "",
           ambassadorType: ambassadors.length === 0 ? "Primary" : "Secondary",
-          profileImage: "",
+          profileImage: null,
         });
         setShowPhone1(false);
         setShowPhone2(false);
@@ -918,7 +831,10 @@ const AddAmbassadorForm = ({
                   htmlFor="avatar-upload-form"
                   className="ambassador-add-avatar-upload"
                 >
-                  <FaCamera className="ambassador-add-camera-icon" />
+                  <svg className="ambassador-add-camera-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 9a3 3 0 0 0-3 3v.01a3 3 0 0 0 3 3 3 3 0 0 0 3-3V12a3 3 0 0 0-3-3zm0 4.5a1.5 1.5 0 0 1-1.5-1.5v-.01a1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5V12a1.5 1.5 0 0 1-1.5 1.5z"/>
+                    <path d="M21 6h-3.56a2.9 2.9 0 0 0-.67-1.29l-.88-.88A3 3 0 0 0 13.95 3H10.1a3 3 0 0 0-2.12.88l-.87.88A2.9 2.9 0 0 0 6.44 6H3a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3zm1.5 12a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 18V9A1.5 1.5 0 0 1 3 7.5h3.44c.3 0 .58-.1.82-.3l.87-.88a1.5 1.5 0 0 1 1.06-.44h3.84a1.5 1.5 0 0 1 1.06.44l.88.88c.24.2.52.3.82.3H21a1.5 1.5 0 0 1 1.5 1.5v9z"/>
+                  </svg>
                   <input
                     type="file"
                     id="avatar-upload-form"
@@ -1068,15 +984,6 @@ const Ambassador = () => {
     }
   };
 
-  const handleImageUpload = (data) => {
-    const { id, imagePath } = data;
-    setAmbassadors((prev) =>
-      prev.map((ambassador) =>
-        ambassador.id === id ? { ...ambassador, profileImage: imagePath } : ambassador
-      )
-    );
-  };
-
   const handleCancel = () => {
     setEditAmbassador(null);
     setShowForm(false);
@@ -1093,22 +1000,19 @@ const Ambassador = () => {
     setShowForm(true);
   };
 
-  const ambassadorSlots = Array(2).fill({}); // Initialize two empty slots
-  let availableAmbassadors = [...ambassadors]; // Copy ambassadors to manipulate
+  const ambassadorSlots = Array(2).fill({});
+  let availableAmbassadors = [...ambassadors];
 
-  // Assign Primary ambassador to the first slot if it exists
   const primaryIndex = availableAmbassadors.findIndex((a) => a.ambassador_type === "Primary");
   if (primaryIndex !== -1) {
     ambassadorSlots[0] = availableAmbassadors.splice(primaryIndex, 1)[0];
   }
 
-  // Assign Secondary ambassador to the second slot if it exists
   const secondaryIndex = availableAmbassadors.findIndex((a) => a.ambassador_type === "Secondary");
   if (secondaryIndex !== -1) {
     ambassadorSlots[1] = availableAmbassadors.splice(secondaryIndex, 1)[0];
   }
 
-  // Fill any remaining empty slots with remaining ambassadors (if any)
   for (let i = 0; i < ambassadorSlots.length; i++) {
     if (!ambassadorSlots[i].id && availableAmbassadors.length > 0) {
       ambassadorSlots[i] = availableAmbassadors.shift();
@@ -1152,7 +1056,6 @@ const Ambassador = () => {
               profileImage={ambassador.profileImage}
               onEdit={handleEditAmbassador}
               onRemove={handleRemoveAmbassador}
-              onImageUpload={handleImageUpload}
               isEmpty={!ambassador.id}
             />
           ))}

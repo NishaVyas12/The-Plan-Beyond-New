@@ -20,6 +20,7 @@ import PhoneIcon from "../../../assets/images/Contact/Smartphone.svg";
 import VFCIcon from "../../../assets/images/Contact/VFC.svg";
 import cameraIcon from "../../../assets/images/dash_icon/camera.svg";
 import uploadFileIcon from "../../../assets/images/dash_icon/upload.svg";
+import debounce from 'lodash.debounce';
 
 const OPENCAGE_API_KEY = "4cd0370d3cee487181c2d52e3fc22370";
 
@@ -328,6 +329,11 @@ const Contact = () => {
   const [error, setError] = useState("");
   const [contacts, setContacts] = useState([]);
   const [editingContactId, setEditingContactId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [filter, setFilter] = useState('ALL');
+  const [limit] = useState(20);
   const [customContact, setCustomContact] = useState({
     first_name: "",
     middle_name: "",
@@ -414,28 +420,38 @@ const Contact = () => {
     docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   };
 
-  const fetchContacts = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/contacts`,
-        {
-          withCredentials: true,
-        }
-      );
-      if (response.data.success) {
-        setContacts(response.data.contacts || []);
-      } else {
-        toast.error(response.data.message, { autoClose: 3000 });
-      }
-    } catch (err) {
-      console.error("Error fetching contacts:", err);
-      toast.error("Failed to fetch contacts", { autoClose: 3000 });
+  const fetchContacts = async (page = 1, filter = 'ALL', search = '') => {
+  try {
+    const params = { filter };
+    if (search) {
+      params.search = search;
+    } else {
+      params.page = page;
+      params.limit = limit;
     }
-  };
+
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/contacts`, {
+      params,
+      withCredentials: true,
+    });
+
+    if (response.data.success) {
+      setContacts(response.data.contacts || []);
+      setCurrentPage(search ? 1 : response.data.currentPage || 1);
+      setTotalPages(search ? 1 : response.data.totalPages || 1);
+      setTotal(response.data.total || 0);
+    } else {
+      toast.error(response.data.message, { autoClose: 3000 });
+    }
+  } catch (err) {
+    console.error("Error fetching contacts:", err);
+    toast.error("Failed to fetch contacts", { autoClose: 3000 });
+  }
+};
 
   useEffect(() => {
-    fetchContacts();
-  }, []);
+    fetchContacts(currentPage, filter);
+  }, [currentPage, filter]);
 
   const fetchLocationData = async (latitude, longitude) => {
     try {
@@ -910,8 +926,6 @@ const Contact = () => {
                 if (parsedNumber && parsedNumber.isValid()) {
                   return parsedNumber.formatInternational();
                 } else {
-                  console.warn(`Invalid phone number "${number}" in vCard ${i + 1}. Using as-is.`);
-                  toast.warn(`vCard ${i + 1} phone number "${number}" is invalid. Using as-is.`, { autoClose: 3000 });
                   return number;
                 }
               });
@@ -1005,27 +1019,24 @@ const Contact = () => {
 };
 
   const validateContact = (contact) => {
-    if (!contact.first_name?.trim()) {
-      return "First name is required.";
-    }
-    if (!contact.phone_number?.trim()) {
-      return "At least one phone number is required.";
-    }
-    const parsedNumber = parsePhoneNumberFromString(contact.phone_number, "IN");
-    if (!parsedNumber || !parsedNumber.isValid()) {
-      return "Phone number must be in a valid international format (e.g., +91XXXXXXXXXX).";
-    }
-    if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
-      return "Invalid email format.";
-    }
-    if (
-      contact.website &&
-      !/^(https?:\/\/)?[\w-]+(\.[\w-]+)+[/#?]?.*$/.test(contact.website)
-    ) {
-      return "Invalid website URL.";
-    }
-    return null;
-  };
+  if (!contact.first_name?.trim()) {
+    return "First name is required.";
+  }
+  if (!contact.phone_number?.trim()) {
+    return "At least one phone number is required.";
+  }
+  
+  if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+    return "Invalid email format.";
+  }
+  if (
+    contact.website &&
+    !/^(https?:\/\/)?[\w-]+(\.[\w-]+)+[/#?]?.*$/.test(contact.website)
+  ) {
+    return "Invalid website URL.";
+  }
+  return null;
+};
 
   const validateFiles = (image, files) => {
     if (image) {
@@ -1457,18 +1468,18 @@ const Contact = () => {
   );
 
   const filteredContacts = contacts.filter((contact) =>
-    `${contact.first_name || ""} ${contact.last_name || ""}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
-  );
+  `${contact.first_name || ""} ${contact.last_name || ""}`
+    .toLowerCase()
+    .includes(searchQuery.toLowerCase())
+);
 
   const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedContacts(filteredContacts.map((contact) => contact.id));
-    } else {
-      setSelectedContacts([]);
-    }
-  };
+  if (e.target.checked) {
+    setSelectedContacts(contacts.map((contact) => contact.id));
+  } else {
+    setSelectedContacts([]);
+  }
+};
 
   const handleSelectContact = (contactId) => {
     setSelectedContacts((prev) =>
@@ -1617,10 +1628,100 @@ const getPhoneNumbersDisplay = (contact) => {
   ));
 };
 
+// Pagination handlers
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+const handleSearchChange = (e) => {
+  setSearchQuery(e.target.value);
+};
+
+// Debounced fetch for search
+const debouncedFetchContacts = debounce((query) => {
+  setCurrentPage(1);
+  fetchContacts(1, filter, query);
+}, 300);
+
+useEffect(() => {
+  debouncedFetchContacts(searchQuery);
+  return () => debouncedFetchContacts.cancel(); 
+}, [searchQuery, filter]);
+
+
+  const renderPagination = () => {
+  const pageNumbers = [];
+  const maxPagesToShow = 3; 
+  const showEllipsisThreshold = maxPagesToShow + 2;
+
+ 
+  pageNumbers.push(1);
+
+  let startPage = Math.max(2, currentPage - Math.floor(maxPagesToShow / 2));
+  let endPage = Math.min(totalPages - 1, startPage + maxPagesToShow - 1);
+
+  if (endPage === totalPages - 1) {
+    startPage = Math.max(2, endPage - maxPagesToShow + 1);
+  }
+
+  if (startPage > 2) {
+    pageNumbers.push("...");
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
+
+  if (endPage < totalPages - 1) {
+    pageNumbers.push("...");
+  }
+
+  if (totalPages > 1) {
+    pageNumbers.push(totalPages);
+  }
+
+  return (
+    <div className="pagination-container">
+      {currentPage !== 1 && (
+        <button
+          className="pagination-button"
+          onClick={() => handlePageChange(currentPage - 1)}
+          aria-label="Go to previous page"
+        >
+          Previous
+        </button>
+      )}
+      {pageNumbers.map((page, index) => (
+        <button
+          key={index}
+          className={`pagination-button ${currentPage === page ? 'active' : ''} ${page === '...' ? 'ellipsis' : ''}`}
+          onClick={() => typeof page === 'number' && handlePageChange(page)}
+          disabled={page === '...'}
+          aria-label={page === '...' ? 'More pages' : `Go to page ${page}`}
+          aria-current={currentPage === page ? 'page' : undefined}
+        >
+          {page}
+        </button>
+      ))}
+      {currentPage !== totalPages && (
+        <button
+          className="pagination-button"
+          onClick={() => handlePageChange(currentPage + 1)}
+          aria-label="Go to next page"
+        >
+          Next
+        </button>
+      )}
+    </div>
+  );
+};
+
   return (
     <div className="add-contact-page">
       <h2 className="add-contact-title">Contacts</h2>
-      {contacts.length === 0 ? (
+      {contacts.length === 0 && !searchQuery ? (
         <div className="add-contact-empty-box">
           <img
             src={folderIcon}
@@ -1719,7 +1820,7 @@ const getPhoneNumbersDisplay = (contact) => {
               </tr>
             </thead>
             <tbody>
-              {filteredContacts.map((contact) => (
+              {contacts.map((contact) => (
                 <tr key={contact.id} className="contact-item">
                   <td>
                     <input
@@ -1787,6 +1888,7 @@ const getPhoneNumbersDisplay = (contact) => {
               ))}
             </tbody>
           </table>
+          {!searchQuery && totalPages > 1 && renderPagination()}
         </>
       )}
 

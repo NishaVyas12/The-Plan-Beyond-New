@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/database");
-const uploadWithMulter = require("../utils/fileUpload");
 const {
   createUserContactsTable,
   createUploadedFilesTable,
@@ -11,6 +10,7 @@ const path = require("path");
 const fs = require("fs").promises;
 const { parsePhoneNumberFromString } = require("libphonenumber-js");
 const { checkAuth } = require("../middleware/auth");
+const { upload } = require("../middleware/multer");
 
 // Middleware to check authentication
 const auth = (req, res, next) => {
@@ -31,10 +31,7 @@ const validateContact = (contact) => {
   if (!contact.phone_number?.trim()) {
     return "At least one phone number is required.";
   }
-  // Allow phone numbers starting with '+' followed by digits, hyphens, or spaces
-  if (!contact.phone_number.match(/^\+\d[\d\s-]{6,}$/)) {
-    return "Phone number must start with '+' followed by at least 7 digits (may include spaces or hyphens).";
-  }
+  
   if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
     return "Invalid email format.";
   }
@@ -47,12 +44,11 @@ const validateContact = (contact) => {
   return null;
 };
 
-
 // POST /api/contacts/save
 router.post(
   ["/save", "/save-contacts"],
   auth,
-  uploadWithMulter,
+  upload, // Use 'upload' from multer.js
   async (req, res) => {
     let { contacts: contactsJson, source } = req.body;
     const files = {
@@ -152,9 +148,9 @@ router.post(
       }
 
       const connection = await pool.getConnection();
-      await connection.beginTransaction();
-
       try {
+        await connection.beginTransaction();
+
         for (const contact of contacts) {
           const validationError = validateContact(contact);
           if (validationError) {
@@ -243,7 +239,7 @@ router.post(
           // Handle profile image
           if (files.profileImage.length > 0) {
             const profileImage = files.profileImage[0];
-            contactImagePath = `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
+            contactImagePath = `/images/${req.session.userId}/${profileImage.filename}`;
             if (contactImagePath.length > 255) {
               throw new Error("Profile image path exceeds 255 characters");
             }
@@ -539,22 +535,22 @@ router.post(
 
             // Handle additional file uploads
             if (tempFiles.length > 0) {
+              if (!contactId) {
+                throw new Error("Contact ID is required for additional file uploads");
+              }
               const finalDir = path.join(
-                "uploads",
-                "send_file",
+                "images",
                 `${req.session.userId}`,
-                `${contactId}`
-              );
+                "sendfile"
+              ); // Store in images/user_id/sendfile/
               await fs.mkdir(finalDir, { recursive: true });
 
               for (const tempFile of tempFiles) {
                 const finalPath = path.join(finalDir, tempFile.filename);
                 await fs.rename(tempFile.originalPath, finalPath);
-                const filePath = `/uploads/send_file/${req.session.userId}/${contactId}/${tempFile.filename}`;
+                const filePath = `/images/${req.session.userId}/sendfile/${tempFile.filename}`;
                 if (filePath.length > 255) {
-                  throw new Error(
-                    `File path ${filePath} exceeds 255 characters`
-                  );
+                  throw new Error(`File path ${filePath} exceeds 255 characters`);
                 }
                 const [result] = await connection.query(
                   `INSERT INTO uploaded_files (user_id, contact_id, file_path, file_name)
@@ -571,9 +567,7 @@ router.post(
                   file_path: filePath,
                   file_name: tempFile.originalname,
                 });
-                console.log(
-                  `Saved file for contact ${contactId}: ${filePath}`
-                );
+                console.log(`Saved file for contact ${contactId}: ${filePath}`);
               }
             }
 
@@ -655,7 +649,7 @@ router.post(
               const profileImagePath = path.join(
                 __dirname,
                 "..",
-                `/uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
+                `/images/${req.session.userId}/${files.profileImage[0].filename}`
               );
               try {
                 await fs.unlink(profileImagePath);
@@ -681,23 +675,14 @@ router.post(
         }
 
         await connection.commit();
-        connection.release();
-
-        res.json({
-          success: true,
-          message: `${savedCount} contacts saved/updated, ${importantDatesAdded} important dates added.`,
-          contacts: savedContacts,
-          skipped,
-        });
       } catch (err) {
         await connection.rollback();
-        connection.release();
         // Clean up all files on transaction failure
         if (files.profileImage.length > 0) {
           const profileImagePath = path.join(
             __dirname,
             "..",
-            `/uploads/contact_image-${req.session.userId}/${files.profileImage[0].filename}`
+            `/images/${req.session.userId}/${files.profileImage[0].filename}`
           );
           try {
             await fs.unlink(profileImagePath);
@@ -719,7 +704,16 @@ router.post(
           }
         }
         throw err;
+      } finally {
+        connection.release();
       }
+
+      res.json({
+        success: true,
+        message: `${savedCount} contacts saved/updated, ${importantDatesAdded} important dates added.`,
+        contacts: savedContacts,
+        skipped,
+      });
     } catch (err) {
       console.error("Error saving contacts:", err);
       res.status(500).json({
@@ -731,7 +725,7 @@ router.post(
 );
 
 // POST /api/contacts/upload
-router.post("/upload", auth, uploadWithMulter, async (req, res) => {
+router.post("/upload", auth, upload, async (req, res) => {
   const { contactId } = req.body;
 
   if (!contactId) {
@@ -771,21 +765,17 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
     }
 
     const connection = await pool.getConnection();
-    await connection.beginTransaction();
-
     try {
+      await connection.beginTransaction();
+
       const uploadedFiles = [];
+      const finalDir = path.join("images", `${req.session.userId}`, "sendfile");
+      await fs.mkdir(finalDir, { recursive: true });
+
       for (const file of files) {
-        const finalDir = path.join(
-          "uploads",
-          "send_file",
-          `${req.session.userId}`,
-          `${contactId}`
-        );
-        await fs.mkdir(finalDir, { recursive: true });
         const finalPath = path.join(finalDir, file.filename);
         await fs.rename(file.path, finalPath);
-        const filePath = `/uploads/send_file/${req.session.userId}/${contactId}/${file.filename}`;
+        const filePath = `/images/${req.session.userId}/sendfile/${file.filename}`;
         if (filePath.length > 255) {
           throw new Error(`File path ${filePath} exceeds 255 characters`);
         }
@@ -804,7 +794,6 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
       }
 
       await connection.commit();
-      connection.release();
 
       res.json({
         success: true,
@@ -814,7 +803,6 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
       });
     } catch (err) {
       await connection.rollback();
-      connection.release();
       for (const file of files) {
         try {
           await fs.unlink(file.path);
@@ -823,6 +811,8 @@ router.post("/upload", auth, uploadWithMulter, async (req, res) => {
         }
       }
       throw err;
+    } finally {
+      connection.release();
     }
   } catch (err) {
     console.error("Error uploading files:", err);
@@ -856,13 +846,13 @@ router.get("/", checkAuth, async (req, res) => {
 
     // Get query parameters
     let page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
+    let limit = parseInt(req.query.limit) || 50;
     let offset = (page - 1) * limit;
     const filter = req.query.filter || "ALL";
     const search = req.query.search || "";
 
     // Determine if full fetch
-    const noPagination = !req.query.page && !req.query.limit && filter === "ALL" && !search;
+    const noPagination = !!search;
     if (noPagination) {
       limit = null;
       offset = null;
@@ -915,7 +905,7 @@ router.get("/", checkAuth, async (req, res) => {
       FROM ${tableName}
       ${whereClause}
       ORDER BY first_name ASC
-      ${!noPagination ? 'LIMIT ? OFFSET ?' : ''}
+      ${!noPagination ? "LIMIT ? OFFSET ?" : ""}
     `;
     const queryValues = !noPagination ? [...queryParams, limit, offset] : queryParams;
 
@@ -1027,9 +1017,9 @@ router.delete("/:id", auth, async (req, res) => {
     }
 
     const connection = await pool.getConnection();
-    await connection.beginTransaction();
-
     try {
+      await connection.beginTransaction();
+
       const [files] = await connection.query(
         `SELECT file_path FROM uploaded_files WHERE user_id = ? AND contact_id = ?`,
         [req.session.userId, id]
@@ -1093,7 +1083,6 @@ router.delete("/:id", auth, async (req, res) => {
       }
 
       await connection.commit();
-      connection.release();
 
       res.json({
         success: true,
@@ -1101,11 +1090,129 @@ router.delete("/:id", auth, async (req, res) => {
       });
     } catch (err) {
       await connection.rollback();
-      connection.release();
       throw err;
+    } finally {
+      connection.release();
     }
   } catch (err) {
     console.error("Error deleting contact:", err);
+    res.status(500).json({
+      success: false,
+      message: `Server error: ${err.message}`,
+    });
+  }
+});
+
+// POST /api/contacts/delete-contacts
+router.post("/delete-contacts", auth, async (req, res) => {
+  const { contactIds } = req.body;
+
+  if (!contactIds || !Array.isArray(contactIds) || contactIds.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid or empty contact IDs.",
+    });
+  }
+
+  try {
+    const tableName = `contacts_user_${req.session.userId}`;
+    const tableExists = await checkTableExists(tableName);
+    if (!tableExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Contact table not found.",
+      });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      for (const id of contactIds) {
+        const [existingContact] = await connection.query(
+          `SELECT id, contact_image, phone_number, phone_number1, phone_number2, phone_number3 FROM ${tableName} WHERE id = ? AND user_id = ?`,
+          [id, req.session.userId]
+        );
+        if (existingContact.length === 0) {
+          continue;
+        }
+
+        const [files] = await connection.query(
+          `SELECT file_path FROM uploaded_files WHERE user_id = ? AND contact_id = ?`,
+          [req.session.userId, id]
+        );
+
+        await connection.query(`DELETE FROM ${tableName} WHERE id = ?`, [id]);
+        await connection.query(
+          `DELETE FROM uploaded_files WHERE user_id = ? AND contact_id = ?`,
+          [req.session.userId, id]
+        );
+
+        if (existingContact[0].contact_image) {
+          const imagePath = path.join(
+            __dirname,
+            "..",
+            existingContact[0].contact_image
+          );
+          try {
+            await fs.unlink(imagePath);
+            console.log(`Deleted profile image: ${imagePath}`);
+          } catch (unlinkErr) {
+            console.error(`Error deleting profile image ${imagePath}:`, unlinkErr);
+          }
+        }
+
+        for (const file of files) {
+          const filePath = path.join(__dirname, "..", file.file_path);
+          try {
+            await fs.unlink(filePath);
+            console.log(`Deleted file: ${filePath}`);
+          } catch (unlinkErr) {
+            console.error(`Error deleting file ${filePath}:`, unlinkErr);
+          }
+        }
+
+        const importantDatesTableExists = await checkTableExists("important_dates");
+        if (importantDatesTableExists) {
+          await connection.query(
+            `DELETE FROM important_dates WHERE user_id = ? AND (phone_number IN (?, ?, ?, ?) OR phone_number1 IN (?, ?, ?, ?) OR phone_number2 IN (?, ?, ?, ?) OR phone_number3 IN (?, ?, ?, ?))`,
+            [
+              req.session.userId,
+              existingContact[0].phone_number || "",
+              existingContact[0].phone_number1 || "",
+              existingContact[0].phone_number2 || "",
+              existingContact[0].phone_number3 || "",
+              existingContact[0].phone_number || "",
+              existingContact[0].phone_number1 || "",
+              existingContact[0].phone_number2 || "",
+              existingContact[0].phone_number3 || "",
+              existingContact[0].phone_number || "",
+              existingContact[0].phone_number1 || "",
+              existingContact[0].phone_number2 || "",
+              existingContact[0].phone_number3 || "",
+              existingContact[0].phone_number || "",
+              existingContact[0].phone_number1 || "",
+              existingContact[0].phone_number2 || "",
+              existingContact[0].phone_number3 || "",
+            ]
+          );
+        }
+      }
+
+      await connection.commit();
+
+      res.json({
+        success: true,
+        message: `Successfully deleted ${contactIds.length} contact(s).`,
+      });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    console.error("Error deleting contacts:", err);
     res.status(500).json({
       success: false,
       message: `Server error: ${err.message}`,
@@ -1133,9 +1240,9 @@ router.delete("/files/:fileId", auth, async (req, res) => {
     const filePath = path.join(__dirname, "..", file[0].file_path);
 
     const connection = await pool.getConnection();
-    await connection.beginTransaction();
-
     try {
+      await connection.beginTransaction();
+
       await connection.query(
         `DELETE FROM uploaded_files WHERE id = ? AND user_id = ?`,
         [fileId, req.session.userId]
@@ -1149,7 +1256,6 @@ router.delete("/files/:fileId", auth, async (req, res) => {
       }
 
       await connection.commit();
-      connection.release();
 
       res.json({
         success: true,
@@ -1159,8 +1265,9 @@ router.delete("/files/:fileId", auth, async (req, res) => {
       });
     } catch (err) {
       await connection.rollback();
-      connection.release();
       throw err;
+    } finally {
+      connection.release();
     }
   } catch (err) {
     console.error("Error deleting file:", err);
@@ -1170,8 +1277,6 @@ router.delete("/files/:fileId", auth, async (req, res) => {
     });
   }
 });
-
-
 
 // POST /api/contacts/categorize-contacts
 router.post("/categorize-contacts", auth, async (req, res) => {
@@ -1271,9 +1376,9 @@ router.post("/categorize-contacts", auth, async (req, res) => {
     );
 
     const connection = await pool.getConnection();
-    await connection.beginTransaction();
-
     try {
+      await connection.beginTransaction();
+
       for (const contact of contacts) {
         const phoneNumbers = [
           contact.phone_number,
@@ -1389,7 +1494,6 @@ router.post("/categorize-contacts", auth, async (req, res) => {
       );
 
       await connection.commit();
-      connection.release();
 
       res.json({
         success: true,
@@ -1397,8 +1501,9 @@ router.post("/categorize-contacts", auth, async (req, res) => {
       });
     } catch (err) {
       await connection.rollback();
-      connection.release();
       throw err;
+    } finally {
+      connection.release();
     }
   } catch (err) {
     console.error("Error categorizing contacts:", err);

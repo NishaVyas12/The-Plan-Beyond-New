@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/database");
-const upload = require("../utils/fileUpload");
+const { upload } = require("../middleware/multer"); // Use provided Multer config
 const { checkTableExists, createUserContactsTable } = require("../database/schema");
-
+const path = require("path");
+const fs = require("fs").promises;
 
 const checkAuth = (req, res, next) => {
   if (!req.session || !req.session.userId) {
@@ -84,9 +85,13 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
     await connection.beginTransaction();
 
     try {
-      const imagePath = profileImage
-        ? `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`
-        : null;
+      let imagePath = null;
+      if (profileImage) {
+        imagePath = `/images/${req.session.userId}/${profileImage.filename}`;
+        if (imagePath.length > 255) {
+          throw new Error("Profile image path exceeds 255 characters");
+        }
+      }
 
       const [result] = await connection.query(
         `INSERT INTO nominees (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, category, relationship, nominee_type, profile_image)
@@ -159,7 +164,6 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
       }
 
       await connection.commit();
-      connection.release();
 
       const nominee = {
         id: result.insertId,
@@ -180,8 +184,18 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
       res.json({ success: true, nominee });
     } catch (err) {
       await connection.rollback();
-      connection.release();
+      if (profileImage) {
+        const profileImagePath = path.join(__dirname, "..", `/images/${req.session.userId}/${profileImage.filename}`);
+        try {
+          await fs.unlink(profileImagePath);
+          console.log(`Deleted profile image: ${profileImagePath}`);
+        } catch (unlinkErr) {
+          console.error(`Error cleaning up profile image ${profileImagePath}:`, unlinkErr);
+        }
+      }
       throw err;
+    } finally {
+      connection.release();
     }
   } catch (err) {
     sendError(res, 500, `Error adding nominee: ${err.message}`);
@@ -219,7 +233,7 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
 
   try {
     const [existing] = await pool.query(
-      `SELECT id, nominee_type FROM nominees WHERE id = ? AND user_id = ?`,
+      `SELECT id, nominee_type, profile_image FROM nominees WHERE id = ? AND user_id = ?`,
       [id, req.session.userId]
     );
     if (existing.length === 0) {
@@ -250,15 +264,29 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
     await connection.beginTransaction();
 
     try {
-      const imagePath = profileImage
-        ? `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`
-        : null;
+      let imagePath = existing[0].profile_image;
+      if (profileImage) {
+        // Delete existing profile image if it exists
+        if (existing[0].profile_image) {
+          const oldImagePath = path.join(__dirname, "..", existing[0].profile_image);
+          try {
+            await fs.unlink(oldImagePath);
+            console.log(`Deleted old profile image: ${oldImagePath}`);
+          } catch (unlinkErr) {
+            console.error(`Error deleting old profile image ${oldImagePath}:`, unlinkErr);
+          }
+        }
+        imagePath = `/images/${req.session.userId}/${profileImage.filename}`;
+        if (imagePath.length > 255) {
+          throw new Error("Profile image path exceeds 255 characters");
+        }
+      }
 
       await connection.query(
         `UPDATE nominees 
          SET first_name = ?, middle_name = ?, last_name = ?, email = ?, 
              phone_number = ?, phone_number1 = ?, phone_number2 = ?, 
-             relationship = ?, nominee_type = ?, category = ?, profile_image = COALESCE(?, profile_image)
+             relationship = ?, nominee_type = ?, category = ?, profile_image = ?
          WHERE id = ? AND user_id = ?`,
         [
           firstName,
@@ -291,7 +319,7 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
           `UPDATE ${tableName} SET 
            first_name = ?, middle_name = ?, last_name = ?, email = ?, 
            phone_number = ?, phone_number1 = ?, phone_number2 = ?, 
-           category = ?, relation = ?, is_nominee = ?, contact_image = COALESCE(?, contact_image)
+           category = ?, relation = ?, is_nominee = ?, contact_image = ?
            WHERE id = ?`,
           [
             firstName,
@@ -331,7 +359,6 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
       }
 
       await connection.commit();
-      connection.release();
 
       const nominee = {
         id,
@@ -345,14 +372,24 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
         category,
         relation,
         nominee_type: nomineeType,
-        profile_image: imagePath || existing[0].profile_image,
+        profile_image: imagePath,
       };
 
       res.json({ success: true, nominee });
     } catch (err) {
       await connection.rollback();
-      connection.release();
+      if (profileImage) {
+        const profileImagePath = path.join(__dirname, "..", `/images/${req.session.userId}/${profileImage.filename}`);
+        try {
+          await fs.unlink(profileImagePath);
+          console.log(`Deleted profile image: ${profileImagePath}`);
+        } catch (unlinkErr) {
+          console.error(`Error cleaning up profile image ${profileImagePath}:`, unlinkErr);
+        }
+      }
       throw err;
+    } finally {
+      connection.release();
     }
   } catch (err) {
     sendError(res, 500, `Error updating nominee: ${err.message}`);
@@ -371,7 +408,7 @@ router.delete("/nominees/:id", checkAuth, async (req, res) => {
 
   try {
     const [nominees] = await pool.query(
-      `SELECT email, phone_number, phone_number1, phone_number2 FROM nominees WHERE id = ? AND user_id = ?`,
+      `SELECT email, phone_number, phone_number1, phone_number2, profile_image FROM nominees WHERE id = ? AND user_id = ?`,
       [parsedNomineeId, userId]
     );
 
@@ -379,7 +416,7 @@ router.delete("/nominees/:id", checkAuth, async (req, res) => {
       return sendError(res, 404, "Nominee not found.");
     }
 
-    const { email, phone_number, phone_number1, phone_number2 } = nominees[0];
+    const { email, phone_number, phone_number1, phone_number2, profile_image } = nominees[0];
     const phoneNumbers = [phone_number, phone_number1, phone_number2].filter((num) => num);
 
     const connection = await pool.getConnection();
@@ -393,7 +430,6 @@ router.delete("/nominees/:id", checkAuth, async (req, res) => {
 
       if (nomineeResult.affectedRows === 0) {
         await connection.rollback();
-        connection.release();
         return sendError(res, 404, "Nominee not found.");
       }
 
@@ -401,13 +437,23 @@ router.delete("/nominees/:id", checkAuth, async (req, res) => {
       await createUserContactsTable(userId);
 
       await connection.query(
-        `UPDATE ${tableName} SET is_nominee = 0 
+        `UPDATE ${tableName} SET is_nominee = 0, contact_image = NULL 
          WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?)) AND is_nominee = 1`,
         [userId, email, phoneNumbers, phoneNumbers, phoneNumbers]
       );
 
+      // Delete profile image if it exists
+      if (profile_image) {
+        const imagePath = path.join(__dirname, "..", profile_image);
+        try {
+          await fs.unlink(imagePath);
+          console.log(`Deleted profile image: ${imagePath}`);
+        } catch (unlinkErr) {
+          console.error(`Error deleting profile image ${imagePath}:`, unlinkErr);
+        }
+      }
+
       await connection.commit();
-      connection.release();
 
       return res.json({
         success: true,
@@ -415,79 +461,12 @@ router.delete("/nominees/:id", checkAuth, async (req, res) => {
       });
     } catch (err) {
       await connection.rollback();
-      connection.release();
       throw err;
+    } finally {
+      connection.release();
     }
   } catch (err) {
     sendError(res, 500, `Error removing nominee: ${err.message}`);
-  }
-});
-
-router.post("/nominees/upload-image", checkAuth, upload, async (req, res) => {
-  const { nomineeId } = req.body;
-  const profileImage = req.files?.profileImage?.[0];
-
-  if (!nomineeId) {
-    return sendError(res, 400, "Nominee ID is required.");
-  }
-
-  if (!profileImage) {
-    return sendError(res, 400, "No profile image uploaded.");
-  }
-
-  try {
-    const [nominees] = await pool.query(
-      `SELECT id, email, phone_number, phone_number1, phone_number2 FROM nominees WHERE id = ? AND user_id = ?`,
-      [nomineeId, req.session.userId]
-    );
-    if (nominees.length === 0) {
-      return sendError(res, 404, "Nominee not found.");
-    }
-
-    const { email, phone_number, phone_number1, phone_number2 } = nominees[0];
-    const phoneNumbers = [phone_number, phone_number1, phone_number2].filter((num) => num);
-    const imagePath = `/uploads/contact_image-${req.session.userId}/${profileImage.filename}`;
-
-    const connection = await pool.getConnection();
-    await connection.beginTransaction();
-
-    try {
-      await connection.query(
-        `UPDATE nominees SET profile_image = ? WHERE id = ? AND user_id = ?`,
-        [imagePath, nomineeId, req.session.userId]
-      );
-
-      const tableName = `contacts_user_${req.session.userId}`;
-      await createUserContactsTable(req.session.userId);
-
-      const [existingContact] = await connection.query(
-        `SELECT id FROM ${tableName} 
-         WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,
-        [req.session.userId, email, phoneNumbers, phoneNumbers, phoneNumbers]
-      );
-
-      if (existingContact.length > 0) {
-        await connection.query(
-          `UPDATE ${tableName} SET contact_image = ? WHERE id = ?`,
-          [imagePath, existingContact[0].id]
-        );
-      }
-
-      await connection.commit();
-      connection.release();
-
-      res.json({
-        success: true,
-        message: "Nominee image uploaded successfully.",
-        imagePath,
-      });
-    } catch (err) {
-      await connection.rollback();
-      connection.release();
-      throw err;
-    }
-  } catch (err) {
-    sendError(res, 500, `Error uploading nominee image: ${err.message}`);
   }
 });
 

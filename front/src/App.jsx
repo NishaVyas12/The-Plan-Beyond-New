@@ -264,16 +264,7 @@ function App() {
               </>
             }
           />
-          <Route
-            path="/all-feedbacks"
-            element={
-              <>
-                <New_Header />
-                <FeedbacksPage />
-                <Footer />
-              </>
-            }
-          />
+          
           <Route
             path="/confirmation"
             element={
@@ -334,7 +325,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Routes>
-        <FeedbackWrapper />
+       
       </div>
     </Router>
   );

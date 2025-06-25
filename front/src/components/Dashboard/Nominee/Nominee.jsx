@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaCamera } from "react-icons/fa";
@@ -23,7 +24,6 @@ const NomineeCard = ({
   profileImage = "",
   onEdit,
   onRemove,
-  onImageUpload,
   isEmpty,
 }) => {
   const navigate = useNavigate();
@@ -39,52 +39,6 @@ const NomineeCard = ({
 
   const closePopup = () => {
     setIsPopupOpen(false);
-  };
-
-  const handleImageUpload = async (event) => {
-    if (isEmpty) return;
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("profileImage", file);
-    formData.append("nomineeId", id);
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees/upload-image`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        onImageUpload({ id, imagePath: data.imagePath });
-        toast.success("Profile image uploaded successfully!", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      } else {
-        if (response.status === 401) {
-          toast.error("Session expired. Please log in again.", {
-            position: "top-right",
-            autoClose: 3000,
-            onClose: () => navigate("/login"),
-          });
-        } else {
-          toast.error(data.message || "Failed to upload image.", {
-            position: "top-right",
-            autoClose: 3000,
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Error uploading image:", err);
-      toast.error("Error uploading image. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
   };
 
   useEffect(() => {
@@ -154,19 +108,7 @@ const NomineeCard = ({
                   }
                 : {}
             }
-          >
-            <label htmlFor={`avatar-upload-${id}`} className="nominee-add-avatar-upload">
-              <FaCamera className="nominee-add-camera-icon" />
-              <input
-                type="file"
-                id={`avatar-upload-${id}`}
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={handleImageUpload}
-                disabled={isEmpty}
-              />
-            </label>
-          </div>
+          />
         </div>
         <div className="nominee-add-details-add-nominee">
           <div className="nominee-add-name-relation-add-nominee">
@@ -393,7 +335,6 @@ const AddNomineeForm = ({
     }
   }, [editNominee, allContacts]);
 
-  // Added useEffect for Escape key handling
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && isOpen) {
@@ -515,6 +456,7 @@ const AddNomineeForm = ({
       "relation",
       formData.category === "Family" ? formData.relation : ""
     );
+    submitData.append("nomineeType", editNominee ? editNominee.type : "");
     if (formData.profileImage) {
       submitData.append("profileImage", formData.profileImage);
     }
@@ -991,7 +933,7 @@ const Nominee = () => {
       } else {
         if (response.status === 401) {
           toast.error("Session expired. Please log in again.", {
-            position: "",
+            position: "top-right",
             autoClose: 3000,
             onClose: () => navigate("/login"),
           });
@@ -1075,15 +1017,6 @@ const Nominee = () => {
     }
   };
 
-  const handleImageUpload = (data) => {
-    const { id, imagePath } = data;
-    setNominees((prev) =>
-      prev.map((nominee) =>
-        nominee.id === id ? { ...nominee, profile_image: imagePath } : nominee
-      )
-    );
-  };
-
   const handleCancel = () => {
     setEditNominee(null);
     setShowForm(false);
@@ -1158,7 +1091,6 @@ const Nominee = () => {
               profileImage={nominee.profile_image}
               onEdit={handleEditNominee}
               onRemove={handleRemoveNominee}
-              onImageUpload={handleImageUpload}
               isEmpty={!nominee.id}
             />
           ))}
