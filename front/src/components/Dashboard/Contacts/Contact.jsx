@@ -21,6 +21,7 @@ import VFCIcon from "../../../assets/images/Contact/VFC.svg";
 import cameraIcon from "../../../assets/images/dash_icon/camera.svg";
 import uploadFileIcon from "../../../assets/images/dash_icon/upload.svg";
 import debounce from 'lodash.debounce';
+import ViewContact from "./ViewContact";
 
 const OPENCAGE_API_KEY = "4cd0370d3cee487181c2d52e3fc22370";
 
@@ -82,16 +83,16 @@ const CategorizeDropdown = ({
       const contactIds = selectedContacts;
 
       const response = await axios.post(
-  `${import.meta.env.VITE_API_URL}/api/contacts/categorize-contacts`, // Added /contacts
-  {
-    contactIds,
-    category,
-    relation: finalRelation,
-    isAmbassador,
-    isNominee,
-  },
-  { withCredentials: true }
-);
+        `${import.meta.env.VITE_API_URL}/api/contacts/categorize-contacts`, // Added /contacts
+        {
+          contactIds,
+          category,
+          relation: finalRelation,
+          isAmbassador,
+          isNominee,
+        },
+        { withCredentials: true }
+      );
 
       if (response.data.success) {
         toast.success(`Contacts categorized successfully`, {
@@ -163,8 +164,8 @@ const CategorizeDropdown = ({
           categorizeData.relation === "Custom"
           ? customRelation
           : categorizeData.category === "Family"
-          ? categorizeData.relation
-          : "",
+            ? categorizeData.relation
+            : "",
         false,
         false
       );
@@ -189,7 +190,7 @@ const CategorizeDropdown = ({
   };
 
 
-  
+
 
   return (
     <div className="add-contact-action-dropdown" ref={categoryDropdownRef}>
@@ -204,9 +205,8 @@ const CategorizeDropdown = ({
           {categoryOptions.map((option) => (
             <div
               key={option}
-              className={`add-contact-categorize-option ${
-                categorizeData.category === option ? "selected" : ""
-              }`}
+              className={`add-contact-categorize-option ${categorizeData.category === option ? "selected" : ""
+                }`}
               onClick={() => handleCategorySelect(option)}
             >
               {option}
@@ -225,9 +225,8 @@ const CategorizeDropdown = ({
           {relationOptions.map((option) => (
             <div
               key={option}
-              className={`add-contact-categorize-option ${
-                categorizeData.relation === option ? "selected" : ""
-              }`}
+              className={`add-contact-categorize-option ${categorizeData.relation === option ? "selected" : ""
+                }`}
               onClick={() => handleRelationSelect(option)}
             >
               {option}
@@ -248,9 +247,8 @@ const CategorizeDropdown = ({
                 />
               </div>
               <div
-                className={`add-contact-categorize-option add-contact-confirm-custom ${
-                  !customRelation ? "disabled" : ""
-                }`}
+                className={`add-contact-categorize-option add-contact-confirm-custom ${!customRelation ? "disabled" : ""
+                  }`}
                 onClick={() => {
                   if (customRelation) {
                     setShowRoleDropdown(true);
@@ -421,33 +419,33 @@ const Contact = () => {
   };
 
   const fetchContacts = async (page = 1, filter = 'ALL', search = '') => {
-  try {
-    const params = { filter };
-    if (search) {
-      params.search = search;
-    } else {
-      params.page = page;
-      params.limit = limit;
-    }
+    try {
+      const params = { filter };
+      if (search) {
+        params.search = search;
+      } else {
+        params.page = page;
+        params.limit = limit;
+      }
 
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/contacts`, {
-      params,
-      withCredentials: true,
-    });
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/contacts`, {
+        params,
+        withCredentials: true,
+      });
 
-    if (response.data.success) {
-      setContacts(response.data.contacts || []);
-      setCurrentPage(search ? 1 : response.data.currentPage || 1);
-      setTotalPages(search ? 1 : response.data.totalPages || 1);
-      setTotal(response.data.total || 0);
-    } else {
-      toast.error(response.data.message, { autoClose: 3000 });
+      if (response.data.success) {
+        setContacts(response.data.contacts || []);
+        setCurrentPage(search ? 1 : response.data.currentPage || 1);
+        setTotalPages(search ? 1 : response.data.totalPages || 1);
+        setTotal(response.data.total || 0);
+      } else {
+        toast.error(response.data.message, { autoClose: 3000 });
+      }
+    } catch (err) {
+      console.error("Error fetching contacts:", err);
+      toast.error("Failed to fetch contacts", { autoClose: 3000 });
     }
-  } catch (err) {
-    console.error("Error fetching contacts:", err);
-    toast.error("Failed to fetch contacts", { autoClose: 3000 });
-  }
-};
+  };
 
   useEffect(() => {
     fetchContacts(currentPage, filter);
@@ -645,8 +643,7 @@ const Contact = () => {
                   return number;
                 } else {
                   toast.warn(
-                    `Phone number ${number} for ${
-                      contact.names?.[0]?.displayName || "Unknown"
+                    `Phone number ${number} for ${contact.names?.[0]?.displayName || "Unknown"
                     } is not in international format. Assuming +91.`,
                     { autoClose: 3000 }
                   );
@@ -661,19 +658,19 @@ const Contact = () => {
             const website = contact.urls?.[0]?.value || "";
             const birthday = contact.birthdays?.[0]?.date
               ? `${contact.birthdays[0].date.year || ""}-${String(
-                  contact.birthdays[0].date.month || ""
-                ).padStart(2, "0")}-${String(
-                  contact.birthdays[0].date.day || ""
-                ).padStart(2, "0")}`
+                contact.birthdays[0].date.month || ""
+              ).padStart(2, "0")}-${String(
+                contact.birthdays[0].date.day || ""
+              ).padStart(2, "0")}`
               : "";
             const anniversary = contact.events?.find(
               (e) => e.type === "anniversary"
             )?.date
               ? `${contact.events[0].date.year || ""}-${String(
-                  contact.events[0].date.month || ""
-                ).padStart(2, "0")}-${String(
-                  contact.events[0].date.day || ""
-                ).padStart(2, "0")}`
+                contact.events[0].date.month || ""
+              ).padStart(2, "0")}-${String(
+                contact.events[0].date.day || ""
+              ).padStart(2, "0")}`
               : "";
 
             return {
@@ -837,206 +834,206 @@ const Contact = () => {
   };
 
   const syncPhoneViaVcf = async (event) => {
-  const files = event.target.files;
-  if (!files || files.length === 0) {
-    setError("No file selected.");
-    toast.error("No file selected.", { autoClose: 3000 });
-    return;
-  }
-
-  const file = files[0]; // Process only the first file
-  try {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const vcfText = e.target.result;
-        console.log("Raw VCF file content:", vcfText.substring(0, 500));
-
-        // Normalize line endings and unfold lines
-        let normalizedText = vcfText.replace(/\r\n|\r/g, '\n');
-        normalizedText = normalizedText.replace(/\n\s+/g, '');
-
-        // Split into vCard entries
-        const vcfCards = normalizedText
-          .split('BEGIN:VCARD\n')
-          .filter(card => card.trim() && card.includes('END:VCARD'))
-          .map(card => `BEGIN:VCARD\n${card.trim()}`);
-
-        if (vcfCards.length === 0) {
-          throw new Error("No valid vCard entries found in the VCF file. Ensure each vCard has BEGIN:VCARD and END:VCARD.");
-        }
-
-        console.log(`Found ${vcfCards.length} vCard entries`);
-
-        let phoneContactsData = [];
-        for (let i = 0; i < vcfCards.length; i++) {
-          let cardText = vcfCards[i];
-          try {
-            console.log(`vCard ${i + 1} content:`, cardText);
-
-            // Extract version for validation
-            let versionMatch = cardText.match(/VERSION:([^\n\r]*)/i);
-            let version = versionMatch ? versionMatch[1].trim() : null;
-
-            // Handle invalid or missing version
-            if (!['2.1', '3.0', '4.0'].includes(version)) {
-              console.warn(`Invalid or missing version "${version || 'none'}" in vCard ${i + 1}. Defaulting to 3.0.`);
-              toast.warn(`vCard ${i + 1} has invalid version "${version || 'none'}". Proceeding with manual parsing.`, { autoClose: 3000 });
-              if (version) {
-                cardText = cardText.replace(/VERSION:[^\n\r]*/, 'VERSION:3.0');
-              } else {
-                cardText = cardText.replace('BEGIN:VCARD\n', 'BEGIN:VCARD\nVERSION:3.0\n');
-              }
-            }
-
-            // Manual parsing
-            const lines = cardText.split('\n');
-            let name = "", phoneNumbers = [], email = "", org = "", title = "", addressComponents = [], website = "", dateOfBirth = "", anniversary = "";
-            for (const line of lines) {
-              if (line.startsWith('FN:')) {
-                name = line.slice(3).trim();
-              } else if (line.startsWith('N:')) {
-                const nParts = line.slice(2).split(';').filter(part => part.trim());
-                name = nParts.reverse().join(" ").trim() || name;
-              } else if (line.startsWith('TEL')) {
-                const tel = line.split(':')[1]?.trim();
-                if (tel) phoneNumbers.push(tel);
-              } else if (line.startsWith('EMAIL')) {
-                email = line.split(':')[1]?.trim() || "";
-              } else if (line.startsWith('ORG')) {
-                org = line.split(':')[1]?.trim() || "";
-              } else if (line.startsWith('TITLE')) {
-                title = line.split(':')[1]?.trim() || "";
-              } else if (line.startsWith('ADR')) {
-                addressComponents = line.split(':')[1]?.split(';') || [];
-              } else if (line.startsWith('URL')) {
-                website = line.split(':')[1]?.trim() || "";
-              } else if (line.startsWith('BDAY')) {
-                dateOfBirth = line.split(':')[1]?.trim() || "";
-              } else if (line.startsWith('ANNIVERSARY')) {
-                anniversary = line.split(':')[1]?.trim() || "";
-              }
-            }
-
-            phoneNumbers = phoneNumbers
-              .filter((tel) => tel && typeof tel === "string" && tel.trim() !== "")
-              .map((tel) => {
-                let number = tel.replace(/[\s-()]/g, "");
-                const parsedNumber = parsePhoneNumberFromString(number);
-                if (parsedNumber && parsedNumber.isValid()) {
-                  return parsedNumber.formatInternational();
-                } else {
-                  return number;
-                }
-              });
-
-            if (phoneNumbers.length > 0) {
-              const nameParts = name.split(" ").filter(part => part.trim());
-              phoneContactsData.push({
-                first_name: nameParts[0] || "Unknown",
-                middle_name: nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "",
-                last_name: nameParts.length > 1 ? nameParts[nameParts.length - 1] : "",
-                company: org,
-                job_type: title,
-                website,
-                category: "",
-                relation: "",
-                phone_number: phoneNumbers[0] || "",
-                phone_number1: phoneNumbers[1] || "",
-                phone_number2: phoneNumbers[2] || "",
-                phone_number3: phoneNumbers[3] || "",
-                email,
-                flat_building_no: addressComponents[0] || "",
-                street: addressComponents[1] || "",
-                city: addressComponents[2] || "",
-                state: addressComponents[3] || "",
-                country: addressComponents[4] || "",
-                postal_code: addressComponents[5] || "",
-                date_of_birth: dateOfBirth,
-                anniversary: anniversary,
-                notes: "",
-                contact_image: "",
-                release_on_pass: false,
-                is_ambassador: false,
-                is_nominee: false,
-              });
-              console.log(`Successfully parsed vCard ${i + 1}`);
-            } else {
-              console.warn(`Skipping vCard ${i + 1}: No valid phone numbers found.`);
-              toast.warn(`Skipped vCard ${i + 1}: No valid phone numbers.`, { autoClose: 3000 });
-            }
-          } catch (parseErr) {
-            console.error(`Error parsing vCard ${i + 1}:`, parseErr.message, cardText);
-            toast.warn(`Skipped vCard ${i + 1}: ${parseErr.message}`, { autoClose: 3000 });
-            continue;
-          }
-        }
-
-        if (phoneContactsData.length === 0) {
-          toast.info("No valid contacts with phone numbers found in the VCF file.", { autoClose: 3000 });
-          toggleDrawer();
-          return;
-        }
-
-        const saveResponse = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/contacts/save`,
-          { contacts: phoneContactsData, source: "vcf" },
-          { withCredentials: true }
-        );
-
-        if (saveResponse.data.success) {
-          toast.success(`Successfully imported ${saveResponse.data.contacts?.length || 0} contacts`, { autoClose: 3000 });
-          if (saveResponse.data.skipped?.length > 0) {
-            saveResponse.data.skipped.forEach((skipped) => {
-              const contactName = [skipped.contact.first_name, skipped.contact.middle_name, skipped.contact.last_name]
-                .filter(Boolean)
-                .join(" ") || "Unknown";
-              toast.error(`Skipped ${contactName}: ${skipped.reason}`, { autoClose: 5000 });
-            });
-          }
-          await fetchContacts();
-          toggleDrawer();
-        } else {
-          throw new Error(saveResponse.data.message || "Failed to save contacts");
-        }
-      } catch (err) {
-        setError("Failed to process VCF file: " + err.message);
-        toast.error("Failed to process VCF file: " + err.message, { autoClose: 3000 });
-      }
-    };
-    reader.onerror = () => {
-      setError("Failed to read the VCF file.");
-      toast.error("Failed to read the VCF file.", { autoClose: 3000 });
-    };
-    reader.readAsText(file, 'UTF-8');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      setError("No file selected.");
+      toast.error("No file selected.", { autoClose: 3000 });
+      return;
     }
-  } catch (err) {
-    setError("Failed to sync VCF contacts: " + err.message);
-    toast.error("Failed to sync VCF contacts: " + err.message, { autoClose: 3000 });
-  }
-};
+
+    const file = files[0]; // Process only the first file
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const vcfText = e.target.result;
+          console.log("Raw VCF file content:", vcfText.substring(0, 500));
+
+          // Normalize line endings and unfold lines
+          let normalizedText = vcfText.replace(/\r\n|\r/g, '\n');
+          normalizedText = normalizedText.replace(/\n\s+/g, '');
+
+          // Split into vCard entries
+          const vcfCards = normalizedText
+            .split('BEGIN:VCARD\n')
+            .filter(card => card.trim() && card.includes('END:VCARD'))
+            .map(card => `BEGIN:VCARD\n${card.trim()}`);
+
+          if (vcfCards.length === 0) {
+            throw new Error("No valid vCard entries found in the VCF file. Ensure each vCard has BEGIN:VCARD and END:VCARD.");
+          }
+
+          console.log(`Found ${vcfCards.length} vCard entries`);
+
+          let phoneContactsData = [];
+          for (let i = 0; i < vcfCards.length; i++) {
+            let cardText = vcfCards[i];
+            try {
+              console.log(`vCard ${i + 1} content:`, cardText);
+
+              // Extract version for validation
+              let versionMatch = cardText.match(/VERSION:([^\n\r]*)/i);
+              let version = versionMatch ? versionMatch[1].trim() : null;
+
+              // Handle invalid or missing version
+              if (!['2.1', '3.0', '4.0'].includes(version)) {
+                console.warn(`Invalid or missing version "${version || 'none'}" in vCard ${i + 1}. Defaulting to 3.0.`);
+                toast.warn(`vCard ${i + 1} has invalid version "${version || 'none'}". Proceeding with manual parsing.`, { autoClose: 3000 });
+                if (version) {
+                  cardText = cardText.replace(/VERSION:[^\n\r]*/, 'VERSION:3.0');
+                } else {
+                  cardText = cardText.replace('BEGIN:VCARD\n', 'BEGIN:VCARD\nVERSION:3.0\n');
+                }
+              }
+
+              // Manual parsing
+              const lines = cardText.split('\n');
+              let name = "", phoneNumbers = [], email = "", org = "", title = "", addressComponents = [], website = "", dateOfBirth = "", anniversary = "";
+              for (const line of lines) {
+                if (line.startsWith('FN:')) {
+                  name = line.slice(3).trim();
+                } else if (line.startsWith('N:')) {
+                  const nParts = line.slice(2).split(';').filter(part => part.trim());
+                  name = nParts.reverse().join(" ").trim() || name;
+                } else if (line.startsWith('TEL')) {
+                  const tel = line.split(':')[1]?.trim();
+                  if (tel) phoneNumbers.push(tel);
+                } else if (line.startsWith('EMAIL')) {
+                  email = line.split(':')[1]?.trim() || "";
+                } else if (line.startsWith('ORG')) {
+                  org = line.split(':')[1]?.trim() || "";
+                } else if (line.startsWith('TITLE')) {
+                  title = line.split(':')[1]?.trim() || "";
+                } else if (line.startsWith('ADR')) {
+                  addressComponents = line.split(':')[1]?.split(';') || [];
+                } else if (line.startsWith('URL')) {
+                  website = line.split(':')[1]?.trim() || "";
+                } else if (line.startsWith('BDAY')) {
+                  dateOfBirth = line.split(':')[1]?.trim() || "";
+                } else if (line.startsWith('ANNIVERSARY')) {
+                  anniversary = line.split(':')[1]?.trim() || "";
+                }
+              }
+
+              phoneNumbers = phoneNumbers
+                .filter((tel) => tel && typeof tel === "string" && tel.trim() !== "")
+                .map((tel) => {
+                  let number = tel.replace(/[\s-()]/g, "");
+                  const parsedNumber = parsePhoneNumberFromString(number);
+                  if (parsedNumber && parsedNumber.isValid()) {
+                    return parsedNumber.formatInternational();
+                  } else {
+                    return number;
+                  }
+                });
+
+              if (phoneNumbers.length > 0) {
+                const nameParts = name.split(" ").filter(part => part.trim());
+                phoneContactsData.push({
+                  first_name: nameParts[0] || "Unknown",
+                  middle_name: nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "",
+                  last_name: nameParts.length > 1 ? nameParts[nameParts.length - 1] : "",
+                  company: org,
+                  job_type: title,
+                  website,
+                  category: "",
+                  relation: "",
+                  phone_number: phoneNumbers[0] || "",
+                  phone_number1: phoneNumbers[1] || "",
+                  phone_number2: phoneNumbers[2] || "",
+                  phone_number3: phoneNumbers[3] || "",
+                  email,
+                  flat_building_no: addressComponents[0] || "",
+                  street: addressComponents[1] || "",
+                  city: addressComponents[2] || "",
+                  state: addressComponents[3] || "",
+                  country: addressComponents[4] || "",
+                  postal_code: addressComponents[5] || "",
+                  date_of_birth: dateOfBirth,
+                  anniversary: anniversary,
+                  notes: "",
+                  contact_image: "",
+                  release_on_pass: false,
+                  is_ambassador: false,
+                  is_nominee: false,
+                });
+                console.log(`Successfully parsed vCard ${i + 1}`);
+              } else {
+                console.warn(`Skipping vCard ${i + 1}: No valid phone numbers found.`);
+                toast.warn(`Skipped vCard ${i + 1}: No valid phone numbers.`, { autoClose: 3000 });
+              }
+            } catch (parseErr) {
+              console.error(`Error parsing vCard ${i + 1}:`, parseErr.message, cardText);
+              toast.warn(`Skipped vCard ${i + 1}: ${parseErr.message}`, { autoClose: 3000 });
+              continue;
+            }
+          }
+
+          if (phoneContactsData.length === 0) {
+            toast.info("No valid contacts with phone numbers found in the VCF file.", { autoClose: 3000 });
+            toggleDrawer();
+            return;
+          }
+
+          const saveResponse = await axios.post(
+            `${import.meta.env.VITE_API_URL}/api/contacts/save`,
+            { contacts: phoneContactsData, source: "vcf" },
+            { withCredentials: true }
+          );
+
+          if (saveResponse.data.success) {
+            toast.success(`Successfully imported ${saveResponse.data.contacts?.length || 0} contacts`, { autoClose: 3000 });
+            if (saveResponse.data.skipped?.length > 0) {
+              saveResponse.data.skipped.forEach((skipped) => {
+                const contactName = [skipped.contact.first_name, skipped.contact.middle_name, skipped.contact.last_name]
+                  .filter(Boolean)
+                  .join(" ") || "Unknown";
+                toast.error(`Skipped ${contactName}: ${skipped.reason}`, { autoClose: 5000 });
+              });
+            }
+            await fetchContacts();
+            toggleDrawer();
+          } else {
+            throw new Error(saveResponse.data.message || "Failed to save contacts");
+          }
+        } catch (err) {
+          setError("Failed to process VCF file: " + err.message);
+          toast.error("Failed to process VCF file: " + err.message, { autoClose: 3000 });
+        }
+      };
+      reader.onerror = () => {
+        setError("Failed to read the VCF file.");
+        toast.error("Failed to read the VCF file.", { autoClose: 3000 });
+      };
+      reader.readAsText(file, 'UTF-8');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      setError("Failed to sync VCF contacts: " + err.message);
+      toast.error("Failed to sync VCF contacts: " + err.message, { autoClose: 3000 });
+    }
+  };
 
   const validateContact = (contact) => {
-  if (!contact.first_name?.trim()) {
-    return "First name is required.";
-  }
-  if (!contact.phone_number?.trim()) {
-    return "At least one phone number is required.";
-  }
-  
-  if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
-    return "Invalid email format.";
-  }
-  if (
-    contact.website &&
-    !/^(https?:\/\/)?[\w-]+(\.[\w-]+)+[/#?]?.*$/.test(contact.website)
-  ) {
-    return "Invalid website URL.";
-  }
-  return null;
-};
+    if (!contact.first_name?.trim()) {
+      return "First name is required.";
+    }
+    if (!contact.phone_number?.trim()) {
+      return "At least one phone number is required.";
+    }
+
+    if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+      return "Invalid email format.";
+    }
+    if (
+      contact.website &&
+      !/^(https?:\/\/)?[\w-]+(\.[\w-]+)+[/#?]?.*$/.test(contact.website)
+    ) {
+      return "Invalid website URL.";
+    }
+    return null;
+  };
 
   const validateFiles = (image, files) => {
     if (image) {
@@ -1211,45 +1208,45 @@ const Contact = () => {
   };
 
   const handleDeleteSelected = async () => {
-  if (selectedContacts.length === 0) {
-    toast.error("Please select at least one contact to delete.", {
-      autoClose: 3000,
-    });
-    return;
-  }
-
-  if (
-    !window.confirm(
-      `Are you sure you want to delete ${selectedContacts.length} contact(s)?`
-    )
-  ) {
-    return;
-  }
-
-  try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/contacts/delete-contacts`, // Updated endpoint
-      { contactIds: selectedContacts },
-      { withCredentials: true }
-    );
-
-    if (response.data.success) {
-      toast.success(response.data.message, { autoClose: 3000 });
-      await fetchContacts();
-      setSelectedContacts([]);
-    } else {
-      toast.error(response.data.message || "Failed to delete contacts.", {
+    if (selectedContacts.length === 0) {
+      toast.error("Please select at least one contact to delete.", {
         autoClose: 3000,
       });
+      return;
     }
-  } catch (err) {
-    console.error("Error deleting selected contacts:", err);
-    toast.error(
-      `Failed to delete contacts: ${err.response?.data?.message || err.message}`,
-      { autoClose: 3000 }
-    );
-  }
-};
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${selectedContacts.length} contact(s)?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/contacts/delete-contacts`, // Updated endpoint
+        { contactIds: selectedContacts },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.message, { autoClose: 3000 });
+        await fetchContacts();
+        setSelectedContacts([]);
+      } else {
+        toast.error(response.data.message || "Failed to delete contacts.", {
+          autoClose: 3000,
+        });
+      }
+    } catch (err) {
+      console.error("Error deleting selected contacts:", err);
+      toast.error(
+        `Failed to delete contacts: ${err.response?.data?.message || err.message}`,
+        { autoClose: 3000 }
+      );
+    }
+  };
 
   const handleEditContact = (contact) => {
     setEditingContactId(contact.id);
@@ -1291,9 +1288,9 @@ const Contact = () => {
           prev.map((c) =>
             c.id === contactId
               ? {
-                  ...c,
-                  uploaded_files: c.uploaded_files.filter((f) => f.id !== fileId),
-                }
+                ...c,
+                uploaded_files: c.uploaded_files.filter((f) => f.id !== fileId),
+              }
               : c
           )
         );
@@ -1468,18 +1465,18 @@ const Contact = () => {
   );
 
   const filteredContacts = contacts.filter((contact) =>
-  `${contact.first_name || ""} ${contact.last_name || ""}`
-    .toLowerCase()
-    .includes(searchQuery.toLowerCase())
-);
+    `${contact.first_name || ""} ${contact.last_name || ""}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
 
   const handleSelectAll = (e) => {
-  if (e.target.checked) {
-    setSelectedContacts(contacts.map((contact) => contact.id));
-  } else {
-    setSelectedContacts([]);
-  }
-};
+    if (e.target.checked) {
+      setSelectedContacts(contacts.map((contact) => contact.id));
+    } else {
+      setSelectedContacts([]);
+    }
+  };
 
   const handleSelectContact = (contactId) => {
     setSelectedContacts((prev) =>
@@ -1573,150 +1570,163 @@ const Contact = () => {
   };
 
   const getCategoryDisplay = (contact) => {
-  const parts = [];
-  if (contact.category) parts.push(contact.category);
-  if (contact.relation) parts.push(contact.relation);
-  if (contact.is_ambassador) parts.push("Ambassador");
-  if (contact.is_nominee) parts.push("Nominee");
-  return parts.length > 0 ? parts.join("/") : "N/A";
-};
+    const parts = [];
+    if (contact.category) parts.push(contact.category);
+    if (contact.relation) parts.push(contact.relation);
+    if (contact.is_ambassador) parts.push("Ambassador");
+    if (contact.is_nominee) parts.push("Nominee");
+    return parts.length > 0 ? parts.join("/") : "N/A";
+  };
 
-const getCategoryClass = (contact) => {
-  if (!contact.category) return "category-na";
-  if (
-    (contact.category === "Family" && contact.relation) ||
-    (contact.is_ambassador &&
-      ["Family", "Friends", "Work"].includes(contact.category)) ||
-    (contact.is_nominee &&
-      ["Family", "Friends", "Work"].includes(contact.category))
-  ) {
+  const getCategoryClass = (contact) => {
+    if (!contact.category) return "category-na";
     if (
-      (contact.category === "Family" && contact.relation === "Daughter" && contact.is_ambassador) ||
-      contact.is_ambassador ||
-      contact.is_nominee
+      (contact.category === "Family" && contact.relation) ||
+      (contact.is_ambassador &&
+        ["Family", "Friends", "Work"].includes(contact.category)) ||
+      (contact.is_nominee &&
+        ["Family", "Friends", "Work"].includes(contact.category))
     ) {
-      return "category-ambassador-nominee";
+      if (
+        (contact.category === "Family" && contact.relation === "Daughter" && contact.is_ambassador) ||
+        contact.is_ambassador ||
+        contact.is_nominee
+      ) {
+        return "category-ambassador-nominee";
+      }
+      if (contact.category === "Family" && contact.relation === "Son") {
+        return "category-family-son";
+      }
     }
-    if (contact.category === "Family" && contact.relation === "Son") {
-      return "category-family-son";
-    }
-  }
-  if (contact.category === "Friends") return "category-friends";
-  if (contact.category === "Work") return "category-work";
-  return "category-na";
-};
+    if (contact.category === "Friends") return "category-friends";
+    if (contact.category === "Work") return "category-work";
+    return "category-na";
+  };
 
-const getPhoneNumbersDisplay = (contact) => {
-  const numbers = [
-    contact.phone_number,
-    contact.phone_number1,
-    contact.phone_number2,
-    contact.phone_number3,
-  ].filter((num) => num && num.trim()); 
+  const getPhoneNumbersDisplay = (contact) => {
+    const numbers = [
+      contact.phone_number,
+      contact.phone_number1,
+      contact.phone_number2,
+      contact.phone_number3,
+    ].filter((num) => num && num.trim());
 
-  if (numbers.length === 0) return "N/A";
+    if (numbers.length === 0) return "N/A";
 
-  // Option 1: Comma-separated
-  //return numbers.join(", ");
+    // Option 1: Comma-separated
+    //return numbers.join(", ");
 
-  //Option 2: Line breaks (uncomment to use instead of comma-separated)
-  return numbers.map((num, index) => (
-    <span key={index} className="contact-phone ">
-      {num}
-      {index < numbers.length - 1 && <br />}
-    </span>
-  ));
-};
+    //Option 2: Line breaks (uncomment to use instead of comma-separated)
+    return numbers.map((num, index) => (
+      <span key={index} className="contact-phone ">
+        {num}
+        {index < numbers.length - 1 && <br />}
+      </span>
+    ));
+  };
 
-// Pagination handlers
+  // Pagination handlers
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
 
-const handleSearchChange = (e) => {
-  setSearchQuery(e.target.value);
-};
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
 
-// Debounced fetch for search
-const debouncedFetchContacts = debounce((query) => {
-  setCurrentPage(1);
-  fetchContacts(1, filter, query);
-}, 300);
+  // Debounced fetch for search
+  const debouncedFetchContacts = debounce((query) => {
+    setCurrentPage(1);
+    fetchContacts(1, filter, query);
+  }, 300);
 
-useEffect(() => {
-  debouncedFetchContacts(searchQuery);
-  return () => debouncedFetchContacts.cancel(); 
-}, [searchQuery, filter]);
+  useEffect(() => {
+    debouncedFetchContacts(searchQuery);
+    return () => debouncedFetchContacts.cancel();
+  }, [searchQuery, filter]);
 
 
   const renderPagination = () => {
-  const pageNumbers = [];
-  const maxPagesToShow = 3; 
-  const showEllipsisThreshold = maxPagesToShow + 2;
+    const pageNumbers = [];
+    const maxPagesToShow = 3;
+    const showEllipsisThreshold = maxPagesToShow + 2;
 
- 
-  pageNumbers.push(1);
 
-  let startPage = Math.max(2, currentPage - Math.floor(maxPagesToShow / 2));
-  let endPage = Math.min(totalPages - 1, startPage + maxPagesToShow - 1);
+    pageNumbers.push(1);
 
-  if (endPage === totalPages - 1) {
-    startPage = Math.max(2, endPage - maxPagesToShow + 1);
-  }
+    let startPage = Math.max(2, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxPagesToShow - 1);
 
-  if (startPage > 2) {
-    pageNumbers.push("...");
-  }
+    if (endPage === totalPages - 1) {
+      startPage = Math.max(2, endPage - maxPagesToShow + 1);
+    }
 
-  for (let i = startPage; i <= endPage; i++) {
-    pageNumbers.push(i);
-  }
+    if (startPage > 2) {
+      pageNumbers.push("...");
+    }
 
-  if (endPage < totalPages - 1) {
-    pageNumbers.push("...");
-  }
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
 
-  if (totalPages > 1) {
-    pageNumbers.push(totalPages);
-  }
+    if (endPage < totalPages - 1) {
+      pageNumbers.push("...");
+    }
 
-  return (
-    <div className="pagination-container">
-      {currentPage !== 1 && (
-        <button
-          className="pagination-button"
-          onClick={() => handlePageChange(currentPage - 1)}
-          aria-label="Go to previous page"
-        >
-          Previous
-        </button>
-      )}
-      {pageNumbers.map((page, index) => (
-        <button
-          key={index}
-          className={`pagination-button ${currentPage === page ? 'active' : ''} ${page === '...' ? 'ellipsis' : ''}`}
-          onClick={() => typeof page === 'number' && handlePageChange(page)}
-          disabled={page === '...'}
-          aria-label={page === '...' ? 'More pages' : `Go to page ${page}`}
-          aria-current={currentPage === page ? 'page' : undefined}
-        >
-          {page}
-        </button>
-      ))}
-      {currentPage !== totalPages && (
-        <button
-          className="pagination-button"
-          onClick={() => handlePageChange(currentPage + 1)}
-          aria-label="Go to next page"
-        >
-          Next
-        </button>
-      )}
-    </div>
-  );
-};
+    if (totalPages > 1) {
+      pageNumbers.push(totalPages);
+    }
+
+    return (
+      <div className="pagination-container">
+        {currentPage !== 1 && (
+          <button
+            className="pagination-button"
+            onClick={() => handlePageChange(currentPage - 1)}
+            aria-label="Go to previous page"
+          >
+            Previous
+          </button>
+        )}
+        {pageNumbers.map((page, index) => (
+          <button
+            key={index}
+            className={`pagination-button ${currentPage === page ? 'active' : ''} ${page === '...' ? 'ellipsis' : ''}`}
+            onClick={() => typeof page === 'number' && handlePageChange(page)}
+            disabled={page === '...'}
+            aria-label={page === '...' ? 'More pages' : `Go to page ${page}`}
+            aria-current={currentPage === page ? 'page' : undefined}
+          >
+            {page}
+          </button>
+        ))}
+        {currentPage !== totalPages && (
+          <button
+            className="pagination-button"
+            onClick={() => handlePageChange(currentPage + 1)}
+            aria-label="Go to next page"
+          >
+            Next
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const [isViewContactOpen, setIsViewContactOpen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
+
+  const handleViewContact = (contact) => {
+    setSelectedContact(contact);
+    setIsViewContactOpen(true);
+  };
+
+  const handleCloseViewContact = () => {
+    setIsViewContactOpen(false);
+    setSelectedContact(null);
+  };
 
   return (
     <div className="add-contact-page">
@@ -1773,7 +1783,7 @@ useEffect(() => {
                     </svg>
                   </button>
                 </div>
-               
+
               </div>
               <div className="contact-header-buttons">
                 <button
@@ -1851,13 +1861,13 @@ useEffect(() => {
                   </td>
                   <td>{contact.email || ""}</td>
                   <td className="contact-phone">
-  {getPhoneNumbersDisplay(contact)}
-</td>
+                    {getPhoneNumbersDisplay(contact)}
+                  </td>
                   <td>
-  <span className={`contact-category ${getCategoryClass(contact)}`}>
-    {getCategoryDisplay(contact)}
-  </span>
-</td>
+                    <span className={`contact-category ${getCategoryClass(contact)}`}>
+                      {getCategoryDisplay(contact)}
+                    </span>
+                  </td>
                   <td>
                     <div className="contact-action-container">
                       <button
@@ -1868,6 +1878,18 @@ useEffect(() => {
                       </button>
                       {dropdownOpen === contact.id && (
                         <div className="contact-action-dropdown">
+                          <button
+                            className="contact-action-option"
+                            onClick={() => handleViewContact(contact)}
+                          >
+                            View
+                          </button>
+                          {isViewContactOpen && selectedContact && (
+                            <ViewContact
+                              contact={selectedContact}
+                              onClose={handleCloseViewContact}
+                            />
+                          )}
                           <button
                             className="contact-action-option"
                             onClick={() => handleEditContact(contact)}
@@ -2482,7 +2504,6 @@ useEffect(() => {
                         </div>
                       )}
                     </div>
-                   
 
 
 
@@ -2491,37 +2512,38 @@ useEffect(() => {
 
 
 
-      {(additionalFiles.length > 0 || existingFiles.length > 0) && (
-        <div className="added-files">
-          {existingFiles.map((file) => (
-            <div key={file.id} className="added-file">
-              <span>{file.file_name}</span>
-              <button
-                className="remove-file-btn"
-                onClick={() => handleDeleteFile(file.id, editingContactId)}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-          {additionalFiles.map((file, index) => (
-            <div key={`new-${index}`} className="added-file">
-              <span>{file.name}</span>
-              <button
-                className="remove-file-btn"
-                onClick={() =>
-                  setAdditionalFiles(additionalFiles.filter((_, i) => i !== index))
-                }
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  </div>
-</div>
+
+                    {(additionalFiles.length > 0 || existingFiles.length > 0) && (
+                      <div className="added-files">
+                        {existingFiles.map((file) => (
+                          <div key={file.id} className="added-file">
+                            <span>{file.file_name}</span>
+                            <button
+                              className="remove-file-btn"
+                              onClick={() => handleDeleteFile(file.id, editingContactId)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {additionalFiles.map((file, index) => (
+                          <div key={`new-${index}`} className="added-file">
+                            <span>{file.name}</span>
+                            <button
+                              className="remove-file-btn"
+                              onClick={() =>
+                                setAdditionalFiles(additionalFiles.filter((_, i) => i !== index))
+                              }
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div className="add-contact-form-actions">
                 <button
