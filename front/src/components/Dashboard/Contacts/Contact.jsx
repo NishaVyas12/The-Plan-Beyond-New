@@ -46,6 +46,7 @@ const CategorizeDropdown = ({
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showRelationDropdown, setShowRelationDropdown] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showCustomRelationInput, setShowCustomRelationInput] = useState(false);
 
   const categoryOptions = ["Family", "Friends", "Work"];
   const relationOptions = [
@@ -84,7 +85,7 @@ const CategorizeDropdown = ({
       const contactIds = selectedContacts;
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/contacts/categorize-contacts`, // Added /contacts
+        `${import.meta.env.VITE_API_URL}/api/contacts/categorize-contacts`,
         {
           contactIds,
           category,
@@ -111,6 +112,7 @@ const CategorizeDropdown = ({
         setShowCategoryDropdown(false);
         setShowRelationDropdown(false);
         setShowRoleDropdown(false);
+        setShowCustomRelationInput(false);
       } else {
         toast.error(response.data.message, { autoClose: 3000 });
       }
@@ -135,21 +137,32 @@ const CategorizeDropdown = ({
     setShowRoleDropdown(
       category === "Family" || category === "Friends" || category === "Work"
     );
+    setShowCustomRelationInput(false);
   };
 
   const handleRelationSelect = (relation) => {
-    setCategorizeData((prev) => ({
-      ...prev,
-      relation: prev.category === "Family" ? relation : "",
-      isAmbassador: false,
-      isNominee: false,
-    }));
-    setShowRelationDropdown(true);
-    setShowRoleDropdown(false);
-    if (relation !== "Custom") {
-      setCustomRelation("");
+    if (relation === "Custom") {
+      setShowCustomRelationInput(!showCustomRelationInput);
+      if (showCustomRelationInput && customRelation) {
+        setCustomRelation("");
+      }
+    } else {
+      setCategorizeData((prev) => ({
+        ...prev,
+        relation: prev.category === "Family" ? relation : "",
+        isAmbassador: false,
+        isNominee: false,
+      }));
+      setShowRelationDropdown(true);
       setShowRoleDropdown(true);
+      setCustomRelation("");
+      setShowCustomRelationInput(false);
     }
+  };
+
+  const handleCustomRelationChange = (e) => {
+    const value = e.target.value;
+    setCustomRelation(value);
   };
 
   const handleRoleChange = (role) => {
@@ -203,8 +216,7 @@ const CategorizeDropdown = ({
           {categoryOptions.map((option) => (
             <div
               key={option}
-              className={`add-contact-categorize-option ${categorizeData.category === option ? "selected" : ""
-                }`}
+              className={`add-contact-categorize-option ${categorizeData.category === option ? "selected" : ""}`}
               onClick={() => handleCategorySelect(option)}
             >
               {option}
@@ -221,46 +233,31 @@ const CategorizeDropdown = ({
           ref={relationDropdownRef}
         >
           {relationOptions.map((option) => (
-            <div
-              key={option}
-              className={`add-contact-categorize-option ${categorizeData.relation === option ? "selected" : ""
-                }`}
-              onClick={() => handleRelationSelect(option)}
-            >
-              {option}
-              {categorizeData.relation === option && (
-                <span className="add-contact-checkmark">✔</span>
-              )}
-            </div>
-          ))}
-          {categorizeData.relation === "Custom" && (
-            <div className="add-contact-custom-relation-container">
-              <div className="add-contact-form-group">
+            <div key={option}>
+              <label className="filter-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={
+                    option === "Custom"
+                      ? showCustomRelationInput
+                      : categorizeData.relation === option
+                  }
+                  onChange={() => handleRelationSelect(option)}
+                />
+                {option}
+              </label>
+              {option === "Custom" && showCustomRelationInput && (
                 <input
                   type="text"
                   className="add-contact-form-input"
                   placeholder="Enter custom relation"
                   value={customRelation}
-                  onChange={(e) => setCustomRelation(e.target.value)}
+                  onChange={handleCustomRelationChange}
+                  autoFocus
                 />
-              </div>
-              <div
-                className={`add-contact-categorize-option add-contact-confirm-custom ${!customRelation ? "disabled" : ""
-                  }`}
-                onClick={() => {
-                  if (customRelation) {
-                    setShowRoleDropdown(true);
-                  } else {
-                    toast.error("Please enter a custom relation.", {
-                      autoClose: 3000,
-                    });
-                  }
-                }}
-              >
-                Confirm
-              </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
       )}
       {showRoleDropdown &&
@@ -269,7 +266,7 @@ const CategorizeDropdown = ({
           categorizeData.category === "Work") &&
         (categorizeData.category !== "Family" ||
           categorizeData.relation ||
-          customRelation) && (
+          (categorizeData.relation === "Custom" && customRelation)) && (
           <div
             className="add-contact-categorize-options add-contact-sub-options add-contact-sub-sub-options"
             ref={roleDropdownRef}
@@ -420,49 +417,140 @@ const Contact = () => {
     doc: "application/msword",
     docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   };
-
-  const fetchContacts = async (page = 1, filterType = 'ALL', search = '', filters = {}) => {
+  const fetchContacts = async (page = 1, filterType = "ALL", search = "", filters = {}) => {
     try {
       const params = { filter: filterType };
-      if (search) {
-        params.search = search;
+
+      // Validate inputs
+      if (typeof search !== "string") {
+        console.warn("Invalid search query:", search);
+        params.search = "";
+      } else if (search.trim()) {
+        params.search = search.trim();
+      }
+
+      // Validate filters
+      const safeFilters = {
+        categories: Array.isArray(filters.categories) ? filters.categories.filter(cat => typeof cat === "string") : [],
+        relations: Array.isArray(filters.relations) ? filters.relations.filter(rel => typeof rel === "string") : [],
+        sharedAfterPassAway: !!filters.sharedAfterPassAway,
+      };
+
+      if (
+        safeFilters.categories.length > 0 ||
+        safeFilters.relations.length > 0 ||
+        safeFilters.sharedAfterPassAway
+      ) {
+        params.all = true; // Fetch all contacts for filters
       } else {
-        params.page = page;
-        params.limit = limit;
+        params.page = Number.isInteger(page) && page > 0 ? page : 1;
+        params.limit = Number.isInteger(limit) && limit > 0 ? limit : 20;
       }
-      // Add filter options
-      if (filters.categories?.length > 0) {
-        params.categories = filters.categories.join(",");
+
+      // Separate predefined categories and custom category
+      const predefinedCategories = safeFilters.categories.filter((cat) =>
+        ["Family", "Friends", "Work"].includes(cat)
+      );
+      const customCategory = safeFilters.categories.find(
+        (cat) => !["Family", "Friends", "Work"].includes(cat)
+      );
+
+      if (predefinedCategories.length > 0) {
+        params.categories = predefinedCategories.join(",");
       }
-      if (filters.relations?.length > 0) {
-        params.relations = filters.relations.join(",");
+      if (customCategory) {
+        params.category_like = customCategory.trim();
       }
-      if (filters.sharedAfterPassAway) {
-        params.release_on_pass = 1; // API expects 1 for true
+
+      // Separate predefined relations and custom relation
+      const predefinedRelations = safeFilters.relations.filter((rel) =>
+        [
+          "Son",
+          "Daughter",
+          "Wife",
+          "Husband",
+          "Father",
+          "Mother",
+          "Brother",
+          "Sister",
+          "Custom",
+        ].includes(rel)
+      );
+      const customRelation = safeFilters.relations.find(
+        (rel) =>
+          ![
+            "Son",
+            "Daughter",
+            "Wife",
+            "Husband",
+            "Father",
+            "Mother",
+            "Brother",
+            "Sister",
+            "Custom",
+          ].includes(rel)
+      );
+
+      if (predefinedRelations.length > 0) {
+        params.relations = predefinedRelations.join(",");
       }
+      if (customRelation) {
+        params.relation_like = customRelation.trim();
+      }
+
+      if (safeFilters.sharedAfterPassAway) {
+        params.release_on_pass = 1;
+      }
+
+      console.log("Fetching contacts with params:", params);
 
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/contacts`, {
         params,
         withCredentials: true,
       });
 
+      console.log("API response:", response.data);
+
       if (response.data.success) {
-        setContacts(response.data.contacts || []);
-        setCurrentPage(search ? 1 : response.data.currentPage || 1);
-        setTotalPages(search ? 1 : response.data.totalPages || 1);
-        setTotal(response.data.total || 0);
+        setContacts(Array.isArray(response.data.contacts) ? response.data.contacts : []);
+        setCurrentPage(
+          params.search || safeFilters.categories.length > 0
+            ? 1
+            : Number.isInteger(response.data.currentPage) && response.data.currentPage > 0
+              ? response.data.currentPage
+              : 1
+        );
+        setTotalPages(
+          params.search || safeFilters.categories.length > 0
+            ? 1
+            : Number.isInteger(response.data.totalPages) && response.data.totalPages > 0
+              ? response.data.totalPages
+              : 1
+        );
+        setTotal(Number.isInteger(response.data.total) ? response.data.total : 0);
       } else {
-        toast.error(response.data.message, { autoClose: 3000 });
+        console.error("API error message:", response.data.message);
+        toast.error(response.data.message || "Failed to fetch contacts", { autoClose: 3000 });
       }
     } catch (err) {
-      console.error('Error fetching contacts:', err);
-      toast.error('Failed to fetch contacts', { autoClose: 3000 });
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.statusText ||
+        err.message ||
+        "Unknown error";
+      console.error("Error fetching contacts:", {
+        error: errorMessage,
+        status: err.response?.status,
+        params,
+        response: err.response?.data,
+      });
+      toast.error(`Failed to fetch contacts: ${errorMessage}`, { autoClose: 3000 });
     }
   };
-
   useEffect(() => {
-    fetchContacts(currentPage, filter);
-  }, [currentPage, filter]);
+    debouncedFetchContacts(searchQuery, filterOptions);
+    return () => debouncedFetchContacts.cancel();
+  }, [searchQuery, filterOptions]);
 
   const fetchLocationData = async (latitude, longitude) => {
     try {
@@ -1493,11 +1581,20 @@ const Contact = () => {
       .includes(searchQuery.toLowerCase());
     const matchesCategory =
       filterOptions.categories.length === 0 ||
-      filterOptions.categories.includes(contact.category);
+      filterOptions.categories.some(cat => {
+        if (["Family", "Friends", "Work"].includes(cat)) {
+          return contact.category === cat;
+        }
+        return contact.category?.toLowerCase().includes(cat.toLowerCase());
+      });
     const matchesRelation =
       filterOptions.relations.length === 0 ||
-      filterOptions.relations.includes(contact.relation) ||
-      (filterOptions.relations.includes("Custom") && contact.relation && !relationOptions.includes(contact.relation));
+      filterOptions.relations.some(rel => {
+        if (relationOptions.includes(rel)) {
+          return contact.relation === rel;
+        }
+        return contact.relation?.toLowerCase().includes(rel.toLowerCase());
+      });
     const matchesSharedAfterPassAway =
       !filterOptions.sharedAfterPassAway || contact.release_on_pass === 1;
     return matchesSearch && matchesCategory && matchesRelation && matchesSharedAfterPassAway;
@@ -1844,10 +1941,14 @@ const Contact = () => {
     option.toLowerCase().includes(jobTypeSearch.toLowerCase())
   );
 
+  const isFilterActive = filterOptions.categories.length > 0 ||
+    filterOptions.relations.length > 0 ||
+    filterOptions.sharedAfterPassAway;
+
   return (
     <div className="add-contact-page">
       <h2 className="add-contact-title">Contacts</h2>
-      {contacts.length === 0 && !searchQuery ? (
+      {contacts.length === 0 && !searchQuery && !isFilterActive ? (
         <div className="add-contact-empty-box">
           <img
             src={folderIcon}
@@ -1911,7 +2012,7 @@ const Contact = () => {
                   setSelectedContacts={setSelectedContacts}
                   fetchContacts={fetchContacts}
                   categoryDropdownRef={categoryDropdownRef}
-                  relationDropdownRef={categoryDropdownRef}
+                  relationDropdownRef={relationDropdownRef}
                   roleDropdownRef={roleDropdownRef}
                 />
                 <button className="contact-add-button" onClick={toggleDrawer}>

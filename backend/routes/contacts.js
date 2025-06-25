@@ -850,9 +850,15 @@ router.get("/", checkAuth, async (req, res) => {
     let offset = (page - 1) * limit;
     const filter = req.query.filter || "ALL";
     const search = req.query.search || "";
+    const categories = req.query.categories ? req.query.categories.split(",") : [];
+    const category_like = req.query.category_like || "";
+    const relations = req.query.relations ? req.query.relations.split(",") : [];
+    const relation_like = req.query.relation_like || "";
+    const release_on_pass = req.query.release_on_pass === "1" ? 1 : 0;
+    const all = req.query.all === "true";
 
     // Determine if full fetch
-    const noPagination = !!search;
+    const noPagination = all || !!search || categories.length > 0 || category_like || relations.length > 0 || relation_like || release_on_pass;
     if (noPagination) {
       limit = null;
       offset = null;
@@ -878,6 +884,41 @@ router.get("/", checkAuth, async (req, res) => {
       }
     }
 
+    // Apply categories
+    if (categories.length > 0) {
+      whereClause += whereClause ? " AND" : " WHERE";
+      whereClause += ` category IN (${categories.map(() => "?").join(",")})`;
+      queryParams.push(...categories);
+    }
+
+    // Apply custom category
+    if (category_like) {
+      whereClause += whereClause ? " AND" : " WHERE";
+      whereClause += " category LIKE ?";
+      queryParams.push(`%${category_like}%`);
+    }
+
+    // Apply relations
+    if (relations.length > 0) {
+      whereClause += whereClause ? " AND" : " WHERE";
+      whereClause += ` relation IN (${relations.map(() => "?").join(",")})`;
+      queryParams.push(...relations);
+    }
+
+    // Apply custom relation
+    if (relation_like) {
+      whereClause += whereClause ? " AND" : " WHERE";
+      whereClause += " relation LIKE ?";
+      queryParams.push(`%${relation_like}%`);
+    }
+
+    // Apply release_on_pass
+    if (release_on_pass) {
+      whereClause += whereClause ? " AND" : " WHERE";
+      whereClause += " release_on_pass = ?";
+      queryParams.push(1);
+    }
+
     // Apply search
     if (search) {
       whereClause += whereClause ? " AND" : " WHERE";
@@ -892,7 +933,7 @@ router.get("/", checkAuth, async (req, res) => {
         `SELECT COUNT(*) AS total FROM ${tableName}${whereClause}`,
         queryParams
       );
-      total = result.total;
+      total = parseInt(result.total, 10);
     }
 
     // Fetch contacts with all fields
@@ -967,9 +1008,9 @@ router.get("/", checkAuth, async (req, res) => {
         anniversary: contact.anniversary || "",
         notes: contact.notes || "",
         contact_image: contact.contact_image || "",
-        release_on_pass: contact.release_on_pass || false,
-        is_ambassador: contact.is_ambassador || false,
-        is_nominee: contact.is_nominee || false,
+        release_on_pass: !!contact.release_on_pass,
+        is_ambassador: !!contact.is_ambassador,
+        is_nominee: !!contact.is_nominee,
         created_at: contact.created_at,
         uploaded_files: filesByContactId[contact.id] || [],
       };
