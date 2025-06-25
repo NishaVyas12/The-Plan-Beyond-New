@@ -34,6 +34,7 @@ const Profile = () => {
   const [successMessage, setSuccessMessage] = useState(null);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showDeleteFingerprintConfirm, setShowDeleteFingerprintConfirm] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -401,15 +402,20 @@ const Profile = () => {
       if (response.data.success) {
         toast.success(response.data.message);
         setIsFingerprintRegistered(false);
+        setShowDeleteFingerprintConfirm(false); // Close the popup
       } else {
         toast.error(`Failed to delete ${type === "face" ? "Face ID" : "Fingerprint"}.`);
       }
     } catch (err) {
       toast.error(
         err.response?.data?.message ||
-          `Error deleting ${type === "face" ? "Face ID" : "Fingerprint"}.`
+        `Error deleting ${type === "face" ? "Face ID" : "Fingerprint"}.`
       );
     }
+  };
+
+  const handleShowDeleteFingerprintConfirm = () => {
+    setShowDeleteFingerprintConfirm(true);
   };
 
   return (
@@ -428,43 +434,43 @@ const Profile = () => {
         <div className="profile-left">
           <div className="profile-card">
             <div className="profile-image-container" style={{ position: "relative" }}>
-  {imagePreview || profile.profile_image ? (
-    <img
-      src={imagePreview || `${import.meta.env.VITE_API_URL}${profile.profile_image}`}
-      alt="Profile"
-      className="profile-image"
-    />
-  ) : (
-    <div className="profile-initials">
-      {profile.first_name && profile.last_name
-        ? `${profile.first_name[0]}${profile.last_name[0]}`
-        : "NA"}
-    </div>
-  )}
-  <label
-    htmlFor="profile-upload"
-    style={{
-      cursor: imageUploading ? "progress" : "pointer",
-      position: "absolute",
-      bottom: 0,
-      right: 0,
-    }}
-  >
-    {imageUploading ? (
-      <span className="profile-upload-loading">Uploading...</span>
-    ) : (
-      <img src={Camera} className="profile-edit-icon" alt="Upload" />
-    )}
-    <input
-      type="file"
-      id="profile-upload"
-      accept="image/*"
-      style={{ display: "none" }}
-      onChange={handleImageChange}
-      disabled={imageUploading}
-    />
-  </label>
-</div>
+              {imagePreview || profile.profile_image ? (
+                <img
+                  src={imagePreview || `${import.meta.env.VITE_API_URL}${profile.profile_image}`}
+                  alt="Profile"
+                  className="profile-image"
+                />
+              ) : (
+                <div className="profile-initials">
+                  {profile.first_name && profile.last_name
+                    ? `${profile.first_name[0]}${profile.last_name[0]}`
+                    : "NA"}
+                </div>
+              )}
+              <label
+                htmlFor="profile-upload"
+                style={{
+                  cursor: imageUploading ? "progress" : "pointer",
+                  position: "absolute",
+                  bottom: 0,
+                  right: 0,
+                }}
+              >
+                {imageUploading ? (
+                  <span className="profile-upload-loading">Uploading...</span>
+                ) : (
+                  <img src={Camera} className="profile-edit-icon" alt="Upload" />
+                )}
+                <input
+                  type="file"
+                  id="profile-upload"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleImageChange}
+                  disabled={imageUploading}
+                />
+              </label>
+            </div>
             <h3 className="profile-name">{`${profile.first_name} ${profile.middle_name} ${profile.last_name}`}</h3>
             <p className="profile-email">{profile.email || "N/A"}</p>
             {/* <p className="profile-joined">Joined: Aug 2023</p> */}
@@ -811,7 +817,7 @@ const Profile = () => {
                 className="profile-fingerprint"
                 onClick={() =>
                   isFingerprintRegistered
-                    ? handleBiometricDeletion("fingerprint")
+                    ? handleShowDeleteFingerprintConfirm()
                     : handleBiometricRegistration("fingerprint")
                 }
               >
@@ -822,6 +828,36 @@ const Profile = () => {
                 />
                 {isFingerprintRegistered ? "Delete Fingerprint" : "Add Fingerprint"}
               </p>
+            )}
+            {showDeleteFingerprintConfirm && (
+              <div className="delete-fingerprint-confirm-popup-backdrop">
+                <div className="delete-fingerprint-confirm-popup">
+                  <button
+                    className="delete-fingerprint-confirm-close"
+                    onClick={() => setShowDeleteFingerprintConfirm(false)}
+                  >
+                    ×
+                  </button>
+                  <h3 className="delete-fingerprint-confirm-heading">Confirm Deletion</h3>
+                  <p className="delete-fingerprint-confirm-message">
+                    Are you sure you want to delete your fingerprint? This action cannot be undone.
+                  </p>
+                  <div className="delete-fingerprint-confirm-actions">
+                    <button
+                      className="profile-cancel-btn"
+                      onClick={() => setShowDeleteFingerprintConfirm(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="profile-save-btn delete"
+                      onClick={() => handleBiometricDeletion("fingerprint")}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
             <ToastContainer
               position="top-right"

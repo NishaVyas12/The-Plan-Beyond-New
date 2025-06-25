@@ -22,6 +22,7 @@ import cameraIcon from "../../../assets/images/dash_icon/camera.svg";
 import uploadFileIcon from "../../../assets/images/dash_icon/upload.svg";
 import debounce from 'lodash.debounce';
 import ViewContact from "./ViewContact";
+import FilterDropdown from "./FilterDropdown";
 
 const OPENCAGE_API_KEY = "4cd0370d3cee487181c2d52e3fc22370";
 
@@ -189,9 +190,6 @@ const CategorizeDropdown = ({
     );
   };
 
-
-
-
   return (
     <div className="add-contact-action-dropdown" ref={categoryDropdownRef}>
       <button
@@ -331,6 +329,11 @@ const Contact = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState('ALL');
+  const [filterOptions, setFilterOptions] = useState({
+    categories: [],
+    relations: [],
+    sharedAfterPassAway: false,
+  });
   const [limit] = useState(20);
   const [customContact, setCustomContact] = useState({
     first_name: "",
@@ -418,14 +421,24 @@ const Contact = () => {
     docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   };
 
-  const fetchContacts = async (page = 1, filter = 'ALL', search = '') => {
+  const fetchContacts = async (page = 1, filterType = 'ALL', search = '', filters = {}) => {
     try {
-      const params = { filter };
+      const params = { filter: filterType };
       if (search) {
         params.search = search;
       } else {
         params.page = page;
         params.limit = limit;
+      }
+      // Add filter options
+      if (filters.categories?.length > 0) {
+        params.categories = filters.categories.join(",");
+      }
+      if (filters.relations?.length > 0) {
+        params.relations = filters.relations.join(",");
+      }
+      if (filters.sharedAfterPassAway) {
+        params.release_on_pass = 1; // API expects 1 for true
       }
 
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/contacts`, {
@@ -442,8 +455,8 @@ const Contact = () => {
         toast.error(response.data.message, { autoClose: 3000 });
       }
     } catch (err) {
-      console.error("Error fetching contacts:", err);
-      toast.error("Failed to fetch contacts", { autoClose: 3000 });
+      console.error('Error fetching contacts:', err);
+      toast.error('Failed to fetch contacts', { autoClose: 3000 });
     }
   };
 
@@ -1183,17 +1196,24 @@ const Contact = () => {
     }
   };
 
-  const handleDeleteContact = async (contactId) => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [contactIdToDelete, setContactIdToDelete] = useState(null);
+
+  const handleDeleteContact = (contactId) => {
+    setContactIdToDelete(contactId);
+    setShowDeleteConfirm(true);
+  };
+  const confirmDeleteContact = async () => {
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/contacts/${contactId}`,
+        `${import.meta.env.VITE_API_URL}/api/contacts/${contactIdToDelete}`,
         {
           withCredentials: true,
         }
       );
       if (response.data.success) {
         toast.success(response.data.message, { autoClose: 3000 });
-        setContacts(contacts.filter((contact) => contact.id !== contactId));
+        setContacts(contacts.filter((contact) => contact.id !== contactIdToDelete));
       } else {
         throw new Error(response.data.message);
       }
@@ -1204,6 +1224,8 @@ const Contact = () => {
         autoClose: 3000,
       });
     }
+    setShowDeleteConfirm(false);
+    setContactIdToDelete(null);
     setDropdownOpen(null);
   };
 
@@ -1259,6 +1281,7 @@ const Contact = () => {
     setProfileImageFile(null);
     setRelationSearch(contact.relation || "");
     setCategorySearch(contact.category || "");
+    setJobTypeSearch(contact.job_type || "");
     setCustomRelation(contact.relation || "");
     setPhoneCount(
       1 +
@@ -1464,11 +1487,21 @@ const Contact = () => {
     option.toLowerCase().includes(categorySearch.toLowerCase())
   );
 
-  const filteredContacts = contacts.filter((contact) =>
-    `${contact.first_name || ""} ${contact.last_name || ""}`
+  const filteredContacts = contacts.filter((contact) => {
+    const matchesSearch = `${contact.first_name || ""} ${contact.last_name || ""}`
       .toLowerCase()
-      .includes(searchQuery.toLowerCase())
-  );
+      .includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      filterOptions.categories.length === 0 ||
+      filterOptions.categories.includes(contact.category);
+    const matchesRelation =
+      filterOptions.relations.length === 0 ||
+      filterOptions.relations.includes(contact.relation) ||
+      (filterOptions.relations.includes("Custom") && contact.relation && !relationOptions.includes(contact.relation));
+    const matchesSharedAfterPassAway =
+      !filterOptions.sharedAfterPassAway || contact.release_on_pass === 1;
+    return matchesSearch && matchesCategory && matchesRelation && matchesSharedAfterPassAway;
+  });
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
@@ -1632,20 +1665,16 @@ const Contact = () => {
     }
   };
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  // Debounced fetch for search
-  const debouncedFetchContacts = debounce((query) => {
-    setCurrentPage(1);
-    fetchContacts(1, filter, query);
-  }, 300);
-
   useEffect(() => {
-    debouncedFetchContacts(searchQuery);
+    debouncedFetchContacts(searchQuery, filterOptions);
     return () => debouncedFetchContacts.cancel();
-  }, [searchQuery, filter]);
+  }, [searchQuery, filter, filterOptions]);
+
+  // Update debouncedFetchContacts to accept filterOptions
+  const debouncedFetchContacts = debounce((query, filters) => {
+    setCurrentPage(1);
+    fetchContacts(1, filter, query, filters);
+  }, 300);
 
 
   const renderPagination = () => {
@@ -1728,6 +1757,93 @@ const Contact = () => {
     setSelectedContact(null);
   };
 
+  const [jobTypeSearch, setJobTypeSearch] = useState("");
+  const [showJobTypeDropdown, setShowJobTypeDropdown] = useState(false);
+  const jobTypeInputRef = useRef(null);
+
+  const jobTypeOptions = [
+    "Software Engineer – Technology/IT",
+    "Marketing Manager – Marketing & Communications",
+    "Human Resources Executive – HR & Administration",
+    "Financial Analyst – Finance & Accounting",
+    "Sales Executive – Sales & Business Development",
+    "Graphic Designer – Design & Creative",
+    "Operations Manager – Operations & Logistics",
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        relationInputRef.current &&
+        !relationInputRef.current.contains(event.target)
+      ) {
+        setShowRelationDropdown(false);
+      }
+      if (
+        categoryInputRef.current &&
+        !categoryInputRef.current.contains(event.target)
+      ) {
+        setShowCategoryDropdown(false);
+      }
+      if (
+        jobTypeInputRef.current &&
+        !jobTypeInputRef.current.contains(event.target)
+      ) {
+        setShowJobTypeDropdown(false);
+      }
+      if (
+        !event.target.closest(".contact-action-dropdown") &&
+        !event.target.closest(".contact-action-button") &&
+        !event.target.closest(".add-contact-categorize-options") &&
+        !event.target.closest(".add-contact-action-dropdown")
+      ) {
+        setDropdownOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleJobTypeSearch = (e) => {
+    const value = e.target.value;
+    setJobTypeSearch(value);
+    setShowJobTypeDropdown(true);
+    if (jobTypeOptions.includes(value)) {
+      setCustomContact((prev) => ({ ...prev, job_type: value }));
+    } else {
+      setCustomContact((prev) => ({ ...prev, job_type: "" }));
+    }
+  };
+
+  const handleJobTypeSelect = (option) => {
+    setCustomContact((prev) => ({ ...prev, job_type: option }));
+    setJobTypeSearch(option);
+    setShowJobTypeDropdown(false);
+  };
+
+  const handleAddCustomJobType = () => {
+    if (jobTypeSearch.trim()) {
+      setCustomContact((prev) => ({ ...prev, job_type: jobTypeSearch.trim() }));
+      setJobTypeSearch(jobTypeSearch.trim());
+      setShowJobTypeDropdown(false);
+      jobTypeInputRef.current?.focus();
+    }
+  };
+
+  const handleJobTypeKeyDown = (e) => {
+    if (
+      e.key === "Enter" &&
+      jobTypeSearch.trim() &&
+      !jobTypeOptions.includes(jobTypeSearch)
+    ) {
+      handleAddCustomJobType();
+    }
+  };
+
+  const filteredJobTypes = jobTypeOptions.filter((option) =>
+    option.toLowerCase().includes(jobTypeSearch.toLowerCase())
+  );
+
   return (
     <div className="add-contact-page">
       <h2 className="add-contact-title">Contacts</h2>
@@ -1783,13 +1899,10 @@ const Contact = () => {
                     </svg>
                   </button>
                 </div>
-
+                <FilterDropdown filterOptions={filterOptions} setFilterOptions={setFilterOptions} />
               </div>
               <div className="contact-header-buttons">
-                <button
-                  className="contact-header-button"
-                  onClick={handleDeleteSelected}
-                >
+                <button className="contact-header-button" onClick={handleDeleteSelected}>
                   Bulk Delete <span className="dropdown-icon">⏷</span>
                 </button>
                 <CategorizeDropdown
@@ -1798,7 +1911,7 @@ const Contact = () => {
                   setSelectedContacts={setSelectedContacts}
                   fetchContacts={fetchContacts}
                   categoryDropdownRef={categoryDropdownRef}
-                  relationDropdownRef={relationDropdownRef}
+                  relationDropdownRef={categoryDropdownRef}
                   roleDropdownRef={roleDropdownRef}
                 />
                 <button className="contact-add-button" onClick={toggleDrawer}>
@@ -1830,7 +1943,7 @@ const Contact = () => {
               </tr>
             </thead>
             <tbody>
-              {contacts.map((contact) => (
+              {filteredContacts.map((contact) => (
                 <tr key={contact.id} className="contact-item">
                   <td>
                     <input
@@ -1902,6 +2015,43 @@ const Contact = () => {
                           >
                             Delete
                           </button>
+
+                          {showDeleteConfirm && (
+                            <div className="delete-confirm-popup-backdrop">
+                              <div className="delete-confirm-popup">
+                                <button
+                                  className="delete-confirm-close"
+                                  onClick={() => {
+                                    setShowDeleteConfirm(false);
+                                    setContactIdToDelete(null);
+                                  }}
+                                >
+                                  ×
+                                </button>
+                                <h3 className="delete-confirm-heading">Confirm Deletion</h3>
+                                <p className="delete-confirm-message">
+                                  Are you sure you want to delete this contact? This action cannot be undone.
+                                </p>
+                                <div className="delete-confirm-actions">
+                                  <button
+                                    className="add-contact-form-button cancel"
+                                    onClick={() => {
+                                      setShowDeleteConfirm(false);
+                                      setContactIdToDelete(null);
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    className="add-contact-form-button delete"
+                                    onClick={confirmDeleteContact}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2084,19 +2234,52 @@ const Contact = () => {
                     }
                   />
                 </div>
-                <div className="add-contact-form-group">
+                <div
+                  className="add-contact-form-group job-type-group"
+                  ref={jobTypeInputRef}
+                >
                   <label className="add-contact-form-label">Job Type</label>
                   <input
                     type="text"
                     className="add-contact-form-input"
-                    value={customContact.job_type}
-                    onChange={(e) =>
-                      setCustomContact((prev) => ({
-                        ...prev,
-                        job_type: e.target.value,
-                      }))
-                    }
+                    value={jobTypeSearch}
+                    onChange={handleJobTypeSearch}
+                    onFocus={() => setShowJobTypeDropdown(true)}
+                    onKeyDown={handleJobTypeKeyDown}
+                    placeholder="Search or enter job type"
                   />
+                  {showJobTypeDropdown && (
+                    <div className="job-type-dropdown">
+                      {filteredJobTypes.length > 0 || jobTypeSearch.trim() ? (
+                        <>
+                          {filteredJobTypes.map((option) => (
+                            <div
+                              key={option}
+                              className="job-type-option"
+                              onClick={() => handleJobTypeSelect(option)}
+                            >
+                              {option}
+                            </div>
+                          ))}
+                          <div
+                            className="relation-option add-custom"
+                            onClick={() => {
+                              setShowJobTypeDropdown(false);
+                              setJobTypeSearch(jobTypeSearch.trim());
+                              setCustomContact((prev) => ({ ...prev, job_type: jobTypeSearch.trim() }));
+                              jobTypeInputRef.current?.focus();
+                            }}
+                          >
+                            Add Custom{jobTypeSearch && ":"} {jobTypeSearch}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="job-type-option no-results">
+                          No results found
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="add-contact-form-group">
                   <label className="add-contact-form-label">Website</label>
@@ -2127,20 +2310,32 @@ const Contact = () => {
                     value={categorySearch}
                     onChange={handleCategorySearch}
                     onFocus={() => setShowCategoryDropdown(true)}
-                    placeholder="Search category"
+                    placeholder="Search or enter category"
                   />
                   {showCategoryDropdown && (
                     <div className="category-dropdown">
-                      {filteredCategories.length > 0 ? (
-                        filteredCategories.map((option) => (
+                      {filteredCategories.length > 0 || categorySearch.trim() ? (
+                        <>
+                          {filteredCategories.map((option) => (
+                            <div
+                              key={option}
+                              className="category-option"
+                              onClick={() => handleCategorySelect(option)}
+                            >
+                              {option}
+                            </div>
+                          ))}
                           <div
-                            key={option}
-                            className="category-option"
-                            onClick={() => handleCategorySelect(option)}
+                            className="relation-option add-custom"
+                            onClick={() => {
+                              setShowCategoryDropdown(false);
+                              setCategorySearch(categorySearch.trim());
+                              setCustomContact((prev) => ({ ...prev, category: categorySearch.trim() }));
+                            }}
                           >
-                            {option}
+                            Add Custom{categorySearch && ":"} {categorySearch}
                           </div>
-                        ))
+                        </>
                       ) : (
                         <div className="category-option no-results">
                           No results found
@@ -2165,22 +2360,32 @@ const Contact = () => {
                   />
                   {showRelationDropdown && (
                     <div className="relation-dropdown">
-                      {filteredRelations.length > 0 ? (
-                        filteredRelations.map((option) => (
+                      {filteredRelations.length > 0 || relationSearch.trim() ? (
+                        <>
+                          {filteredRelations.map((option) => (
+                            <div
+                              key={option}
+                              className="relation-option"
+                              onClick={() => handleRelationSelect(option)}
+                            >
+                              {option}
+                            </div>
+                          ))}
                           <div
-                            key={option}
-                            className="relation-option"
-                            onClick={() => handleRelationSelect(option)}
+                            className="relation-option add-custom"
+                            onClick={() => {
+                              setShowRelationDropdown(false);
+                              setCustomRelation(relationSearch.trim());
+                              setRelationSearch(relationSearch.trim());
+                              setCustomContact((prev) => ({ ...prev, relation: relationSearch.trim() }));
+                            }}
                           >
-                            {option}
+                            Add Custom{relationSearch && ":"} {relationSearch}
                           </div>
-                        ))
+                        </>
                       ) : (
-                        <div
-                          className="relation-option add-custom"
-                          onClick={handleAddCustomRelation}
-                        >
-                          Add Custom: "{relationSearch}"
+                        <div className="relation-option no-results">
+                          No results found
                         </div>
                       )}
                     </div>

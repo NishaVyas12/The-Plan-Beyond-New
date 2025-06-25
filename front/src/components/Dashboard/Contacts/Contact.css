@@ -14,12 +14,168 @@
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
-.pagination-button.ellipsis {
-  cursor: default;
-  color: #999;
-  background-color: transparent;
-  border: none;
+
+.contact-filter-bar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
 }
+
+.contact-filter-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contact-filter-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 12px;
+    z-index: 1000;
+    min-width: 230px;
+}
+
+.filter-section {
+    margin-bottom: 12px;
+}
+
+.filter-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4C5767;
+    margin-bottom: 8px;
+}
+
+.filter-checkbox-label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #4C5767;
+    margin-bottom: 6px;
+    cursor: pointer;
+}
+
+.filter-checkbox-label input {
+    margin-right: 8px;
+}
+
+.job-type-group {
+    position: relative;
+}
+
+.job-type-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.job-type-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #4C5767;
+}
+
+.job-type-option:hover {
+    background: #f5f5f5;
+}
+
+.job-type-option.no-results {
+    padding: 8px 12px;
+    color: #999;
+    cursor: default;
+}
+
+.delete-confirm-popup-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.delete-confirm-popup {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+}
+
+.delete-confirm-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #4C5767;
+}
+
+.delete-confirm-heading {
+    font-size: 18px;
+    font-weight: 600;
+    color: #4C5767;
+    margin-bottom: 10px;
+}
+
+.delete-confirm-message {
+    font-size: 14px;
+    color: #4C5767;
+    margin-bottom: 20px;
+}
+
+.delete-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.add-contact-form-button.delete {
+    background: #007C6A;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 25px;
+    cursor: pointer;
+}
+
+.add-contact-form-button.delete:hover {
+    background: #006a5a;
+}
+
+.pagination-button.ellipsis {
+    cursor: default;
+    color: #999;
+    background-color: transparent;
+    border: none;
+}
+
 .pagination-container {
     display: flex;
     justify-content: flex-end;
