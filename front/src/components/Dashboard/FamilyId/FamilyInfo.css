@@ -1,0 +1,313 @@
+.family-id-add-contact-page {
+  margin-left: 250px;
+  padding: 2rem 80px;
+  background-color: #fff;
+  height: 100%;
+  margin-top: 4rem;
+}
+
+.family-id-contact-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.family-id-contact-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+.family-id-add-contact-title {
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--secondary-color);
+  margin: 0 0 30px;
+  font-family: "New Spirit";
+}
+
+.family-id-contact-add-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.family-id-contact-add-button:hover {
+  background-color: #006958;
+}
+
+.family-id-card-container {
+  display: grid;
+  grid-template-columns: repeat(3, 3fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.family-id-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #EBEBEB;
+  position: relative;
+}
+
+.family-id-card-content {
+  display: flex;
+  align-items: flex-start;
+}
+
+.family-id-avatar-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100px;
+  margin-right: 16px;
+}
+
+.family-id-avatar {
+  width: 100px;
+  height: 100px;
+  background-color: #DAE8E8;
+  border-radius: 50%;
+  border: 1px solid #DAE8E8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.family-id-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.family-id-name-options {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.family-id-card-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--secondary-color);
+  margin: 0;
+  flex-grow: 1;
+}
+
+.family-id-card-options {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6B7280;
+}
+
+.family-id-card-info {
+  margin-top: 10px; /* Added spacing between name/options and birthday */
+  text-align: left;
+}
+
+.family-id-card-label {
+    margin-top: 30px;
+  font-size: 0.8rem;
+  color: var(--tertiary-color);
+  display: block;
+}
+
+.family-id-card-value {
+  font-size: 0.8rem;
+  color: var(--secondary-color);
+}
+
+.family-id-add-contact-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1001;
+}
+
+.family-id-add-contact-drawer {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100vh;
+  background-color: #fff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 1008;
+  transition: right 0.3s ease-in-out;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.family-id-add-contact-drawer.open {
+  right: 0;
+}
+
+.family-id-add-contact-drawer-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 34.5px;
+  position: relative;
+}
+
+.family-id-add-contact-drawer-close {
+  color: #6B7483;
+  background: none;
+  border: none;
+  font-size: 1.7rem;
+  cursor: pointer;
+  margin-bottom: 20px;
+  padding: 0;
+  z-index: 2;
+}
+
+.family-id-add-contact-drawer-divider {
+  width: calc(100% + 3rem);
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 0 -1.5rem 40px -1.5rem;
+}
+
+.family-id-add-contact-drawer-heading {
+  font-size: 1.1rem;
+  color: var(--secondary-color);
+  margin-bottom: 30px;
+}
+
+.family-id-add-contact-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+}
+
+.family-id-add-contact-form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.family-id-add-contact-form-group {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+.family-id-add-contact-form-group.full-width {
+  flex: 100%;
+}
+
+.family-id-add-contact-form-label {
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.family-id-add-contact-form-input {
+  padding: 0.8rem;
+  border: 1px solid #EBEBEB;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  width: 100% !important;
+  box-sizing: border-box;
+  color: var(--secondary-color);
+}
+
+.family-id-add-contact-form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 5px rgba(14, 115, 92, 0.3);
+}
+
+.family-id-add-contact-phone-input-container {
+  width: 100%;
+}
+
+.family-id-add-contact-phone-input-container .family-id-add-contact-form-input {
+  width: 100% !important;
+  padding: 0.8rem;
+  border: 1px solid #EBEBEB;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  padding-left: 50px;
+}
+
+.family-id-contact-search-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #EBEBEB;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1009;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.family-id-contact-search-option {
+  padding: 0.8rem;
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+  cursor: pointer;
+}
+
+.family-id-contact-search-option:hover {
+  background-color: #D4EEEA;
+}
+
+.family-id-add-contact-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.family-id-add-contact-form-button {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.family-id-add-contact-form-button.cancel {
+  border: 1px solid #EBEBEB;
+  background-color: transparent;
+  color: #4C5767;
+}
+
+.family-id-add-contact-form-button.save {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.family-id-add-contact-form-button.save:hover {
+  background-color: #006958;
+}
+
+.family-id-add-contact-form-button.add-number {
+  background: transparent;
+  color: var(--primary-color);
+  padding: 0 !important;
+  margin: 0 0 1rem;
+  border: none;
+  text-align: left;
+}

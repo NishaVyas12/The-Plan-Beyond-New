@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/database");
-const { upload } = require("../middleware/multer"); // Use provided Multer config
+const { upload } = require("../middleware/multer");
 const { checkTableExists, createUserContactsTable } = require("../database/schema");
 const path = require("path");
 const fs = require("fs").promises;
@@ -67,7 +67,7 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
     );
     if (existingNominees.length >= 5) {
       return sendError(res, 400, "Maximum of five nominees already added.");
-    }
+  }
     if (nomineeType && existingNominees.some((n) => n.nominee_type === nomineeType)) {
       return sendError(res, 400, `A ${nomineeType} nominee already exists.`);
     }
@@ -355,6 +355,21 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
             1,
             imagePath,
           ]
+        );
+      }
+
+      // Update ambassador profile_image if an ambassador exists with matching phone number
+      const [existingAmbassador] = await connection.query(
+        `SELECT id FROM ambassadors 
+         WHERE user_id = ? AND (phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,
+        [req.session.userId, phoneNumbers, phoneNumbers, phoneNumbers]
+      );
+
+      if (existingAmbassador.length > 0) {
+        await connection.query(
+          `UPDATE ambassadors SET profile_image = ? 
+           WHERE id = ? AND user_id = ?`,
+          [imagePath, existingAmbassador[0].id, req.session.userId]
         );
       }
 

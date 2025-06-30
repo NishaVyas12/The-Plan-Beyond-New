@@ -49,18 +49,25 @@ const Profile = () => {
   const [biometricLoading, setBiometricLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [imageUploading, setImageUploading] = useState(false); // New state for upload loading
+  const [imageUploading, setImageUploading] = useState(false);
+  const [nomineeCount, setNomineeCount] = useState(0);
+  const [ambassadorCount, setAmbassadorCount] = useState(0);
 
-  // Fetch profile data and userId
+  // Fetch profile data, userId, nominees, and ambassadors
   const fetchProfile = async () => {
     setIsLoading(true);
     try {
-      const sessionData = await apiService.get(`${import.meta.env.VITE_API_URL}/api/check-session`);
+      const [sessionData, profileData, nomineesData, ambassadorsData] = await Promise.all([
+        apiService.get(`${import.meta.env.VITE_API_URL}/api/check-session`),
+        apiService.get(`${import.meta.env.VITE_API_URL}/api/get-profile`),
+        apiService.get(`${import.meta.env.VITE_API_URL}/api/nominees`),
+        apiService.get(`${import.meta.env.VITE_API_URL}/api/ambassadors`),
+      ]);
+
       if (!sessionData.success || !sessionData.email) {
         throw new Error("Failed to fetch session data");
       }
 
-      const profileData = await apiService.get(`${import.meta.env.VITE_API_URL}/api/get-profile`);
       if (profileData.success && profileData.profile) {
         const updatedProfile = {
           first_name: profileData.profile.first_name || "",
@@ -85,6 +92,14 @@ const Profile = () => {
             ? `${import.meta.env.VITE_API_URL}${profileData.profile.profile_image}`
             : null
         );
+      }
+
+      if (nomineesData.success) {
+        setNomineeCount(nomineesData.nominees.length);
+      }
+
+      if (ambassadorsData.success) {
+        setAmbassadorCount(ambassadorsData.ambassadors.length);
       }
     } catch (err) {
       setError("Failed to fetch profile or session data");
@@ -169,7 +184,7 @@ const Profile = () => {
       );
 
       if (response.data.success) {
-        const imagePath = response.data.imagePath; // e.g., /images/123.jpg
+        const imagePath = response.data.imagePath;
         setProfile((prev) => ({
           ...prev,
           profile_image: imagePath,
@@ -227,14 +242,40 @@ const Profile = () => {
   // Handle address selection
   const handleAddressSelect = (result) => {
     const components = result.components;
+    const formatted = result.formatted;
+
+    // Split the formatted address into parts based on commas
+    const addressParts = formatted.split(",").map(part => part.trim());
+
+    // Initialize address fields
+    let addressLine1 = "";
+    let addressLine2 = "";
+    let city = components.city || components.town || components.village || "";
+    let state = components.state || "";
+    let zipCode = components.postcode || "";
+    let country = components.country || "";
+
+    // Handle address parts based on length and context
+    if (addressParts.length > 0) {
+      addressLine1 = addressParts[0];
+      if (addressParts.length > 1) {
+        addressLine2 = addressParts.slice(1, addressParts.length - 3).join(", ");
+      }
+      if (addressParts.length >= 3) {
+        city = city || addressParts[addressParts.length - 3] || "";
+        state = state || addressParts[addressParts.length - 2] || "";
+        country = country || addressParts[addressParts.length - 1] || "";
+      }
+    }
+
     setProfile((prev) => ({
       ...prev,
-      address_line_1: components.road || components.building || "",
-      address_line_2: components.suburb || components.neighbourhood || "",
-      city: components.city || components.town || components.village || "",
-      state: components.state || "",
-      zip_code: components.postcode || "",
-      country: components.country || "",
+      address_line_1: addressLine1 || components.building || components.road || "",
+      address_line_2: addressLine2 || components.suburb || components.neighbourhood || "",
+      city,
+      state,
+      zip_code: zipCode,
+      country,
     }));
     setAddressSuggestions([]);
     setShowSuggestions(false);
@@ -402,7 +443,7 @@ const Profile = () => {
       if (response.data.success) {
         toast.success(response.data.message);
         setIsFingerprintRegistered(false);
-        setShowDeleteFingerprintConfirm(false); // Close the popup
+        setShowDeleteFingerprintConfirm(false);
       } else {
         toast.error(`Failed to delete ${type === "face" ? "Face ID" : "Fingerprint"}.`);
       }
@@ -473,7 +514,6 @@ const Profile = () => {
             </div>
             <h3 className="profile-name">{`${profile.first_name} ${profile.middle_name} ${profile.last_name}`}</h3>
             <p className="profile-email">{profile.email || "N/A"}</p>
-            {/* <p className="profile-joined">Joined: Aug 2023</p> */}
             <hr className="profile-line" />
             <ul className="profile-details">
               <li>
@@ -486,11 +526,11 @@ const Profile = () => {
               </li>
               <li>
                 <span className="profile-heading">Ambassadors</span>
-                <span className="profile-answer">2 Assigned</span>
+                <span className="profile-answer">{ambassadorCount} Assigned</span>
               </li>
               <li>
                 <span className="profile-heading">Nominees</span>
-                <span className="profile-answer">24 Contacts</span>
+                <span className="profile-answer">{nomineeCount} Contacts</span>
               </li>
             </ul>
           </div>
@@ -738,22 +778,6 @@ const Profile = () => {
 
               <h5>Two-Factor Authentication</h5>
               <ul className="profile-auth-options">
-                {/* <li>
-                  <div>
-                    <p className="profile-auth-text">Authenticator App</p>
-                    <p className="profile-auth-subtext">
-                      Use an app like Google Authenticator
-                    </p>
-                  </div>
-                  <label className="profile-switch">
-                    <input
-                      type="checkbox"
-                      checked={authOptions.authenticatorApp}
-                      onChange={() => handleAuthToggle("authenticatorApp")}
-                    />
-                    <span className="profile-slider round"></span>
-                  </label>
-                </li> */}
                 <li>
                   <div>
                     <p className="profile-auth-text">Email Authentication</p>

@@ -3,8 +3,8 @@
 }
 
 .dash-content {
-    padding: 20px;
-    margin-left: 280px;
+   padding: 2rem 80px 2rem;
+    margin-left: 250px;
 }
 
 .dash-welcome {
@@ -334,7 +334,7 @@
 .dash-category {
     width: calc(32%);
     border: 1px solid rgba(218, 232, 232, 1);
-    border-radius: 5px;
+    border-radius: 12px;
     padding: 25px 10px;
     color: var(--secondary-color);
     display: flex;
@@ -433,9 +433,9 @@
 .slider-category {
     padding: 25px 20px;
     border: 1px solid rgba(218, 232, 232, 1);
-    border-radius: 5px;
+    border-radius: 12px;
     color: var(--secondary-color);
-    min-width: calc(95% / 3);
+    min-width: calc(96.2% / 3);
     display: flex;
     gap: 3rem;
     flex-direction: column;

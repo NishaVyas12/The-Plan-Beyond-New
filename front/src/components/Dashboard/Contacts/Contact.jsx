@@ -23,7 +23,7 @@ import uploadFileIcon from "../../../assets/images/dash_icon/upload.svg";
 import debounce from 'lodash.debounce';
 import ViewContact from "./ViewContact";
 import FilterDropdown from "./FilterDropdown";
-
+import deleteIcon from "../../../assets/images/Contact/Tuning.svg"; // Adjust path to your delete icon
 const OPENCAGE_API_KEY = "4cd0370d3cee487181c2d52e3fc22370";
 
 // New CategorizeDropdown Component
@@ -35,6 +35,10 @@ const CategorizeDropdown = ({
   categoryDropdownRef,
   relationDropdownRef,
   roleDropdownRef,
+  categoryOptions,
+  relationOptions,
+  fetchedCategories,
+  fetchedRelations,
 }) => {
   const [categorizeData, setCategorizeData] = useState({
     category: "",
@@ -43,23 +47,12 @@ const CategorizeDropdown = ({
     isNominee: false,
   });
   const [customRelation, setCustomRelation] = useState("");
+  const [customCategory, setCustomCategory] = useState(""); // New state for custom category
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showRelationDropdown, setShowRelationDropdown] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false); // New state for custom category input
   const [showCustomRelationInput, setShowCustomRelationInput] = useState(false);
-
-  const categoryOptions = ["Family", "Friends", "Work"];
-  const relationOptions = [
-    "Son",
-    "Daughter",
-    "Wife",
-    "Husband",
-    "Father",
-    "Mother",
-    "Brother",
-    "Sister",
-    "Custom",
-  ];
 
   const handleCategorize = async (
     category,
@@ -74,8 +67,13 @@ const CategorizeDropdown = ({
       return;
     }
 
-    const finalRelation = relation === "Custom" ? customRelation : relation;
+    const finalCategory = category === "Custom" ? customCategory.trim() : category;
+    const finalRelation = relation === "Custom" ? customRelation.trim() : relation;
 
+    if (category === "Custom" && !finalCategory) {
+      toast.error("Please enter a custom category.", { autoClose: 3000 });
+      return;
+    }
     if (relation === "Custom" && !finalRelation) {
       toast.error("Please enter a custom relation.", { autoClose: 3000 });
       return;
@@ -88,7 +86,7 @@ const CategorizeDropdown = ({
         `${import.meta.env.VITE_API_URL}/api/contacts/categorize-contacts`,
         {
           contactIds,
-          category,
+          category: finalCategory,
           relation: finalRelation,
           isAmbassador,
           isNominee,
@@ -108,10 +106,12 @@ const CategorizeDropdown = ({
           isAmbassador: false,
           isNominee: false,
         });
+        setCustomCategory("");
         setCustomRelation("");
         setShowCategoryDropdown(false);
         setShowRelationDropdown(false);
         setShowRoleDropdown(false);
+        setShowCustomCategoryInput(false);
         setShowCustomRelationInput(false);
       } else {
         toast.error(response.data.message, { autoClose: 3000 });
@@ -124,28 +124,52 @@ const CategorizeDropdown = ({
   };
 
   const handleCategorySelect = (category) => {
-    setCategorizeData((prev) => ({
-      ...prev,
-      category,
-      relation: "",
-      isAmbassador: false,
-      isNominee: false,
-    }));
-    setCustomRelation("");
-    setShowCategoryDropdown(true);
-    setShowRelationDropdown(category === "Family");
-    setShowRoleDropdown(
-      category === "Family" || category === "Friends" || category === "Work"
-    );
-    setShowCustomRelationInput(false);
+    if (category === "Custom") {
+      setShowCustomCategoryInput(true);
+      setShowCategoryDropdown(true);
+      setShowRelationDropdown(false);
+      setShowRoleDropdown(false);
+      setCustomCategory("");
+    } else {
+      setCategorizeData((prev) => ({
+        ...prev,
+        category,
+        relation: "",
+        isAmbassador: false,
+        isNominee: false,
+      }));
+      setCustomCategory("");
+      setCustomRelation("");
+      setShowCategoryDropdown(true);
+      setShowRelationDropdown(category === "Family");
+      setShowRoleDropdown(true);
+      setShowCustomCategoryInput(false);
+      setShowCustomRelationInput(false);
+    }
+  };
+
+  const handleCustomCategoryChange = (e) => {
+    setCustomCategory(e.target.value);
+  };
+
+  const handleCustomCategoryConfirm = () => {
+    if (customCategory.trim()) {
+      setCategorizeData((prev) => ({ ...prev, category: "Custom" }));
+      setShowCustomCategoryInput(false);
+      setShowCategoryDropdown(true);
+      setShowRelationDropdown(false);
+      setShowRoleDropdown(true);
+    } else {
+      toast.error("Please enter a custom category.", { autoClose: 3000 });
+    }
   };
 
   const handleRelationSelect = (relation) => {
     if (relation === "Custom") {
-      setShowCustomRelationInput(!showCustomRelationInput);
-      if (showCustomRelationInput && customRelation) {
-        setCustomRelation("");
-      }
+      setShowCustomRelationInput(true);
+      setShowRelationDropdown(true);
+      setShowRoleDropdown(false);
+      setCustomRelation("");
     } else {
       setCategorizeData((prev) => ({
         ...prev,
@@ -161,8 +185,18 @@ const CategorizeDropdown = ({
   };
 
   const handleCustomRelationChange = (e) => {
-    const value = e.target.value;
-    setCustomRelation(value);
+    setCustomRelation(e.target.value);
+  };
+
+  const handleCustomRelationConfirm = () => {
+    if (customRelation.trim()) {
+      setCategorizeData((prev) => ({ ...prev, relation: "Custom" }));
+      setShowCustomRelationInput(false);
+      setShowRelationDropdown(true);
+      setShowRoleDropdown(true);
+    } else {
+      toast.error("Please enter a custom relation.", { autoClose: 3000 });
+    }
   };
 
   const handleRoleChange = (role) => {
@@ -173,9 +207,8 @@ const CategorizeDropdown = ({
         isNominee: false,
       }));
       handleCategorize(
-        categorizeData.category || "Other",
-        categorizeData.category === "Family" &&
-          categorizeData.relation === "Custom"
+        categorizeData.category === "Custom" ? customCategory : categorizeData.category || "Other",
+        categorizeData.category === "Family" && categorizeData.relation === "Custom"
           ? customRelation
           : categorizeData.category === "Family"
             ? categorizeData.relation
@@ -196,7 +229,7 @@ const CategorizeDropdown = ({
   const handleRoleConfirm = () => {
     const { category, relation, isAmbassador, isNominee } = categorizeData;
     handleCategorize(
-      category,
+      category === "Custom" ? customCategory : category,
       relation === "Custom" ? customRelation : relation,
       isAmbassador,
       isNominee
@@ -220,11 +253,38 @@ const CategorizeDropdown = ({
               onClick={() => handleCategorySelect(option)}
             >
               {option}
-              {categorizeData.category === option && option !== "Family" && (
+              {categorizeData.category === option && option !== "Family" && !showCustomCategoryInput && (
                 <span className="add-contact-checkmark">✔</span>
               )}
             </div>
           ))}
+          <div
+            className="add-contact-categorize-option"
+            onClick={() => handleCategorySelect("Custom")}
+          >
+            Custom
+            {categorizeData.category === "Custom" && !showCustomCategoryInput && (
+              <span className="add-contact-checkmark">✔</span>
+            )}
+          </div>
+          {showCustomCategoryInput && (
+            <div className="add-contact-custom-input-container">
+              <input
+                type="text"
+                className="add-contact-form-input"
+                placeholder="Enter custom category"
+                value={customCategory}
+                onChange={handleCustomCategoryChange}
+                autoFocus
+              />
+              <button
+                className="add-contact-custom-confirm"
+                onClick={handleCustomCategoryConfirm}
+              >
+                Confirm
+              </button>
+            </div>
+          )}
         </div>
       )}
       {showRelationDropdown && categorizeData.category === "Family" && (
@@ -246,7 +306,19 @@ const CategorizeDropdown = ({
                 />
                 {option}
               </label>
-              {option === "Custom" && showCustomRelationInput && (
+            </div>
+          ))}
+          <div>
+            <label className="filter-checkbox-label">
+              <input
+                type="checkbox"
+                checked={showCustomRelationInput}
+                onChange={() => handleRelationSelect("Custom")}
+              />
+              Custom
+            </label>
+            {showCustomRelationInput && (
+              <div className="add-contact-custom-input-container">
                 <input
                   type="text"
                   className="add-contact-form-input"
@@ -255,61 +327,65 @@ const CategorizeDropdown = ({
                   onChange={handleCustomRelationChange}
                   autoFocus
                 />
-              )}
-            </div>
-          ))}
+                <button
+                  className="add-contact-custom-confirm"
+                  onClick={handleCustomRelationConfirm}
+                >
+                  Confirm
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
       {showRoleDropdown &&
-        (categorizeData.category === "Family" ||
-          categorizeData.category === "Friends" ||
-          categorizeData.category === "Work") &&
-        (categorizeData.category !== "Family" ||
-          categorizeData.relation ||
-          (categorizeData.relation === "Custom" && customRelation)) && (
+        (categorizeData.category &&
+          (categorizeData.category !== "Family" ||
+            categorizeData.relation ||
+            (categorizeData.relation === "Custom" && customRelation))) && (
+        <div
+          className="add-contact-categorize-options add-contact-sub-options add-contact-sub-sub-options"
+          ref={roleDropdownRef}
+        >
           <div
-            className="add-contact-categorize-options add-contact-sub-options add-contact-sub-sub-options"
-            ref={roleDropdownRef}
+            className="add-contact-categorize-option"
+            onClick={() => handleRoleChange("none")}
           >
-            <div
-              className="add-contact-categorize-option"
-              onClick={() => handleRoleChange("none")}
-            >
-              None
-              {!categorizeData.isAmbassador && !categorizeData.isNominee && (
-                <span className="add-contact-checkmark">✔</span>
-              )}
-            </div>
-            <label className="add-contact-categorize-checkbox">
-              <input
-                type="checkbox"
-                checked={categorizeData.isAmbassador}
-                onChange={() => handleRoleChange("isAmbassador")}
-              />
-              Ambassador
-              {categorizeData.isAmbassador && (
-                <span className="add-contact-checkmark">✔</span>
-              )}
-            </label>
-            <label className="add-contact-categorize-checkbox">
-              <input
-                type="checkbox"
-                checked={categorizeData.isNominee}
-                onChange={() => handleRoleChange("isNominee")}
-              />
-              Nominee
-              {categorizeData.isNominee && (
-                <span className="add-contact-checkmark">✔</span>
-              )}
-            </label>
-            <div
-              className="add-contact-categorize-option add-contact-confirm"
-              onClick={handleRoleConfirm}
-            >
-              Confirm
-            </div>
+            None
+            {!categorizeData.isAmbassador && !categorizeData.isNominee && (
+              <span className="add-contact-checkmark">✔</span>
+            )}
           </div>
-        )}
+          <label className="add-contact-categorize-checkbox">
+            <input
+              type="checkbox"
+              checked={categorizeData.isAmbassador}
+              onChange={() => handleRoleChange("isAmbassador")}
+            />
+            Ambassador
+            {categorizeData.isAmbassador && (
+              <span className="add-contact-checkmark">✔</span>
+            )}
+          </label>
+          <label className="add-contact-categorize-checkbox">
+            <input
+              type="checkbox"
+              checked={categorizeData.isNominee}
+              onChange={() => handleRoleChange("isNominee")}
+            />
+            Nominee
+            {categorizeData.isNominee && (
+              <span className="add-contact-checkmark">✔</span>
+            )}
+          </label>
+          <div
+            className="add-contact-categorize-option add-contact-confirm"
+            onClick={handleRoleConfirm}
+          >
+            Confirm
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -326,10 +402,13 @@ const Contact = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState('ALL');
+  
   const [filterOptions, setFilterOptions] = useState({
     categories: [],
-    relations: [],
-    sharedAfterPassAway: false,
+  relations: [],
+  sharedAfterPassAway: false,
+  fetchedCategories: [], // Add this
+  fetchedRelations: [],
   });
   const [limit] = useState(20);
   const [customContact, setCustomContact] = useState({
@@ -359,7 +438,20 @@ const Contact = () => {
     release_on_pass: false,
     is_ambassador: false,
     is_nominee: false,
+    share_on: "",
+    share_by: {
+      whatsapp: false,
+      sms: false,
+      email: false,
+    },
   });
+
+  const [selectedLetter, setSelectedLetter] = useState('');
+  const [clickedLetter, setClickedLetter] = useState('');
+
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+
   const [customCountryId, setCustomCountryId] = useState(null);
   const [customStateId, setCustomStateId] = useState(null);
   const [customCityId, setCustomCityId] = useState(null);
@@ -376,6 +468,7 @@ const Contact = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContacts, setSelectedContacts] = useState([]);
+ const [addressSearch, setAddressSearch] = useState("");
   const [firstImageSrc, setFirstImageSrc] = useState(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -386,17 +479,24 @@ const Contact = () => {
   const relationDropdownRef = useRef(null);
   const roleDropdownRef = useRef(null);
 
-  const categoryOptions = ["Family", "Friends", "Work"];
-  const relationOptions = [
-    "Son",
-    "Daughter",
-    "Wife",
-    "Husband",
-    "Father",
-    "Mother",
-    "Brother",
-    "Sister",
-  ];
+ const shareOnOptions = ["4 Days", "7 Days", "10 Days", "15 Days"];
+const [customShareOn, setCustomShareOn] = useState("");
+const [showShareOnDropdown, setShowShareOnDropdown] = useState(false);
+const shareOnInputRef = useRef(null);
+
+
+  const categoryOptions = [...new Set(["Family", "Friends", "Work", ...filterOptions.fetchedCategories])];
+const relationOptions = [...new Set([
+  "Son",
+  "Daughter",
+  "Wife",
+  "Husband",
+  "Father",
+  "Mother",
+  "Brother",
+  "Sister",
+  ...filterOptions.fetchedRelations
+])];
   const maxFileSize = 5 * 1024 * 1024;
   const allowedImageTypes = ["image/jpeg", "image/png", "image/gif"];
   const allowedFileTypes = [
@@ -417,54 +517,71 @@ const Contact = () => {
     doc: "application/msword",
     docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   };
+
+
+
+
   const fetchContacts = async (page = 1, filterType = "ALL", search = "", filters = {}) => {
-    try {
-      const params = { filter: filterType };
+  try {
+    const params = { filter: filterType };
 
-      // Validate inputs
-      if (typeof search !== "string") {
-        console.warn("Invalid search query:", search);
-        params.search = "";
-      } else if (search.trim()) {
-        params.search = search.trim();
-      }
+    // Validate inputs
+    if (typeof search !== "string") {
+      console.warn("Invalid search query:", search);
+      params.search = "";
+    } else if (search.trim()) {
+      params.search = search.trim();
+    }
 
-      // Validate filters
-      const safeFilters = {
-        categories: Array.isArray(filters.categories) ? filters.categories.filter(cat => typeof cat === "string") : [],
-        relations: Array.isArray(filters.relations) ? filters.relations.filter(rel => typeof rel === "string") : [],
-        sharedAfterPassAway: !!filters.sharedAfterPassAway,
-      };
+    // Validate filters
+    const safeFilters = {
+      categories: Array.isArray(filters.categories) ? filters.categories.filter(cat => typeof cat === "string") : [],
+      relations: Array.isArray(filters.relations) ? filters.relations.filter(rel => typeof rel === "string") : [],
+      sharedAfterPassAway: !!filters.sharedAfterPassAway,
+    };
 
-      if (
-        safeFilters.categories.length > 0 ||
-        safeFilters.relations.length > 0 ||
-        safeFilters.sharedAfterPassAway
-      ) {
-        params.all = true; // Fetch all contacts for filters
-      } else {
-        params.page = Number.isInteger(page) && page > 0 ? page : 1;
-        params.limit = Number.isInteger(limit) && limit > 0 ? limit : 20;
-      }
+    if (
+      safeFilters.categories.length > 0 ||
+      safeFilters.relations.length > 0 ||
+      safeFilters.sharedAfterPassAway
+    ) {
+      params.all = true; // Fetch all contacts for filters
+    } else {
+      params.page = Number.isInteger(page) && page > 0 ? page : 1;
+      params.limit = Number.isInteger(limit) && limit > 0 ? limit : 20;
+    }
 
-      // Separate predefined categories and custom category
-      const predefinedCategories = safeFilters.categories.filter((cat) =>
-        ["Family", "Friends", "Work"].includes(cat)
-      );
-      const customCategory = safeFilters.categories.find(
-        (cat) => !["Family", "Friends", "Work"].includes(cat)
-      );
+    // Separate predefined categories and custom category
+    const predefinedCategories = safeFilters.categories.filter((cat) =>
+      ["Family", "Friends", "Work"].includes(cat)
+    );
+    const customCategory = safeFilters.categories.find(
+      (cat) => !["Family", "Friends", "Work"].includes(cat)
+    );
 
-      if (predefinedCategories.length > 0) {
-        params.categories = predefinedCategories.join(",");
-      }
-      if (customCategory) {
-        params.category_like = customCategory.trim();
-      }
+    if (predefinedCategories.length > 0) {
+      params.categories = predefinedCategories.join(",");
+    }
+    if (customCategory) {
+      params.category_like = customCategory.trim();
+    }
 
-      // Separate predefined relations and custom relation
-      const predefinedRelations = safeFilters.relations.filter((rel) =>
-        [
+    // Separate predefined relations and custom relation
+    const predefinedRelations = safeFilters.relations.filter((rel) =>
+      [
+        "Son",
+        "Daughter",
+        "Wife",
+        "Husband",
+        "Father",
+        "Mother",
+        "Brother",
+        "Sister",
+      ].includes(rel)
+    );
+    const customRelation = safeFilters.relations.find(
+      (rel) =>
+        ![
           "Son",
           "Daughter",
           "Wife",
@@ -473,147 +590,84 @@ const Contact = () => {
           "Mother",
           "Brother",
           "Sister",
-          "Custom",
         ].includes(rel)
-      );
-      const customRelation = safeFilters.relations.find(
-        (rel) =>
-          ![
-            "Son",
-            "Daughter",
-            "Wife",
-            "Husband",
-            "Father",
-            "Mother",
-            "Brother",
-            "Sister",
-            "Custom",
-          ].includes(rel)
-      );
+    );
 
-      if (predefinedRelations.length > 0) {
-        params.relations = predefinedRelations.join(",");
-      }
-      if (customRelation) {
-        params.relation_like = customRelation.trim();
-      }
-
-      if (safeFilters.sharedAfterPassAway) {
-        params.release_on_pass = 1;
-      }
-
-      console.log("Fetching contacts with params:", params);
-
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/contacts`, {
-        params,
-        withCredentials: true,
-      });
-
-      console.log("API response:", response.data);
-
-      if (response.data.success) {
-        setContacts(Array.isArray(response.data.contacts) ? response.data.contacts : []);
-        setCurrentPage(
-          params.search || safeFilters.categories.length > 0
-            ? 1
-            : Number.isInteger(response.data.currentPage) && response.data.currentPage > 0
-              ? response.data.currentPage
-              : 1
-        );
-        setTotalPages(
-          params.search || safeFilters.categories.length > 0
-            ? 1
-            : Number.isInteger(response.data.totalPages) && response.data.totalPages > 0
-              ? response.data.totalPages
-              : 1
-        );
-        setTotal(Number.isInteger(response.data.total) ? response.data.total : 0);
-      } else {
-        console.error("API error message:", response.data.message);
-        toast.error(response.data.message || "Failed to fetch contacts", { autoClose: 3000 });
-      }
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.response?.statusText ||
-        err.message ||
-        "Unknown error";
-      console.error("Error fetching contacts:", {
-        error: errorMessage,
-        status: err.response?.status,
-        params,
-        response: err.response?.data,
-      });
-      toast.error(`Failed to fetch contacts: ${errorMessage}`, { autoClose: 3000 });
+    if (predefinedRelations.length > 0) {
+      params.relations = predefinedRelations.join(",");
     }
-  };
+    if (customRelation) {
+      params.relation_like = customRelation.trim();
+    }
+
+    if (safeFilters.sharedAfterPassAway) {
+      params.release_on_pass = 1; // Ensure this is sent as 1 for the API
+    }
+
+    console.log("Fetching contacts with params:", params);
+
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/contacts`, {
+      params,
+      withCredentials: true,
+    });
+
+    console.log("API response:", response.data);
+
+    if (response.data.success) {
+      // Normalize release_on_pass to boolean for consistency
+      const normalizedContacts = Array.isArray(response.data.contacts)
+        ? response.data.contacts.map(contact => ({
+            ...contact,
+            release_on_pass: contact.release_on_pass === 1 || contact.release_on_pass === true,
+          }))
+        : [];
+      setContacts(normalizedContacts);
+      setFilterOptions((prev) => ({
+        ...prev,
+        fetchedCategories: Array.isArray(response.data.categories) ? response.data.categories : [],
+        fetchedRelations: Array.isArray(response.data.relations) ? response.data.relations : [],
+      }));
+      setCurrentPage(
+        params.search || safeFilters.categories.length > 0
+          ? 1
+          : Number.isInteger(response.data.currentPage) && response.data.currentPage > 0
+            ? response.data.currentPage
+            : 1
+      );
+      setTotalPages(
+        params.search || safeFilters.categories.length > 0
+          ? 1
+          : Number.isInteger(response.data.totalPages) && response.data.totalPages > 0
+            ? response.data.totalPages
+            : 1
+      );
+      setTotal(Number.isInteger(response.data.total) ? response.data.total : 0);
+    } else {
+      console.error("API error message:", response.data.message);
+      toast.error(response.data.message || "Failed to fetch contacts", { autoClose: 3000 });
+    }
+  } catch (err) {
+    const errorMessage =
+      err.response?.data?.message ||
+      err.response?.statusText ||
+      err.message ||
+      "Unknown error";
+    console.error("Error fetching contacts:", {
+      error: errorMessage,
+      status: err.response?.status,
+      params,
+      response: err.response?.data,
+    });
+    toast.error(`Failed to fetch contacts: ${errorMessage}`, { autoClose: 3000 });
+  }
+};
+
+
+
   useEffect(() => {
     debouncedFetchContacts(searchQuery, filterOptions);
     return () => debouncedFetchContacts.cancel();
   }, [searchQuery, filterOptions]);
-
-  const fetchLocationData = async (latitude, longitude) => {
-    try {
-      const response = await axios.get(
-        `https://api.opencagedata.com/geocode/v1/json?key=${OPENCAGE_API_KEY}&q=${latitude}+${longitude}&pretty=1`
-      );
-      const { results } = response.data;
-      if (results && results.length > 0) {
-        const location = results[0].components;
-        let flatBuildingNo = location.house_number || "";
-        let street = location.road || "";
-
-        if (street && street.toLowerCase() === "unnamed road") {
-          street = location.neighbourhood || "";
-        } else if (!street) {
-          street = location.neighbourhood || "";
-        }
-
-        setCustomContact((prev) => ({
-          ...prev,
-          flat_building_no: flatBuildingNo,
-          street,
-          country: location.country || "",
-          state: location.state || "",
-          city: location.city || location.town || location.village || "",
-          postal_code: location.postcode || "",
-        }));
-
-        if (!flatBuildingNo || !street) {
-          toast.warn(
-            "Building number or street name not available from location data. Please adjust manually if needed.",
-            { autoClose: 5000 }
-          );
-        }
-      } else {
-        toast.error("Unable to fetch location data.", { autoClose: 3000 });
-      }
-    } catch (err) {
-      setError("Failed to fetch location data: " + err.message);
-      toast.error("Failed to fetch location data: " + err.message, {
-        autoClose: 3000,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (showCustomForm && !editingContactId && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          fetchLocationData(position.coords.latitude, position.coords.longitude);
-        },
-        (error) => {
-          setError("Geolocation permission denied or unavailable: " + error.message);
-          toast.error(
-            "Geolocation permission denied or unavailable: " + error.message,
-            {
-              autoClose: 3000,
-            }
-          );
-        }
-      );
-    }
-  }, [showCustomForm, editingContactId]);
 
   useEffect(() => {
     const renderFirstImage = async () => {
@@ -1157,132 +1211,149 @@ const Contact = () => {
   };
 
   const handleAddOrUpdateContact = async () => {
-    const {
-      first_name,
-      middle_name,
-      last_name,
-      company,
-      job_type,
-      website,
-      category,
-      relation,
-      phone_number,
-      phone_number1,
-      phone_number2,
-      phone_number3,
-      email,
-      flat_building_no,
-      street,
-      country,
-      state,
-      city,
-      postal_code,
-      date_of_birth,
-      anniversary,
-      notes,
-      release_on_pass,
-    } = customContact;
+  const {
+    first_name,
+    middle_name,
+    last_name,
+    company,
+    job_type,
+    website,
+    category,
+    relation,
+    phone_number,
+    phone_number1,
+    phone_number2,
+    phone_number3,
+    email,
+    flat_building_no,
+    street,
+    country,
+    state,
+    city,
+    postal_code,
+    date_of_birth,
+    anniversary,
+    notes,
+    release_on_pass,
+    share_on,
+    share_by,
+  } = customContact;
 
-    const newContact = {
-      id: editingContactId || undefined,
-      first_name,
-      middle_name,
-      last_name,
-      company,
-      job_type,
-      website,
-      category,
-      relation: customRelation || relation,
-      phone_number,
-      phone_number1,
-      phone_number2,
-      phone_number3,
-      email,
-      flat_building_no,
-      street,
-      country,
-      state,
-      city,
-      postal_code,
-      date_of_birth,
-      anniversary,
-      notes,
-      contact_image: "",
-      release_on_pass,
-      is_ambassador: false,
-      is_nominee: false,
-      uploaded_files: existingFiles,
-    };
-
-    const validationError = validateContact(newContact);
-    if (validationError) {
-      setError(validationError);
-      toast.error(validationError, { autoClose: 3000 });
-      return;
-    }
-
-    const fileValidationError = validateFiles(profileImageFile, additionalFiles);
-    if (fileValidationError) {
-      setError(fileValidationError);
-      toast.error(fileValidationError, { autoClose: 3000 });
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append("contacts", JSON.stringify([newContact]));
-      formData.append("source", "custom");
-      if (profileImageFile) {
-        formData.append("profileImage", profileImageFile);
-      }
-      additionalFiles.forEach((file) => {
-        formData.append("additionalFiles", file);
-      });
-
-      const saveResponse = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/contacts/save`,
-        formData,
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-
-      if (saveResponse.data.success) {
-        toast.success(saveResponse.data.message, { autoClose: 3000 });
-        if (saveResponse.data.skipped?.length > 0) {
-          saveResponse.data.skipped.forEach((skipped) => {
-            toast.error(skipped.reason, { autoClose: 3000 });
-          });
-        }
-        await fetchContacts();
-        const savedContact = saveResponse.data.contacts?.[0];
-        if (savedContact?.contact_image) {
-          setCustomContact((prev) => ({
-            ...prev,
-            contact_image: `${import.meta.env.VITE_API_URL}${savedContact.contact_image}`,
-          }));
-          setProfileImageFile(null);
-        }
-        setAdditionalFiles([]);
-        setExistingFiles(savedContact?.uploaded_files || []);
-        setFirstImageSrc(null);
-      } else {
-        throw new Error(saveResponse.data.message || "Failed to save contact");
-      }
-
-      closeCustomForm();
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message;
-      setError(
-        `Failed to ${editingContactId ? "update" : "add"} contact: ${errorMessage}`
-      );
-      toast.error(
-        `Failed to ${editingContactId ? "update" : "add"} contact: ${errorMessage}`,
-        { autoClose: 3000 }
-      );
-    }
+  const newContact = {
+    id: editingContactId || undefined,
+    first_name,
+    middle_name,
+    last_name,
+    company,
+    job_type,
+    website,
+    category,
+    relation: customRelation || relation,
+    phone_number,
+    phone_number1,
+    phone_number2,
+    phone_number3,
+    email,
+    flat_building_no,
+    street,
+    country,
+    state,
+    city,
+    postal_code,
+    date_of_birth,
+    anniversary,
+    notes,
+    contact_image: "",
+    release_on_pass,
+    is_ambassador: false,
+    is_nominee: false,
+    share_on: share_on || "",
+    share_by: {
+      whatsapp: share_by.whatsapp || false,
+      sms: share_by.sms || false,
+      email: share_by.email || false,
+    },
+    uploaded_files: existingFiles,
   };
+
+  const validationError = validateContact(newContact);
+  if (validationError) {
+    setError(validationError);
+    toast.error(validationError, { autoClose: 3000 });
+    return;
+  }
+
+  const fileValidationError = validateFiles(profileImageFile, additionalFiles);
+  if (fileValidationError) {
+    setError(fileValidationError);
+    toast.error(fileValidationError, { autoClose: 3000 });
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("contacts", JSON.stringify([newContact]));
+    formData.append("source", "custom");
+    if (profileImageFile) {
+      formData.append("profileImage", profileImageFile);
+    }
+    additionalFiles.forEach((file) => {
+      formData.append("additionalFiles", file);
+    });
+
+    const saveResponse = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/contacts/save`,
+      formData,
+      {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+
+    if (saveResponse.data.success) {
+      toast.success(saveResponse.data.message, { autoClose: 3000 });
+      if (saveResponse.data.skipped?.length > 0) {
+        saveResponse.data.skipped.forEach((skipped) => {
+          toast.error(skipped.reason, { autoClose: 3000 });
+        });
+      }
+      await fetchContacts();
+      const savedContact = saveResponse.data.contacts?.[0];
+      if (savedContact?.contact_image) {
+        setCustomContact((prev) => ({
+          ...prev,
+          contact_image: `${import.meta.env.VITE_API_URL}${savedContact.contact_image}`,
+          share_on: savedContact.share_on || "",
+          share_by: {
+            whatsapp: savedContact.share_by?.whatsapp || false,
+            sms: savedContact.share_by?.sms || false,
+            email: savedContact.share_by?.email || false,
+          },
+        }));
+        setProfileImageFile(null);
+      }
+      setAdditionalFiles([]);
+      setExistingFiles(savedContact?.uploaded_files || []);
+      setFirstImageSrc(null);
+    } else {
+      throw new Error(saveResponse.data.message || "Failed to save contact");
+    }
+
+    closeCustomForm();
+  } catch (err) {
+    const errorMessage = err.response?.data?.message || err.message;
+    setError(
+      `Failed to ${editingContactId ? "update" : "add"} contact: ${errorMessage}`
+    );
+    toast.error(
+      `Failed to ${editingContactId ? "update" : "add"} contact: ${errorMessage}`,
+      { autoClose: 3000 }
+    );
+  }
+};
+
+
+
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [contactIdToDelete, setContactIdToDelete] = useState(null);
@@ -1358,31 +1429,39 @@ const Contact = () => {
     }
   };
 
-  const handleEditContact = (contact) => {
-    setEditingContactId(contact.id);
-    setCustomContact({
-      ...contact,
-      contact_image: contact.contact_image
-        ? `${import.meta.env.VITE_API_URL}${contact.contact_image}`
-        : "",
-    });
-    setProfileImageFile(null);
-    setRelationSearch(contact.relation || "");
-    setCategorySearch(contact.category || "");
-    setJobTypeSearch(contact.job_type || "");
-    setCustomRelation(contact.relation || "");
-    setPhoneCount(
-      1 +
-      (contact.phone_number1 ? 1 : 0) +
-      (contact.phone_number2 ? 1 : 0) +
-      (contact.phone_number3 ? 1 : 0)
-    );
-    setExistingFiles(contact.uploaded_files || []);
-    setAdditionalFiles([]);
-    setFirstImageSrc(null);
-    setShowCustomForm(true);
-    setDropdownOpen(null);
-  };
+ const handleEditContact = (contact) => {
+  setEditingContactId(contact.id);
+  setCustomContact({
+    ...contact,
+    contact_image: contact.contact_image
+      ? `${import.meta.env.VITE_API_URL}${contact.contact_image}`
+      : "",
+    share_on: contact.share_on || "",
+    share_by: {
+      whatsapp: contact.share_by?.whatsapp || contact.share_by_whatsapp || false,
+      sms: contact.share_by?.sms || contact.share_by_sms || false,
+      email: contact.share_by?.email || contact.share_by_email || false,
+    },
+  });
+  setAddressSearch(contact.flat_building_no || ""); // Initialize addressSearch with flat_building_no
+  setProfileImageFile(null);
+  setRelationSearch(contact.relation || "");
+  setCategorySearch(contact.category || "");
+  setJobTypeSearch(contact.job_type || "");
+  setCustomRelation(contact.relation || "");
+  setCustomShareOn(contact.share_on || "");
+  setPhoneCount(
+    1 +
+    (contact.phone_number1 ? 1 : 0) +
+    (contact.phone_number2 ? 1 : 0) +
+    (contact.phone_number3 ? 1 : 0)
+  );
+  setExistingFiles(contact.uploaded_files || []);
+  setAdditionalFiles([]);
+  setFirstImageSrc(null);
+  setShowCustomForm(true);
+  setDropdownOpen(null);
+};
 
   const handleDeleteFile = async (fileId, contactId) => {
     try {
@@ -1466,53 +1545,62 @@ const Contact = () => {
   };
 
   const closeCustomForm = () => {
-    setShowCustomForm(false);
-    setCustomContact({
-      first_name: "",
-      middle_name: "",
-      last_name: "",
-      company: "",
-      job_type: "",
-      website: "",
-      category: "",
-      relation: "",
-      phone_number: "",
-      phone_number1: "",
-      phone_number2: "",
-      phone_number3: "",
-      email: "",
-      flat_building_no: "",
-      street: "",
-      country: "",
-      state: "",
-      city: "",
-      postal_code: "",
-      date_of_birth: "",
-      anniversary: "",
-      notes: "",
-      contact_image: "",
-      release_on_pass: false,
-      is_ambassador: false,
-      is_nominee: false,
-    });
-    setCustomRelation("");
-    setRelationSearch("");
-    setCategorySearch("");
-    setPhoneCount(1);
-    setCustomCountryId(null);
-    setCustomStateId(null);
-    setCustomCityId(null);
-    setError("");
-    setShowPhonePopup(false);
-    setNewPhone("");
-    setProfileImageFile(null);
-    setAdditionalFiles([]);
-    setExistingFiles([]);
-    setFirstImageSrc(null);
-    if (imageInputRef.current) imageInputRef.current.value = "";
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
+  setShowCustomForm(false);
+  // Reset all relevant states to their initial values
+  setCustomContact({
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    company: "",
+    job_type: "",
+    website: "",
+    category: "",
+    relation: "",
+    phone_number: "",
+    phone_number1: "",
+    phone_number2: "",
+    phone_number3: "",
+    email: "",
+    flat_building_no: "",
+    street: "",
+    country: "",
+    state: "",
+    city: "",
+    postal_code: "",
+    date_of_birth: "",
+    anniversary: "",
+    notes: "",
+    contact_image: "",
+    release_on_pass: false,
+    is_ambassador: false,
+    is_nominee: false,
+    share_on: "",
+    share_by: {
+      whatsapp: false,
+      sms: false,
+      email: false,
+    },
+  });
+  setEditingContactId(null); // Ensure editing state is cleared
+  setCustomRelation("");
+  setRelationSearch("");
+  setCategorySearch("");
+  setJobTypeSearch("");
+  setCustomShareOn("");
+  setPhoneCount(1);
+  setCustomCountryId(null);
+  setCustomStateId(null);
+  setCustomCityId(null);
+  setError("");
+  setShowPhonePopup(false);
+  setNewPhone("");
+  setProfileImageFile(null);
+  setAdditionalFiles([]);
+  setExistingFiles([]);
+  setFirstImageSrc(null);
+  if (imageInputRef.current) imageInputRef.current.value = "";
+  if (fileInputRef.current) fileInputRef.current.value = "";
+};
   const handleRelationSearch = (e) => {
     const value = e.target.value;
     setRelationSearch(value);
@@ -1576,29 +1664,35 @@ const Contact = () => {
   );
 
   const filteredContacts = contacts.filter((contact) => {
-    const matchesSearch = `${contact.first_name || ""} ${contact.last_name || ""}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      filterOptions.categories.length === 0 ||
-      filterOptions.categories.some(cat => {
-        if (["Family", "Friends", "Work"].includes(cat)) {
-          return contact.category === cat;
-        }
-        return contact.category?.toLowerCase().includes(cat.toLowerCase());
-      });
-    const matchesRelation =
-      filterOptions.relations.length === 0 ||
-      filterOptions.relations.some(rel => {
-        if (relationOptions.includes(rel)) {
-          return contact.relation === rel;
-        }
-        return contact.relation?.toLowerCase().includes(rel.toLowerCase());
-      });
-    const matchesSharedAfterPassAway =
-      !filterOptions.sharedAfterPassAway || contact.release_on_pass === 1;
-    return matchesSearch && matchesCategory && matchesRelation && matchesSharedAfterPassAway;
-  });
+  const matchesSearch = `${contact.first_name || ''} ${contact.last_name || ''}`
+    .toLowerCase()
+    .includes(searchQuery.toLowerCase());
+  const matchesLetter = selectedLetter
+    ? (contact.first_name || '').toLowerCase().startsWith(selectedLetter.toLowerCase())
+    : true;
+  const matchesCategory =
+    filterOptions.categories.length === 0 ||
+    filterOptions.categories.some(cat => {
+      if (['Family', 'Friends', 'Work'].includes(cat)) {
+        return contact.category === cat;
+      }
+      return contact.category?.toLowerCase().includes(cat.toLowerCase());
+    });
+  const matchesRelation =
+    filterOptions.relations.length === 0 ||
+    filterOptions.relations.some(rel => {
+      if (relationOptions.includes(rel)) {
+        return contact.relation === rel;
+      }
+      return contact.relation?.toLowerCase().includes(rel.toLowerCase());
+    });
+  // Fix: Explicitly check release_on_pass as boolean or numeric
+  const matchesSharedAfterPassAway =
+    !filterOptions.sharedAfterPassAway ||
+    contact.release_on_pass === true ||
+    contact.release_on_pass === 1;
+  return matchesSearch && matchesLetter && matchesCategory && matchesRelation && matchesSharedAfterPassAway;
+});
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
@@ -1638,10 +1732,55 @@ const Contact = () => {
       ) {
         setDropdownOpen(null);
       }
+
+     if (
+      shareOnInputRef.current &&
+      !shareOnInputRef.current.contains(event.target)
+    ) {
+      setShowShareOnDropdown(false);
+    }
+  
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+
+  const handleShareOnSearch = (e) => {
+  const value = e.target.value;
+  setCustomShareOn(value);
+  setShowShareOnDropdown(true);
+  if (shareOnOptions.includes(value)) {
+    setCustomContact((prev) => ({ ...prev, share_on: value }));
+  } else {
+    setCustomContact((prev) => ({ ...prev, share_on: value.trim() }));
+  }
+};
+
+const handleShareOnSelect = (option) => {
+  setCustomContact((prev) => ({ ...prev, share_on: option }));
+  setCustomShareOn(option);
+  setShowShareOnDropdown(false);
+};
+
+const handleAddCustomShareOn = () => {
+  setShowShareOnDropdown(false);
+  setCustomShareOn(customShareOn.trim());
+  setCustomContact((prev) => ({ ...prev, share_on: customShareOn.trim() }));
+  shareOnInputRef.current?.focus();
+};
+
+const handleShareOnKeyDown = (e) => {
+  if (e.key === "Enter" && customShareOn.trim()) {
+    setCustomContact((prev) => ({ ...prev, share_on: customShareOn.trim() }));
+    setCustomShareOn(customShareOn.trim());
+    setShowShareOnDropdown(false);
+  }
+};
+
+const filteredShareOnOptions = shareOnOptions.filter((option) =>
+  option.toLowerCase().includes(customShareOn.toLowerCase())
+);
 
   const handleProfileImageChange = (event) => {
     const file = event.target.files[0];
@@ -1757,22 +1896,144 @@ const Contact = () => {
 
   // Pagination handlers
   const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  if (page >= 1 && page <= totalPages) {
+    setCurrentPage(page);
+    fetchContacts(page, filter, searchQuery, filterOptions); 
+  }
+};
 
   useEffect(() => {
-    debouncedFetchContacts(searchQuery, filterOptions);
-    return () => debouncedFetchContacts.cancel();
-  }, [searchQuery, filter, filterOptions]);
+  debouncedFetchContacts(searchQuery, filterOptions);
+  return () => debouncedFetchContacts.cancel();
+}, [searchQuery, filterOptions]);
 
-  // Update debouncedFetchContacts to accept filterOptions
-  const debouncedFetchContacts = debounce((query, filters) => {
-    setCurrentPage(1);
-    fetchContacts(1, filter, query, filters);
-  }, 300);
+const debouncedFetchContacts = debounce((query, filters) => {
+  fetchContacts(currentPage, filter, query, filters);
+}, 300);
 
+const fetchAddressSuggestions = debounce(async (query) => {
+  if (!query || query.length < 3) {
+    setAddressSuggestions([]);
+    setShowAddressSuggestions(false);
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${OPENCAGE_API_KEY}&limit=5`
+    );
+    const data = await response.json();
+    if (data.results && data.results.length > 0) {
+      setAddressSuggestions(data.results);
+      setShowAddressSuggestions(true);
+    } else {
+      setAddressSuggestions([]);
+      setShowAddressSuggestions(false);
+    }
+  } catch (err) {
+    setError("Failed to fetch address suggestions: " + err.message);
+    toast.error("Failed to fetch address suggestions: " + err.message, { autoClose: 3000 });
+  }
+}, 300);
+
+const handleAddressSelect = (result, isCustom = false) => {
+  if (isCustom) {
+    setCustomContact((prev) => ({
+      ...prev,
+      flat_building_no: addressSearch.trim(),
+    }));
+  } else {
+    const components = result.components;
+    const formatted = result.formatted;
+
+    // Split the formatted address into parts based on commas
+    const addressParts = formatted.split(",").map(part => part.trim());
+
+    // Initialize address fields
+    let flatBuildingNo = "";
+    let street = "";
+    let city = components.city || components.town || components.village || "";
+    let state = components.state || "";
+    let postalCode = components.postcode || "";
+    let country = components.country || "";
+
+    // Handle address parts based on length and context
+    if (addressParts.length > 0) {
+      flatBuildingNo = addressParts[0]; // e.g., "Starbucks, Vatika Business Park"
+      if (addressParts.length > 1) {
+        street = addressParts.slice(1, addressParts.length - 3).join(", "); // e.g., "Sohna Road, Sector 49"
+      }
+      if (addressParts.length >= 3) {
+        city = city || addressParts[addressParts.length - 3] || "";
+        state = state || addressParts[addressParts.length - 2] || "";
+        country = country || addressParts[addressParts.length - 1] || "";
+      }
+    }
+
+    setCustomContact((prev) => ({
+      ...prev,
+      flat_building_no: flatBuildingNo || components.building || components.road || "",
+      street: street || components.suburb || components.neighbourhood || "",
+      city,
+      state,
+      postal_code: postalCode,
+      country,
+    }));
+  }
+  setAddressSuggestions([]);
+  setShowAddressSuggestions(false);
+  setAddressSearch("");
+};
+
+const handleAddCustomAddress = () => {
+  if (addressSearch.trim()) {
+    setCustomContact((prev) => ({
+      ...prev,
+      flat_building_no: addressSearch.trim(),
+    }));
+    setAddressSuggestions([]);
+    setShowAddressSuggestions(false);
+    setAddressSearch(addressSearch.trim()); // Retain the typed value in the input
+  } else {
+    toast.error("Please enter an address.", { autoClose: 3000 });
+  }
+};
+
+const handleAddressKeyDown = (e) => {
+  if (e.key === "Enter" && addressSearch.trim()) {
+    if (!addressSuggestions.some(s => s.formatted.toLowerCase() === addressSearch.toLowerCase())) {
+      handleAddCustomAddress();
+    } else {
+      // Select the first matching suggestion if it exists
+      const matchingSuggestion = addressSuggestions.find(s => s.formatted.toLowerCase() === addressSearch.toLowerCase());
+      if (matchingSuggestion) {
+        handleAddressSelect(matchingSuggestion);
+      }
+    }
+    e.preventDefault(); // Prevent form submission or other default behavior
+  }
+};
+
+const handleLetterSelect = (letter) => {
+  setClickedLetter(prev => (prev === letter || letter === '') ? '' : letter);
+  setSelectedLetter(letter);
+  setCurrentPage(1); // Reset to first page
+};
+
+
+  const handleLetterHover = (letter) => {
+  if (!clickedLetter) {
+    setSelectedLetter(letter);
+  }
+};
+
+  const handleLetterHoverOut = () => {
+  if (!clickedLetter) {
+    setSelectedLetter('');
+  } else {
+    setSelectedLetter(clickedLetter);
+  }
+};
 
   const renderPagination = () => {
     const pageNumbers = [];
@@ -1869,37 +2130,50 @@ const Contact = () => {
   ];
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        relationInputRef.current &&
-        !relationInputRef.current.contains(event.target)
-      ) {
-        setShowRelationDropdown(false);
-      }
-      if (
-        categoryInputRef.current &&
-        !categoryInputRef.current.contains(event.target)
-      ) {
-        setShowCategoryDropdown(false);
-      }
-      if (
-        jobTypeInputRef.current &&
-        !jobTypeInputRef.current.contains(event.target)
-      ) {
-        setShowJobTypeDropdown(false);
-      }
-      if (
-        !event.target.closest(".contact-action-dropdown") &&
-        !event.target.closest(".contact-action-button") &&
-        !event.target.closest(".add-contact-categorize-options") &&
-        !event.target.closest(".add-contact-action-dropdown")
-      ) {
-        setDropdownOpen(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const handleClickOutside = (event) => {
+    if (
+      relationInputRef.current &&
+      !relationInputRef.current.contains(event.target)
+    ) {
+      setShowRelationDropdown(false);
+    }
+    if (
+      categoryInputRef.current &&
+      !categoryInputRef.current.contains(event.target)
+    ) {
+      setShowCategoryDropdown(false);
+    }
+    if (
+      jobTypeInputRef.current &&
+      !jobTypeInputRef.current.contains(event.target)
+    ) {
+      setShowJobTypeDropdown(false);
+    }
+    if (
+      shareOnInputRef.current &&
+      !shareOnInputRef.current.contains(event.target)
+    ) {
+      setShowShareOnDropdown(false);
+    }
+    if (
+      !event.target.closest(".address-suggestions-dropdown") &&
+      !event.target.closest(".add-contact-form-input")
+    ) {
+      setShowAddressSuggestions(false);
+      setAddressSearch(customContact.flat_building_no || "");
+    }
+    if (
+      !event.target.closest(".contact-action-dropdown") &&
+      !event.target.closest(".contact-action-button") &&
+      !event.target.closest(".add-contact-categorize-options") &&
+      !event.target.closest(".add-contact-action-dropdown")
+    ) {
+      setDropdownOpen(null);
+    }
+  };
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [customContact.flat_building_no]);
 
   const handleJobTypeSearch = (e) => {
     const value = e.target.value;
@@ -1941,9 +2215,10 @@ const Contact = () => {
     option.toLowerCase().includes(jobTypeSearch.toLowerCase())
   );
 
-  const isFilterActive = filterOptions.categories.length > 0 ||
+ const isFilterActive = filterOptions.categories.length > 0 ||
     filterOptions.relations.length > 0 ||
-    filterOptions.sharedAfterPassAway;
+    filterOptions.sharedAfterPassAway ||
+    selectedLetter !== '';
 
   return (
     <div className="add-contact-page">
@@ -2003,18 +2278,23 @@ const Contact = () => {
                 <FilterDropdown filterOptions={filterOptions} setFilterOptions={setFilterOptions} />
               </div>
               <div className="contact-header-buttons">
-                <button className="contact-header-button" onClick={handleDeleteSelected}>
-                  Bulk Delete <span className="dropdown-icon">⏷</span>
-                </button>
-                <CategorizeDropdown
-                  selectedContacts={selectedContacts}
-                  contacts={contacts}
-                  setSelectedContacts={setSelectedContacts}
-                  fetchContacts={fetchContacts}
-                  categoryDropdownRef={categoryDropdownRef}
-                  relationDropdownRef={relationDropdownRef}
-                  roleDropdownRef={roleDropdownRef}
-                />
+<button className="contact-header-button" onClick={handleDeleteSelected}>
+  <img src={deleteIcon} alt="Delete Icon" className="contact-header-icon" />
+  Bulk Delete <span className="dropdown-icon"></span>
+</button>
+               <CategorizeDropdown
+  selectedContacts={selectedContacts}
+  contacts={contacts}
+  setSelectedContacts={setSelectedContacts}
+  fetchContacts={fetchContacts}
+  categoryDropdownRef={categoryDropdownRef}
+  relationDropdownRef={relationDropdownRef}
+  roleDropdownRef={roleDropdownRef}
+  categoryOptions={categoryOptions}
+  relationOptions={relationOptions}
+  fetchedCategories={filterOptions.fetchedCategories}
+  fetchedRelations={filterOptions.fetchedRelations}
+/>
                 <button className="contact-add-button" onClick={toggleDrawer}>
                   + Add
                 </button>
@@ -2022,10 +2302,33 @@ const Contact = () => {
             </div>
           </div>
 
+          <div className="contact-table-container">
+          <div className="contact-alphabet-filter">
+            <div
+              className={`alphabet-option ${selectedLetter === '' ? 'active' : ''}`}
+              onClick={() => handleLetterSelect('')}
+              onMouseEnter={() => handleLetterHover('')}
+              onMouseLeave={() => handleLetterHoverOut('')}
+            >
+              #
+            </div>
+            {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map(letter => (
+              <div
+                key={letter}
+                className={`alphabet-option ${selectedLetter === letter ? 'active' : ''}`}
+                onClick={() => handleLetterSelect(letter)}
+                onMouseEnter={() => handleLetterHover(letter)}
+                onMouseLeave={() => handleLetterHoverOut(letter)}
+              >
+                {letter}
+              </div>
+            ))}
+          </div>
+
           <table className="contact-table">
             <thead>
-              <tr>
-                <th>
+              <tr className="main-tbl">
+                <th className="border_tl-round">
                   <input
                     type="checkbox"
                     className="contact-table-checkbox"
@@ -2040,7 +2343,7 @@ const Contact = () => {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Category</th>
-                <th>Action</th>
+                <th className="border_tr-round">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -2100,9 +2403,11 @@ const Contact = () => {
                           </button>
                           {isViewContactOpen && selectedContact && (
                             <ViewContact
-                              contact={selectedContact}
-                              onClose={handleCloseViewContact}
-                            />
+                            contact={selectedContact}
+                            onClose={handleCloseViewContact}
+                            onEdit={handleEditContact}
+                            onDelete={handleDeleteContact}
+                          />
                           )}
                           <button
                             className="contact-action-option"
@@ -2161,6 +2466,7 @@ const Contact = () => {
               ))}
             </tbody>
           </table>
+          </div>
           {!searchQuery && totalPages > 1 && renderPagination()}
         </>
       )}
@@ -2239,39 +2545,52 @@ const Contact = () => {
               ×
             </button>
             <div className="add-contact-modal-header">
-              <h2 className="add-contact-custom-heading">
-                {editingContactId ? "Edit Contact" : "Add Custom Contact"}
-              </h2>
-              <div className="add-contact-profile-image-container">
-                <div
-                  className="add-contact-profile-image"
-                  onClick={() => imageInputRef.current?.click()}
-                >
-                  {customContact.contact_image ? (
-                    <img
-                      src={customContact.contact_image}
-                      alt="Profile"
-                      className="add-contact-profile-image-img"
-                    />
-                  ) : (
-                    <div className="add-contact-profile-image-placeholder" />
-                  )}
-                </div>
-                <img
-                  src={cameraIcon}
-                  alt="Camera Icon"
-                  className="add-contact-camera-icon"
-                  onClick={() => imageInputRef.current?.click()}
-                />
-                <input
-                  ref={imageInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfileImageChange}
-                  style={{ display: "none" }}
-                />
-              </div>
-            </div>
+  <h2 className="add-contact-custom-heading">
+    {editingContactId ? "Edit Contact" : "Add Custom Contact"}
+  </h2>
+  <div className="add-contact-profile-image-container">
+    <div
+      className="add-contact-profile-image"
+      onClick={() => imageInputRef.current?.click()}
+    >
+      {customContact.contact_image ? (
+        <img
+          src={customContact.contact_image}
+          alt="Profile"
+          className="add-contact-profile-image-img"
+        />
+      ) : (
+        <div className="add-contact-profile-image-placeholder" />
+      )}
+    </div>
+    <img
+      src={cameraIcon}
+      alt="Camera Icon"
+      className="add-contact-camera-icon"
+      onClick={() => imageInputRef.current?.click()}
+    />
+    <label className="add-contact-checkbox-label add-contact-release-checkbox">
+      <input
+        type="checkbox"
+        checked={customContact.release_on_pass}
+        onChange={(e) =>
+          setCustomContact((prev) => ({
+            ...prev,
+            release_on_pass: e.target.checked,
+          }))
+        }
+      />
+      Information is released when one passes away
+    </label>
+    <input
+      ref={imageInputRef}
+      type="file"
+      accept="image/*"
+      onChange={handleProfileImageChange}
+      style={{ display: "none" }}
+    />
+  </div>
+</div>
 
             <div className="add-contact-form-content">
               <div className="add-contact-form-row">
@@ -2575,20 +2894,47 @@ const Contact = () => {
                     }
                   />
                 </div>
-                <div className="add-contact-form-group">
-                  <label className="add-contact-form-label">Flat/Building No</label>
-                  <input
-                    type="text"
-                    className="add-contact-form-input"
-                    value={customContact.flat_building_no}
-                    onChange={(e) =>
-                      setCustomContact((prev) => ({
-                        ...prev,
-                        flat_building_no: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
+               <div className="add-contact-form-group" style={{ position: "relative" }}>
+  <label className="add-contact-form-label">Flat/Building No</label>
+  <input
+    type="text"
+    className="add-contact-form-input"
+    value={addressSearch}
+    onChange={(e) => {
+      const newValue = e.target.value;
+      setAddressSearch(newValue);
+      setCustomContact((prev) => ({
+        ...prev,
+        flat_building_no: newValue,
+      }));
+      fetchAddressSuggestions(newValue);
+    }}
+    onFocus={() => setShowAddressSuggestions(true)}
+    onKeyDown={handleAddressKeyDown}
+    placeholder="Enter or search address"
+  />
+  {showAddressSuggestions && (addressSuggestions.length > 0 || addressSearch.trim()) && (
+    <div className="address-suggestions-dropdown">
+      {addressSuggestions.map((result, index) => (
+        <div
+          key={index}
+          className="address-suggestion-item"
+          onClick={() => handleAddressSelect(result)}
+        >
+          {result.formatted}
+        </div>
+      ))}
+      {addressSearch.trim() && !addressSuggestions.some(s => s.formatted.toLowerCase() === addressSearch.toLowerCase()) && (
+        <div
+          className="address-suggestion-item add-custom"
+          onClick={handleAddCustomAddress}
+        >
+          Add Custom{addressSearch && ": "} {addressSearch}
+        </div>
+      )}
+    </div>
+  )}
+</div>
                 <div className="add-contact-form-group">
                   <label className="add-contact-form-label">Street</label>
                   <input
@@ -2709,21 +3055,89 @@ const Contact = () => {
                     }
                     rows="3"
                   />
-                  <label className="add-contact-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={customContact.release_on_pass}
-                      onChange={(e) =>
-                        setCustomContact((prev) => ({
-                          ...prev,
-                          release_on_pass: e.target.checked,
-                        }))
-                      }
-                    />
-                    Information is released when one passes away
-                  </label>
+                  
                 </div>
               </div>
+
+             <div className="add-contact-form-row">
+ <div className="add-contact-form-group share-on-group" ref={shareOnInputRef}>
+    <label className="add-contact-form-label">Share On</label>
+    <input
+      type="text"
+      className="add-contact-form-input"
+      value={customShareOn}
+      onChange={handleShareOnSearch}
+      onFocus={() => setShowShareOnDropdown(true)}
+      onKeyDown={handleShareOnKeyDown}
+      placeholder="Select or enter share on days"
+    />
+    {showShareOnDropdown && (
+      <div className="add-contact-share-on-dropdown">
+        <>
+          {filteredShareOnOptions.map((option) => (
+            <div
+              key={option}
+              className="add-contact-share-on-option"
+              onClick={() => handleShareOnSelect(option)}
+            >
+              {option}
+            </div>
+          ))}
+          <div
+            className="add-contact-share-on-option add-custom"
+            onClick={handleAddCustomShareOn}
+          >
+            Add Custom{customShareOn.trim() && `: ${customShareOn}`}
+          </div>
+        </>
+      </div>
+    )}
+  </div>
+  <div className="add-contact-form-group share-by-group">
+    <label className="add-contact-form-label">Share By</label>
+    <div className="add-contact-share-by-checkboxes">
+      <label className="add-contact-checkbox-label">
+        <input
+          type="checkbox"
+          checked={customContact.share_by.whatsapp}
+          onChange={(e) =>
+            setCustomContact((prev) => ({
+              ...prev,
+              share_by: { ...prev.share_by, whatsapp: e.target.checked },
+            }))
+          }
+        />
+        WhatsApp
+      </label>
+      <label className="add-contact-checkbox-label">
+        <input
+          type="checkbox"
+          checked={customContact.share_by.sms}
+          onChange={(e) =>
+            setCustomContact((prev) => ({
+              ...prev,
+              share_by: { ...prev.share_by, sms: e.target.checked },
+            }))
+          }
+        />
+        SMS
+      </label>
+      <label className="add-contact-checkbox-label">
+        <input
+          type="checkbox"
+          checked={customContact.share_by.email}
+          onChange={(e) =>
+            setCustomContact((prev) => ({
+              ...prev,
+              share_by: { ...prev.share_by, email: e.target.checked },
+            }))
+          }
+        />
+        Email
+      </label>
+    </div>
+  </div>
+</div>
 
               <div className="add-contact-form-row">
                 <div className="add-contact-form-group full-width">
@@ -2810,14 +3224,6 @@ const Contact = () => {
                         </div>
                       )}
                     </div>
-
-
-
-
-
-
-
-
 
                     {(additionalFiles.length > 0 || existingFiles.length > 0) && (
                       <div className="added-files">
@@ -2922,3 +3328,4 @@ const Contact = () => {
 };
 
 export default Contact;
+

@@ -121,7 +121,7 @@ const Sidebar = () => {
                     <li
                         className="dash-sidebar-item"
                         onClick={() => {
-                            navigate("/personal-info");
+                            navigate("/family-id");
                             closeSidebar()
                         }}
                     >

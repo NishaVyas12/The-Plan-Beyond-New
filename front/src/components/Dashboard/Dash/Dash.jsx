@@ -23,7 +23,6 @@ import health from "../../../assets/images/sidebar/icon7.svg";
 import Family from "../../../assets/images/sidebar/icon9.svg";
 import Gone from "../../../assets/images/sidebar/icon10.svg";
 import Popups from "../../Popups";
-// import sampleVideo from "../../../assets/videos/TPB.mp4";
 
 const Dash = () => {
   const [profile, setProfile] = useState({
@@ -38,12 +37,11 @@ const Dash = () => {
   const [nomineeCount, setNomineeCount] = useState(0);
   const [contactCount, setContactCount] = useState(0);
   const [videoCount, setVideoCount] = useState(0);
-  const [ambassadors, setAmbassadors] = useState([
-    { name: "Ambassador 1", role: "Initiator" },
-    { name: "Ambassador 2", role: "Approver" },
-  ]);
+  const [ambassadorCount, setAmbassadorCount] = useState(0);
   const [showVideoPopup, setShowVideoPopup] = useState(false);
   const [showSetupPopup, setShowSetupPopup] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const sliderRef = useRef(null);
 
@@ -77,9 +75,75 @@ const Dash = () => {
               ? `${import.meta.env.VITE_API_URL}/${data.profile.profile_image}`
               : null,
           });
+        } else {
+          console.warn("Profile fetch unsuccessful:", data);
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
+        setError("Failed to load profile data.");
+      }
+    };
+
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/contacts`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        if (data.success) {
+          setContactCount(data.total);
+        } else {
+          console.warn("Contacts fetch unsuccessful:", data);
+        }
+      } catch (error) {
+        console.error("Error fetching contacts:", error);
+        setError("Failed to load contacts data.");
+      }
+    };
+
+    const fetchNominees = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/nominees`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        if (data.success) {
+          setNomineeCount(data.nominees.length);
+        } else {
+          console.warn("Nominees fetch unsuccessful:", data);
+        }
+      } catch (error) {
+        console.error("Error fetching nominees:", error);
+        setError("Failed to load nominees data.");
+      }
+    };
+
+    const fetchAmbassadors = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/ambassadors`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        if (data.success) {
+          setAmbassadorCount(data.ambassadors.length);
+        } else {
+          console.warn("Ambassadors fetch unsuccessful:", data);
+        }
+      } catch (error) {
+        console.error("Error fetching ambassadors:", error);
+        setError("Failed to load ambassadors data.");
       }
     };
 
@@ -101,12 +165,29 @@ const Dash = () => {
         }
       } catch (error) {
         console.error("Error checking popup status:", error);
-        setShowSetupPopup(true); // Show popup on error to avoid blocking user
+        setError("Failed to load popup status.");
       }
     };
 
-    fetchProfile();
-    checkPopupStatus();
+    const fetchAllData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          fetchProfile(),
+          fetchContacts(),
+          fetchNominees(),
+          fetchAmbassadors(),
+          checkPopupStatus(),
+        ]);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Failed to load dashboard data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
   }, []);
 
   useEffect(() => {
@@ -152,6 +233,14 @@ const Dash = () => {
     localStorage.setItem("popupCompleted", "true");
     setShowSetupPopup(false);
   };
+
+  if (loading) {
+    return <div>Loading dashboard...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="dash-container">
@@ -294,10 +383,14 @@ const Dash = () => {
               <div className="dash-plan-beyond">
                 <h3 className="dash-section-title">Assign by You</h3>
                 <div className="dash-categories">
-                  <Link to="/personal-info" className="dash-category">
+                  <div
+                    className="dash-category"
+                    onClick={() => navigate("/nominee")}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="dash-category-content">
                       <span className="dash-category-name">Nominees</span>
-                      <p className="dash-category-desc">5 Contacts Added</p>
+                      <p className="dash-category-desc">{nomineeCount} Contacts Added</p>
                     </div>
                     <div className="dash-category-action">
                       <span className="dash-action-inline">
@@ -305,11 +398,15 @@ const Dash = () => {
                         <p>Add Nominees</p>
                       </span>
                     </div>
-                  </Link>
-                  <Link to="/digital-info" className="dash-category">
+                  </div>
+                  <div
+                    className="dash-category"
+                    onClick={() => navigate("/ambassador")}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="dash-category-content">
                       <span className="dash-category-name">Ambassador’s</span>
-                      <p className="dash-category-desc">2 Contacts Added</p>
+                      <p className="dash-category-desc">{ambassadorCount} Contacts Added</p>
                     </div>
                     <div className="dash-category-action">
                       <span className="dash-action-inline">
@@ -317,7 +414,7 @@ const Dash = () => {
                         <p>Add Ambassador</p>
                       </span>
                     </div>
-                  </Link>
+                  </div>
                   <Link to="/home-property-info" className="dash-category">
                     <div className="dash-category-content">
                       <span className="dash-category-name">
@@ -355,7 +452,11 @@ const Dash = () => {
             </div>
             <div className="dash-slider-wrapper">
               <div className="dash-slider" id="slider" ref={sliderRef}>
-                <div className="slider-category">
+                <div
+                  className="slider-category"
+                  onClick={() => navigate("/personal-info")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="dash-user-bg">
                     <img src={user} alt="" />
                   </div>
@@ -366,7 +467,11 @@ const Dash = () => {
                     <p>Who you are, all in one place</p>
                   </div>
                 </div>
-                <div className="slider-category">
+                <div
+                  className="slider-category"
+                  onClick={() => navigate("/digital-info")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="dash-user-bg">
                     <img src={Smartphone} alt="" />
                   </div>
@@ -375,7 +480,11 @@ const Dash = () => {
                     <p>Secure your online world</p>
                   </div>
                 </div>
-                <div className="slider-category">
+                <div
+                  className="slider-category"
+                  onClick={() => navigate("/home-property-info")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="dash-user-bg">
                     <img src={homeSmile} alt="" />
                   </div>
@@ -386,7 +495,11 @@ const Dash = () => {
                     <p>Map what you own, clearly</p>
                   </div>
                 </div>
-                <div className="slider-category">
+                <div
+                  className="slider-category"
+                  onClick={() => navigate("/financial-info")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="dash-user-bg">
                     <img src={financialIcon} alt="" />
                   </div>
@@ -397,7 +510,11 @@ const Dash = () => {
                     <p>Your money, your future organized</p>
                   </div>
                 </div>
-                <div className="slider-category">
+                <div
+                  className="slider-category"
+                  onClick={() => navigate("/legal-info")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="dash-user-bg">
                     <img src={legal} alt="" />
                   </div>
@@ -408,7 +525,11 @@ const Dash = () => {
                     <p>Secure your online world.</p>
                   </div>
                 </div>
-                <div className="slider-category">
+                <div
+                  className="slider-category"
+                  onClick={() => navigate("/health-info")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="dash-user-bg">
                     <img src={health} alt="" />
                   </div>
@@ -419,7 +540,11 @@ const Dash = () => {
                     <p>Vital health details.</p>
                   </div>
                 </div>
-                <div className="slider-category">
+                <div
+                  className="slider-category"
+                  onClick={() => navigate("/family-id")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="dash-user-bg">
                     <img src={Family} alt="" />
                   </div>
@@ -430,7 +555,11 @@ const Dash = () => {
                     <p>Your circle close and connected</p>
                   </div>
                 </div>
-                <div className="slider-category">
+                <div
+                  className="slider-category"
+                  onClick={() => navigate("/after-gone-info")}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="dash-user-bg">
                     <img src={Gone} alt="" />
                   </div>
@@ -513,9 +642,10 @@ const Dash = () => {
                 <button className="video-popup-close" onClick={closeVideoPopup}>
                   ×
                 </button>
+                {/* Replace 'sampleVideo' with a valid video URL or import */}
                 <video
                   className="video-player"
-                  src={"sampleVideo"}
+                  src=""
                   controls
                   autoPlay
                 ></video>

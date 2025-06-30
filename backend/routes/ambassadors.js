@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/database");
-const { upload } = require("../middleware/multer"); // Use the provided Multer config
+const { upload } = require("../middleware/multer");
 const { checkTableExists, createUserContactsTable } = require("../database/schema");
 const { transporter } = require("../config/email");
 const path = require("path");
@@ -418,6 +418,21 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
         };
       }
 
+      // Update nominee profile_image if a nominee exists with matching phone number
+      const [existingNominee] = await connection.query(
+        `SELECT id FROM nominees 
+         WHERE user_id = ? AND (phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,
+        [req.session.userId, phoneNumbers, phoneNumbers, phoneNumbers]
+      );
+
+      if (existingNominee.length > 0) {
+        await connection.query(
+          `UPDATE nominees SET profile_image = ? 
+           WHERE id = ? AND user_id = ?`,
+          [imagePath, existingNominee[0].id, req.session.userId]
+        );
+      }
+
       await connection.commit();
 
       const ambassador = {
@@ -532,7 +547,7 @@ router.delete("/:id", checkAuth, async (req, res) => {
         [email, phoneNumbers, phoneNumbers, phoneNumbers]
       );
 
-      // Delete profile upset profile image
+      // Delete profile image
       if (profile_image) {
         const imagePath = path.join(__dirname, "..", profile_image);
         try {
@@ -555,7 +570,7 @@ router.delete("/:id", checkAuth, async (req, res) => {
       connection.release();
     }
   } catch (err) {
-    console.error("Error robbing ambassador:", err);
+    console.error("Error removing ambassador:", err);
     res.status(500).json({
       success: false,
       message: `Server error: ${err.message || "Unknown error occurred."}`,

@@ -1,6 +1,6 @@
 .ambassador-add-contact-container-add-ambassador {
-  margin-left: 300px;
-  padding: 2rem;
+  margin-left: 250px;
+  padding: 2rem 80px;
   background-color: #fff;
   height: 100%;
   margin-top: 4rem;
@@ -29,7 +29,7 @@
 
 .ambassador-add-button-add-ambassador {
   padding: 8px 16px;
-  border-radius: 15px;
+  border-radius: 25px;
   font-size: 0.95rem;
   border: none;
   cursor: pointer;
@@ -319,7 +319,7 @@
 
 .ambassador-add-profile-label {
   font-size: 1rem;
-  color: var(--secondary-color);
+  color: var(--primary-color);
   font-weight: 500;
 }
 

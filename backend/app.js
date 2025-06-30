@@ -13,6 +13,7 @@ const biometricRoutes = require("./routes/biometric");
 const contactsRoutes = require("./routes/contacts");
 const ambassadorsRoutes = require("./routes/ambassadors");
 const nomineesRoutes = require("./routes/nominees");
+const familyInfoRoutes = require("./routes/familyinfo");
 
 initializeDatabase().then(() => {
   const app = express();
@@ -37,6 +38,7 @@ initializeDatabase().then(() => {
   app.use("/api/contacts", contactsRoutes);
   app.use("/api/ambassadors", ambassadorsRoutes);
   app.use("/api", nomineesRoutes);
+  app.use("/api/familyinfo", familyInfoRoutes);
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

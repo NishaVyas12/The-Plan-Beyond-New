@@ -1,0 +1,225 @@
+.family-detail-page {
+  margin-left: 300px;
+  padding: 2rem 20px 2rem;
+  background-color: #fff;
+  height: 100%;
+  margin-top: 4rem;
+  min-height: calc(100vh - 6rem);
+}
+
+.family-detail-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.family-detail-title {
+  font-weight: 600;
+  font-size: 1.8rem;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.family-detail-add-button {
+  padding: 0.65rem 1.5rem;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 15px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: auto;
+}
+
+.family-detail-add-button:hover {
+  background-color: #218838;
+}
+
+.family-detail-container {
+  margin: 0;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.family-detail-loading {
+  text-align: center;
+  padding: 2rem;
+  color: #1a1a1a;
+}
+
+.family-detail-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.family-detail-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.family-detail-card {
+  background: #fff;
+  border: 1px solid #EBEBEB;
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 150px;
+  position: relative;
+}
+
+.family-detail-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.family-detail-card-label {
+  font-size: 1rem;
+  color: #1a1a1a;
+  text-align: left;
+  font-weight: 500;
+  margin: 0;
+}
+
+.family-detail-card-options {
+  font-size: 1.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.family-detail-card-upload {
+  text-align: center;
+  color: #1a1a1a;
+  border: 2px dashed #ccc;
+  padding: 15px;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.family-detail-card-upload p {
+  color: #1a1a1a;
+  margin: 5px 0;
+}
+
+.family-detail-card-input {
+  padding: 0.5rem;
+  border: 1px solid #EBEBEB;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+  color: #1a1a1a;
+  text-align: center;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.family-detail-card-input:focus {
+  outline: none;
+  border-color: #28a745;
+}
+
+.family-detail-file-name {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
+  text-align: center;
+  width: 100%;
+}
+
+.family-detail-form-actions {
+  display: none;
+}
+
+.family-detail-form-button {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.family-detail-form-button.save {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.family-detail-form-button.save:hover {
+  background-color: #218838;
+}
+
+/* Specific style for Birthday card - NO dashed border and custom layout */
+.family-detail-card.birthday-card {
+  /* No specific min-height adjustments here, let content define */
+}
+
+.family-detail-card.birthday-card .birthday-content {
+  display: flex;
+  flex-direction: column; /* Changed to column to stack parts */
+  align-items: flex-start; /* Align content to the left */
+  width: 100%;
+  flex-grow: 1; /* Allow content to fill space */
+  justify-content: flex-end; /* Push content to the bottom */
+}
+
+.family-detail-card.birthday-card .birthday-date-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: auto; /* Push this row to the bottom of the card */
+  padding-bottom: 5px; /* Little spacing from card bottom */
+}
+
+.family-detail-card.birthday-card .birthday-date-display {
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  margin-right: 15px; /* Spacing between date and remaining days */
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.family-detail-card.birthday-card .remaining-days {
+  font-size: 0.9rem;
+  color: #1a1a1a; /* Black color */
+  white-space: nowrap; /* Prevent wrapping */
+  text-align: right;
+}
+
+
+/* Notes Card - Textarea specific styling */
+.family-detail-card.notes-card .notes-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid #EBEBEB;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  box-sizing: border-box;
+  resize: vertical; /* Allow vertical resizing */
+}
+
+.family-detail-card.notes-card .notes-textarea:focus {
+  outline: none;
+  border-color: #28a745;
+}

@@ -6,7 +6,7 @@ import "react-phone-input-2/lib/style.css";
 import "./Ambassador.css";
 import Select from "react-select";
 import { useNavigate } from "react-router-dom";
-
+import cameraIcon from "../../../assets/images/dash_icon/camera.svg";
 const AmbassadorCard = ({
   id,
   type,
@@ -522,35 +522,35 @@ const AddAmbassadorForm = ({
   };
 
   const fetchAllContacts = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts`, {
-        credentials: "include",
-      });
-      const data = await response.json();
-      if (data.success) {
-        setAllContacts(data.contacts);
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts?all=true`, {
+      credentials: "include",
+    });
+    const data = await response.json();
+    if (data.success) {
+      setAllContacts(data.contacts);
+    } else {
+      if (response.status === 401) {
+        toast.error("Session expired. Please log in again.", {
+          position: "top-right",
+          autoClose: 3000,
+          onClose: () => navigate("/login"),
+        });
       } else {
-        if (response.status === 401) {
-          toast.error("Session expired. Please log in again.", {
-            position: "top-right",
-            autoClose: 3000,
-            onClose: () => navigate("/login"),
-          });
-        } else {
-          toast.error(data.message || "Failed to fetch contacts", {
-            position: "top-right",
-            autoClose: 3000,
-          });
-        }
+        toast.error(data.message || "Failed to fetch contacts", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
-    } catch (err) {
-      console.error("Error fetching contacts:", err);
-      toast.error("Error fetching contacts. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
     }
-  };
+  } catch (err) {
+    console.error("Error fetching contacts:", err);
+    toast.error("Error fetching contacts. Please try again.", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+  }
+};
 
   useEffect(() => {
     fetchAllContacts();
@@ -591,17 +591,18 @@ const AddAmbassadorForm = ({
   };
 
   const contacts = allContacts?.map((item) => ({
-    value: item.phone_number,
-    label: [item.first_name, item.middle_name, item.last_name].filter(Boolean).join(" "),
-    fName: item.first_name,
-    mName: item.middle_name || "",
-    lName: item.last_name || "",
-    email: item.email || "",
-    phone: item.phone_number,
-    category: item.category || "",
-    relation: item.relation || "",
-  }));
-
+  value: item.phone_number,
+  label: [item.first_name, item.middle_name, item.last_name].filter(Boolean).join(" "),
+  fName: item.first_name,
+  mName: item.middle_name || "",
+  lName: item.last_name || "",
+  email: item.email || "",
+  phone: item.phone_number,
+  phone_number1: item.phone_number1 || "", // Add phone_number1
+  phone_number2: item.phone_number2 || "", // Add phone_number2
+  category: item.category || "",
+  relation: item.relation || "",
+}));
   if (!isOpen) return null;
 
   return (
@@ -616,25 +617,35 @@ const AddAmbassadorForm = ({
             <div className="ambassador-add-field-group full-width">
               <label className="ambassador-add-form-label-add-ambassador">Search Contact</label>
               <Select
-                options={contacts}
-                value={formData.contact}
-                name="contact"
-                styles={customStyles}
-                placeholder="Search Contact..."
-                onChange={(selectedOption) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    contact: selectedOption,
-                    firstName: selectedOption?.fName || "",
-                    middleName: selectedOption?.mName || "",
-                    lastName: selectedOption?.lName || "",
-                    email: selectedOption?.email || "",
-                    phone_number: selectedOption?.phone || "",
-                    category: selectedOption?.category || "",
-                    relation: selectedOption?.relation || "",
-                  }));
-                }}
-              />
+  options={contacts}
+  value={formData.contact}
+  name="contact"
+  styles={customStyles}
+  placeholder="Search Contact..."
+  onChange={(selectedOption) => {
+    const newCategory = selectedOption?.category || "";
+    setFormData((prev) => ({
+      ...prev,
+      contact: selectedOption,
+      firstName: selectedOption?.fName || "",
+      middleName: selectedOption?.mName || "",
+      lastName: selectedOption?.lName || "",
+      email: selectedOption?.email || "",
+      phone_number: selectedOption?.phone || "",
+      phone_number1: selectedOption?.phone_number1 || "",
+      phone_number2: selectedOption?.phone_number2 || "",
+      category: newCategory,
+      relation: newCategory === "Family" ? selectedOption?.relation || "" : "",
+    }));
+    setShowPhone1(!!selectedOption?.phone_number1);
+    setShowPhone2(!!selectedOption?.phone_number2);
+    setShowRelationInput(newCategory === "Family");
+    setIsCustomRelation(
+      selectedOption?.relation && !relationOptions.includes(selectedOption?.relation)
+    );
+    setCustomRelation(newCategory === "Family" ? selectedOption?.relation || "" : "");
+  }}
+/>
             </div>
             <div className="ambassador-add-field-group">
               <label className="ambassador-add-form-label-add-ambassador">First Name</label>
@@ -814,39 +825,43 @@ const AddAmbassadorForm = ({
             </div>
           </div>
           <div className="ambassador-add-profile-section">
-            <div className="ambassador-add-avatar-wrapper-add-ambassador">
-              <div
-                className="ambassador-add-avatar-add-ambassador"
-                style={
-                  imagePreview
-                    ? {
-                        backgroundImage: `url(${imagePreview})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : { backgroundColor: "#DAE8E8" }
-                }
-              >
-                <label
-                  htmlFor="avatar-upload-form"
-                  className="ambassador-add-avatar-upload"
-                >
-                  <svg className="ambassador-add-camera-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 9a3 3 0 0 0-3 3v.01a3 3 0 0 0 3 3 3 3 0 0 0 3-3V12a3 3 0 0 0-3-3zm0 4.5a1.5 1.5 0 0 1-1.5-1.5v-.01a1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5V12a1.5 1.5 0 0 1-1.5 1.5z"/>
-                    <path d="M21 6h-3.56a2.9 2.9 0 0 0-.67-1.29l-.88-.88A3 3 0 0 0 13.95 3H10.1a3 3 0 0 0-2.12.88l-.87.88A2.9 2.9 0 0 0 6.44 6H3a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3zm1.5 12a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 18V9A1.5 1.5 0 0 1 3 7.5h3.44c.3 0 .58-.1.82-.3l.87-.88a1.5 1.5 0 0 1 1.06-.44h3.84a1.5 1.5 0 0 1 1.06.44l.88.88c.24.2.52.3.82.3H21a1.5 1.5 0 0 1 1.5 1.5v9z"/>
-                  </svg>
-                  <input
-                    type="file"
-                    id="avatar-upload-form"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleImageUpload}
-                  />
-                </label>
-              </div>
-            </div>
-            <span className="ambassador-add-profile-label">Add Photo</span>
-          </div>
+            
+  <div className="ambassador-add-avatar-wrapper-add-ambassador">
+    <div
+      className="ambassador-add-avatar-add-ambassador"
+      style={
+        imagePreview
+          ? {
+              backgroundImage: `url(${imagePreview})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+          : { backgroundColor: "#DAE8E8" }
+      }
+    >
+      <label
+        htmlFor="avatar-upload-form"
+        className="ambassador-add-avatar-upload"
+      >
+        <img src={cameraIcon} alt="Camera" className="ambassador-add-camera-icon" />
+        <input
+          type="file"
+          id="avatar-upload-form"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleImageUpload}
+        />
+      </label>
+    </div>
+  </div>
+  <label
+    htmlFor="avatar-upload-form"
+    className="ambassador-add-profile-label"
+    style={{ cursor: "pointer" }}
+  >
+    Add Photo
+  </label>
+</div>
         </div>
         <div className="ambassador-add-form-actions-add-ambassador">
           <button

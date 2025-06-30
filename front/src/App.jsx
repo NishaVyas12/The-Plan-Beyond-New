@@ -30,6 +30,10 @@ import ContactPage from "./pages/ContactPage";
 import ProfilePage from "./pages/ProfilePage";
 import NomineePage from "./pages/NomineePage";
 import AmbassadorPage from "./pages/AmbassadorPage";
+import FamilyIDPage from "./pages/FamilyIdPage";
+import FamilyDetail from "./components/Dashboard/FamilyId/FamilyDetail";
+import Navbar from "./components/Dashboard/Dash/navbar";
+import Sidebar from "./components/Dashboard/Dash/sidebar";
 const PrivateRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
@@ -319,6 +323,24 @@ function App() {
             element={
               <PrivateRoute>
                 <AmbassadorPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/family-id"
+            element={
+              <PrivateRoute>
+                <FamilyIDPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/family-detail/:id"
+            element={
+              <PrivateRoute>
+                <Navbar />
+                <Sidebar />
+                <FamilyDetail />
               </PrivateRoute>
             }
           />

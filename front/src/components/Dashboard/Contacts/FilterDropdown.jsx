@@ -1,33 +1,41 @@
 import { useEffect, useState, useRef } from "react";
-import debounce from "lodash.debounce";
-
+import "./Contact.css";
+import deleteIcon from "../../../assets/images/Contact/Tuning.svg"; 
 const FilterDropdown = ({ filterOptions, setFilterOptions }) => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
-  const [customCategory, setCustomCategory] = useState("");
-  const [showCustomRelationInput, setShowCustomRelationInput] = useState(false);
-  const [customRelation, setCustomRelation] = useState("");
+  const [activeTab, setActiveTab] = useState("Category");
+  const [showMore, setShowMore] = useState({
+    Category: false,
+    Relation: false,
+  });
   const filterRef = useRef(null);
 
-  const categoryOptions = ["Family", "Friends", "Work", "Custom"];
-  const relationOptions = [
-    "Son",
-    "Daughter",
-    "Wife",
-    "Husband",
-    "Father",
-    "Mother",
-    "Brother",
-    "Sister",
-    "Custom",
+  // Combine predefined and fetched categories/relations, ensuring uniqueness
+  const categoryOptions = [
+    ...new Set(["Family", "Friends", "Work", ...(filterOptions.fetchedCategories || [])]),
   ];
+  const relationOptions = [
+    ...new Set([
+      "Son",
+      "Daughter",
+      "Wife",
+      "Husband",
+      "Father",
+      "Mother",
+      "Brother",
+      "Sister",
+      ...(filterOptions.fetchedRelations || []),
+    ]),
+  ];
+
+  // Debug: Log options to verify fetched values
+  console.log("Category options:", categoryOptions);
+  console.log("Relation options:", relationOptions);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
         setShowFilterDropdown(false);
-        setShowCustomCategoryInput(false);
-        setShowCustomRelationInput(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -35,93 +43,17 @@ const FilterDropdown = ({ filterOptions, setFilterOptions }) => {
   }, []);
 
   const handleCategoryChange = (category) => {
-    if (category === "Custom") {
-      setShowCustomCategoryInput(!showCustomCategoryInput);
-      if (showCustomCategoryInput && customCategory) {
-        // Remove custom category if unchecking Custom
-        setFilterOptions((prev) => ({
-          ...prev,
-          categories: prev.categories.filter((cat) => cat !== customCategory),
-        }));
-        setCustomCategory("");
-      }
-    } else {
-      const updatedCategories = filterOptions.categories.includes(category)
-        ? filterOptions.categories.filter((cat) => cat !== category)
-        : [...filterOptions.categories, category];
-      setFilterOptions((prev) => ({ ...prev, categories: updatedCategories }));
-    }
-  };
-
-  // Debounced handler for custom category
-  const debouncedUpdateCategory = debounce((value) => {
-    setFilterOptions((prev) => ({
-      ...prev,
-      categories: [
-        ...prev.categories.filter(
-          (cat) => !categoryOptions.includes(cat) && cat !== customCategory
-        ),
-        value,
-      ],
-    }));
-  }, 300);
-
-  const handleCustomCategoryChange = (e) => {
-    const value = e.target.value;
-    setCustomCategory(value);
-    if (value.trim()) {
-      debouncedUpdateCategory(value);
-    } else {
-      setFilterOptions((prev) => ({
-        ...prev,
-        categories: prev.categories.filter((cat) => cat !== customCategory),
-      }));
-    }
+    const updatedCategories = filterOptions.categories.includes(category)
+      ? filterOptions.categories.filter((cat) => cat !== category)
+      : [...filterOptions.categories, category];
+    setFilterOptions((prev) => ({ ...prev, categories: updatedCategories }));
   };
 
   const handleRelationChange = (relation) => {
-    if (relation === "Custom") {
-      setShowCustomRelationInput(!showCustomRelationInput);
-      if (showCustomRelationInput && customRelation) {
-        // Remove custom relation if unchecking Custom
-        setFilterOptions((prev) => ({
-          ...prev,
-          relations: prev.relations.filter((rel) => rel !== customRelation),
-        }));
-        setCustomRelation("");
-      }
-    } else {
-      const updatedRelations = filterOptions.relations.includes(relation)
-        ? filterOptions.relations.filter((rel) => rel !== relation)
-        : [...filterOptions.relations, relation];
-      setFilterOptions((prev) => ({ ...prev, relations: updatedRelations }));
-    }
-  };
-
-  // Debounced handler for custom relation
-  const debouncedUpdateRelation = debounce((value) => {
-    setFilterOptions((prev) => ({
-      ...prev,
-      relations: [
-        ...prev.relations.filter(
-          (rel) => !relationOptions.includes(rel) && rel !== customRelation
-        ),
-        value,
-      ],
-    }));
-  }, 300);
-
-  const handleCustomRelationChange = (e) => {
-    const value = e.target.value;
-    setCustomRelation(value);
-    if (value.trim()) {
-      debouncedUpdateRelation(value);
-    } else {
-      setFilterOptions((prev) => ({
-        ...prev,
-        relations: prev.relations.filter((rel) => rel !== customRelation),
-      }));
-    }
+    const updatedRelations = filterOptions.relations.includes(relation)
+      ? filterOptions.relations.filter((rel) => rel !== relation)
+      : [...filterOptions.relations, relation];
+    setFilterOptions((prev) => ({ ...prev, relations: updatedRelations }));
   };
 
   const handleSharedAfterPassAwayChange = () => {
@@ -131,97 +63,132 @@ const FilterDropdown = ({ filterOptions, setFilterOptions }) => {
     }));
   };
 
+  const clearFilters = () => {
+    setFilterOptions({
+      categories: [],
+      relations: [],
+      sharedAfterPassAway: false,
+      fetchedCategories: filterOptions.fetchedCategories,
+      fetchedRelations: filterOptions.fetchedRelations,
+    });
+    setShowMore({ Category: false, Relation: false });
+    setShowFilterDropdown(false);
+  };
+
+  const toggleShowMore = (tab) => {
+    setShowMore((prev) => ({ ...prev, [tab]: !prev[tab] }));
+  };
+
+  const tabs = [
+    { name: "Category", key: "Category" },
+    { name: "Relation", key: "Relation" },
+    { name: "Shared After Pass Away", key: "SharedAfterPassAway" },
+  ];
+
   return (
     <div className="contact-filter-bar" ref={filterRef}>
-      <button
-        className="contact-filter-button"
-        onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M2 4H14M4 8H12M6 12H10"
-            stroke="#4C5767"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
+<button
+  className="contact-filter-button"
+  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+>
+  <img src={deleteIcon} alt="Delete Icon" className="contact-header-icon" />
+  Filter
+</button>
       {showFilterDropdown && (
         <div className="contact-filter-dropdown">
-          <div className="filter-section">
-            <h4 className="filter-section-title">Category</h4>
-            {categoryOptions.map((category) => (
-              <div key={category}>
-                <label className="filter-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={
-                      category === "Custom"
-                        ? showCustomCategoryInput
-                        : filterOptions.categories.includes(category)
-                    }
-                    onChange={() => handleCategoryChange(category)}
-                  />
-                  {category}
-                </label>
-                {category === "Custom" && showCustomCategoryInput && (
-                  <input
-                    type="text"
-                    className="add-contact-form-input"
-                    value={customCategory}
-                    onChange={handleCustomCategoryChange}
-                    placeholder="Enter custom category"
-                    autoFocus
-                  />
-                )}
-              </div>
-            ))}
+          <div className="filter-tab-wrapper">
+            <div className="filter-tab-nav">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  className={`filter-tab-item ${activeTab === tab.key ? "active" : ""}`}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </div>
+            <div className="filter-tab-content">
+              {activeTab === "Category" && (
+                <div className="filter-options-column">
+                  {categoryOptions.length > 0 ? (
+                    <>
+                      {categoryOptions.slice(0, showMore.Category ? undefined : 5).map((category) => (
+                        <label key={category} className="filter-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={filterOptions.categories.includes(category)}
+                            onChange={() => handleCategoryChange(category)}
+                          />
+                          {category}
+                        </label>
+                      ))}
+                      {categoryOptions.length > 5 && (
+                        <button
+                          className="filter-show-more"
+                          onClick={() => toggleShowMore("Category")}
+                        >
+                          {showMore.Category ? "Show Less" : "Show More"}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="filter-no-options">No categories available</div>
+                  )}
+                </div>
+              )}
+              {activeTab === "Relation" && (
+                <div className="filter-options-column">
+                  {relationOptions.length > 0 ? (
+                    <>
+                      {relationOptions.slice(0, showMore.Relation ? undefined : 5).map((relation) => (
+                        <label key={relation} className="filter-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={filterOptions.relations.includes(relation)}
+                            onChange={() => handleRelationChange(relation)}
+                          />
+                          {relation}
+                        </label>
+                      ))}
+                      {relationOptions.length > 5 && (
+                        <button
+                          className="filter-show-more"
+                          onClick={() => toggleShowMore("Relation")}
+                        >
+                          {showMore.Relation ? "Show Less" : "Show More"}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="filter-no-options">No relations available</div>
+                  )}
+                </div>
+              )}
+              {activeTab === "SharedAfterPassAway" && (
+                <div className="filter-options-column">
+                  <label className="filter-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={filterOptions.sharedAfterPassAway}
+                      onChange={handleSharedAfterPassAwayChange}
+                    />
+                    Enabled
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="filter-section">
-            <h4 className="filter-section-title">Relation</h4>
-            {relationOptions.map((relation) => (
-              <div key={relation}>
-                <label className="filter-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={
-                      relation === "Custom"
-                        ? showCustomRelationInput
-                        : filterOptions.relations.includes(relation)
-                    }
-                    onChange={() => handleRelationChange(relation)}
-                  />
-                  {relation}
-                </label>
-                {relation === "Custom" && showCustomRelationInput && (
-                  <input
-                    type="text"
-                    className="add-contact-form-input"
-                    value={customRelation}
-                    onChange={handleCustomRelationChange}
-                    placeholder="Enter custom relation"
-                    autoFocus
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="filter-section">
-            <h4 className="filter-section-title">Shared After Pass Away</h4>
-            <label className="filter-checkbox-label">
-              <input
-                type="checkbox"
-                checked={filterOptions.sharedAfterPassAway}
-                onChange={handleSharedAfterPassAwayChange}
-              />
-              Shared after pass away
-            </label>
+          <div className="filter-actions">
+            <button className="filter-button clear" onClick={clearFilters}>
+              Clear
+            </button>
+            <button
+              className="filter-button apply"
+              onClick={() => setShowFilterDropdown(false)}
+            >
+              Apply
+            </button>
           </div>
         </div>
       )}

@@ -48,7 +48,7 @@ const validateContact = (contact) => {
 router.post(
   ["/save", "/save-contacts"],
   auth,
-  upload, // Use 'upload' from multer.js
+  upload,
   async (req, res) => {
     let { contacts: contactsJson, source } = req.body;
     const files = {
@@ -189,6 +189,8 @@ router.post(
             release_on_pass,
             is_ambassador: frontendIsAmbassador,
             is_nominee: frontendIsNominee,
+            share_on,
+            share_by,
           } = contact;
 
           const name = [first_name, middle_name, last_name]
@@ -236,7 +238,6 @@ router.post(
           let contactImagePath = "";
           const uploadedFiles = [];
 
-          // Handle profile image
           if (files.profileImage.length > 0) {
             const profileImage = files.profileImage[0];
             contactImagePath = `/images/${req.session.userId}/${profileImage.filename}`;
@@ -254,7 +255,6 @@ router.post(
             }
           }
 
-          // Fetch existing is_ambassador and is_nominee for updates
           let isAmbassador = frontendIsAmbassador || false;
           let isNominee = frontendIsNominee || false;
           if (id) {
@@ -268,7 +268,6 @@ router.post(
             }
           }
 
-          // Track temporary files
           const tempFiles = files.additionalFiles.map((file) => ({
             originalPath: file.path,
             filename: file.filename,
@@ -299,7 +298,7 @@ router.post(
                   }
                 }
                 await connection.query(
-                  `UPDATE ${tableName} SET first_name = ?, middle_name = ?, last_name = ?, company = ?, job_type = ?, website = ?, category = ?, relation = ?, phone_number = ?, phone_number1 = ?, phone_number2 = ?, phone_number3 = ?, email = ?, flat_building_no = ?, street = ?, country = ?, state = ?, city = ?, postal_code = ?, date_of_birth = ?, anniversary = ?, notes = ?, contact_image = ?, release_on_pass = ?, is_ambassador = ?, is_nominee = ? WHERE id = ?`,
+                  `UPDATE ${tableName} SET first_name = ?, middle_name = ?, last_name = ?, company = ?, job_type = ?, website = ?, category = ?, relation = ?, phone_number = ?, phone_number1 = ?, phone_number2 = ?, phone_number3 = ?, email = ?, flat_building_no = ?, street = ?, country = ?, state = ?, city = ?, postal_code = ?, date_of_birth = ?, anniversary = ?, notes = ?, contact_image = ?, release_on_pass = ?, is_ambassador = ?, is_nominee = ?, share_on = ?, share_by_whatsapp = ?, share_by_sms = ?, share_by_email = ? WHERE id = ?`,
                   [
                     first_name || "",
                     middle_name || "",
@@ -327,15 +326,18 @@ router.post(
                     release_on_pass || false,
                     isAmbassador,
                     isNominee,
+                    share_on || "",
+                    share_by?.whatsapp || false,
+                    share_by?.sms || false,
+                    share_by?.email || false,
                     id,
                   ]
                 );
                 savedCount++;
                 console.log(
-                  `Updated contact ${id} with image: ${contactImagePath}, is_ambassador: ${isAmbassador}, is_nominee: ${isNominee}`
+                  `Updated contact ${id} with image: ${contactImagePath}, is_ambassador: ${isAmbassador}, is_nominee: ${isNominee}, share_on: ${share_on}, share_by: ${JSON.stringify(share_by)}`
                 );
 
-                // Update ambassadors table if contact is an ambassador
                 if (isAmbassador && ambassadorsTableExists) {
                   const [existingAmbassador] = await connection.query(
                     `SELECT id FROM ambassadors WHERE user_id = ? AND (email = ? OR phone_number IN (?, ?, ?, ?))`,
@@ -389,7 +391,6 @@ router.post(
                   }
                 }
 
-                // Update nominees table if contact is a nominee
                 if (isNominee && nomineesTableExists) {
                   const [existingNominee] = await connection.query(
                     `SELECT id FROM nominees WHERE user_id = ? AND (email = ? OR phone_number IN (?, ?, ?, ?))`,
@@ -448,8 +449,8 @@ router.post(
               }
             } else {
               const [result] = await connection.query(
-                `INSERT INTO ${tableName} (user_id, first_name, middle_name, last_name, company, job_type, website, category, relation, phone_number, phone_number1, phone_number2, phone_number3, email, flat_building_no, street, country, state, city, postal_code, date_of_birth, anniversary, notes, contact_image, release_on_pass, is_ambassador, is_nominee)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO ${tableName} (user_id, first_name, middle_name, last_name, company, job_type, website, category, relation, phone_number, phone_number1, phone_number2, phone_number3, email, flat_building_no, street, country, state, city, postal_code, date_of_birth, anniversary, notes, contact_image, release_on_pass, is_ambassador, is_nominee, share_on, share_by_whatsapp, share_by_sms, share_by_email)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                   req.session.userId,
                   first_name || "",
@@ -478,15 +479,18 @@ router.post(
                   release_on_pass || false,
                   isAmbassador,
                   isNominee,
+                  share_on || "",
+                  share_by?.whatsapp || false,
+                  share_by?.sms || false,
+                  share_by?.email || false,
                 ]
               );
               contactId = result.insertId;
               savedCount++;
               console.log(
-                `Inserted contact ${contactId} with image: ${contactImagePath}, is_ambassador: ${isAmbassador}, is_nominee: ${isNominee}`
+                `Inserted contact ${contactId} with image: ${contactImagePath}, is_ambassador: ${isAmbassador}, is_nominee: ${isNominee}, share_on: ${share_on}, share_by: ${JSON.stringify(share_by)}`
               );
 
-              // Insert into ambassadors table if contact is an ambassador
               if (isAmbassador && ambassadorsTableExists) {
                 await connection.query(
                   `INSERT INTO ambassadors (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, relationship, category, ambassador_type, profile_image)
@@ -509,7 +513,6 @@ router.post(
                 console.log(`Inserted new ambassador record for contact ${contactId}`);
               }
 
-              // Insert into nominees table if contact is a nominee
               if (isNominee && nomineesTableExists) {
                 await connection.query(
                   `INSERT INTO nominees (user_id, first_name, middle_name, last_name, email, phone_number, phone_number1, phone_number2, relationship, category, nominee_type, profile_image)
@@ -533,7 +536,6 @@ router.post(
               }
             }
 
-            // Handle additional file uploads
             if (tempFiles.length > 0) {
               if (!contactId) {
                 throw new Error("Contact ID is required for additional file uploads");
@@ -542,7 +544,7 @@ router.post(
                 "images",
                 `${req.session.userId}`,
                 "sendfile"
-              ); // Store in images/user_id/sendfile/
+              );
               await fs.mkdir(finalDir, { recursive: true });
 
               for (const tempFile of tempFiles) {
@@ -574,7 +576,6 @@ router.post(
             existingNames.add(name);
             newPhoneNumbers.forEach((num) => existingPhoneNumbers.add(num));
 
-            // Handle important dates
             if (importantDatesTableExists) {
               const occasions = [];
               if (date_of_birth && date_of_birth !== "") {
@@ -637,6 +638,12 @@ router.post(
               uploaded_files: uploadedFiles,
               is_ambassador: isAmbassador,
               is_nominee: isNominee,
+              share_on: share_on || "",
+              share_by: {
+                whatsapp: share_by?.whatsapp || false,
+                sms: share_by?.sms || false,
+                email: share_by?.email || false,
+              },
             });
           } catch (err) {
             console.error(`Error processing contact ${name}:`, err);
@@ -644,7 +651,6 @@ router.post(
               contact,
               reason: `Failed to save contact: ${err.message}`,
             });
-            // Clean up files for this contact
             if (files.profileImage.length > 0) {
               const profileImagePath = path.join(
                 __dirname,
@@ -677,7 +683,6 @@ router.post(
         await connection.commit();
       } catch (err) {
         await connection.rollback();
-        // Clean up all files on transaction failure
         if (files.profileImage.length > 0) {
           const profileImagePath = path.join(
             __dirname,
@@ -844,7 +849,6 @@ router.get("/", checkAuth, async (req, res) => {
       return res.json({ success: true, contacts: [], total: 0, totalPages: 0 });
     }
 
-    // Get query parameters
     let page = parseInt(req.query.page) || 1;
     let limit = parseInt(req.query.limit) || 50;
     let offset = (page - 1) * limit;
@@ -857,7 +861,6 @@ router.get("/", checkAuth, async (req, res) => {
     const release_on_pass = req.query.release_on_pass === "1" ? 1 : 0;
     const all = req.query.all === "true";
 
-    // Determine if full fetch
     const noPagination = all || !!search || categories.length > 0 || category_like || relations.length > 0 || relation_like || release_on_pass;
     if (noPagination) {
       limit = null;
@@ -867,7 +870,6 @@ router.get("/", checkAuth, async (req, res) => {
     let whereClause = "";
     let queryParams = [];
 
-    // Apply filter
     if (filter !== "ALL") {
       if (filter === "Ambassador") {
         whereClause += " WHERE is_ambassador = ?";
@@ -884,49 +886,42 @@ router.get("/", checkAuth, async (req, res) => {
       }
     }
 
-    // Apply categories
     if (categories.length > 0) {
       whereClause += whereClause ? " AND" : " WHERE";
       whereClause += ` category IN (${categories.map(() => "?").join(",")})`;
       queryParams.push(...categories);
     }
 
-    // Apply custom category
     if (category_like) {
       whereClause += whereClause ? " AND" : " WHERE";
       whereClause += " category LIKE ?";
       queryParams.push(`%${category_like}%`);
     }
 
-    // Apply relations
     if (relations.length > 0) {
       whereClause += whereClause ? " AND" : " WHERE";
       whereClause += ` relation IN (${relations.map(() => "?").join(",")})`;
       queryParams.push(...relations);
     }
 
-    // Apply custom relation
     if (relation_like) {
       whereClause += whereClause ? " AND" : " WHERE";
       whereClause += " relation LIKE ?";
       queryParams.push(`%${relation_like}%`);
     }
 
-    // Apply release_on_pass
     if (release_on_pass) {
       whereClause += whereClause ? " AND" : " WHERE";
       whereClause += " release_on_pass = ?";
       queryParams.push(1);
     }
 
-    // Apply search
     if (search) {
       whereClause += whereClause ? " AND" : " WHERE";
       whereClause += " first_name LIKE ? OR middle_name LIKE ? OR last_name LIKE ?";
       queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    // Get total count for pagination
     let total = 0;
     if (!noPagination) {
       const [[result]] = await pool.query(
@@ -936,13 +931,12 @@ router.get("/", checkAuth, async (req, res) => {
       total = parseInt(result.total, 10);
     }
 
-    // Fetch contacts with all fields
     const contactsQuery = `
       SELECT id, user_id, first_name, middle_name, last_name, company, job_type, website,
              category, relation, phone_number, phone_number1, phone_number2, phone_number3,
              email, flat_building_no, street, country, state, city, postal_code,
              date_of_birth, anniversary, notes, contact_image, release_on_pass,
-             is_ambassador, is_nominee, created_at
+             is_ambassador, is_nominee, share_on, share_by_whatsapp, share_by_sms, share_by_email, created_at
       FROM ${tableName}
       ${whereClause}
       ORDER BY first_name ASC
@@ -952,11 +946,21 @@ router.get("/", checkAuth, async (req, res) => {
 
     const [contacts] = await pool.query(contactsQuery, queryValues);
 
-    // Fetch uploaded files
     const [uploadedFiles] = await pool.query(
       `SELECT id, contact_id, file_path, file_name FROM uploaded_files WHERE user_id = ?`,
       [userId]
     );
+
+    // Fetch distinct categories and relations
+    const [categoryResults] = await pool.query(
+      `SELECT DISTINCT category FROM ${tableName} WHERE category IS NOT NULL AND category != ''`
+    );
+    const [relationResults] = await pool.query(
+      `SELECT DISTINCT relation FROM ${tableName} WHERE relation IS NOT NULL AND relation != ''`
+    );
+
+    const categoriesList = categoryResults.map(row => row.category);
+    const relationsList = relationResults.map(row => row.relation);
 
     const filesByContactId = uploadedFiles.reduce((acc, file) => {
       acc[file.contact_id] = acc[file.contact_id] || [];
@@ -968,7 +972,6 @@ router.get("/", checkAuth, async (req, res) => {
       return acc;
     }, {});
 
-    // Parse and enrich contacts
     const parsedContacts = contacts.map((contact) => {
       const name = [contact.first_name, contact.middle_name, contact.last_name]
         .filter(Boolean)
@@ -1011,6 +1014,12 @@ router.get("/", checkAuth, async (req, res) => {
         release_on_pass: !!contact.release_on_pass,
         is_ambassador: !!contact.is_ambassador,
         is_nominee: !!contact.is_nominee,
+        share_on: contact.share_on || "",
+        share_by: {
+          whatsapp: !!contact.share_by_whatsapp,
+          sms: !!contact.share_by_sms,
+          email: !!contact.share_by_email,
+        },
         created_at: contact.created_at,
         uploaded_files: filesByContactId[contact.id] || [],
       };
@@ -1022,6 +1031,8 @@ router.get("/", checkAuth, async (req, res) => {
       total: noPagination ? parsedContacts.length : total,
       totalPages: noPagination ? 1 : Math.ceil(total / limit),
       currentPage: noPagination ? 1 : page,
+      categories: categoriesList,
+      relations: relationsList,
     });
   } catch (err) {
     console.error("Error fetching contacts:", err);
