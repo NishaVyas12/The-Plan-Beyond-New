@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaCamera } from "react-icons/fa";
@@ -295,6 +294,7 @@ const AddNomineeForm = ({
               phone: matchingContact.phone_number || "",
               category: matchingContact.category || "",
               relation: matchingContact.relation || "",
+              contact_image: matchingContact.contact_image || "",
             }
           : {
               value: editNominee.phone_number || "",
@@ -306,6 +306,7 @@ const AddNomineeForm = ({
               phone: editNominee.phone_number || "",
               category: editNominee.category || "",
               relation: editNominee.relation || "",
+              contact_image: "",
             },
         firstName: editNominee.firstName || "",
         middleName: editNominee.middleName || "",
@@ -551,38 +552,38 @@ const AddNomineeForm = ({
   };
 
   const fetchAllContacts = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts?all=true`, {
-      method: "GET",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    });
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts?all=true`, {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
 
-    const data = await response.json();
-    if (data.success) {
-      setAllContacts(data.contacts || []);
-    } else {
-      if (response.status === 401) {
-        toast.error("Session expired. Please log in again.", {
-          position: "top-right",
-          autoClose: 3000,
-          onClose: () => navigate("/login"),
-        });
+      const data = await response.json();
+      if (data.success) {
+        setAllContacts(data.contacts || []);
       } else {
-        toast.error(data.message || "Failed to fetch contacts.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        if (response.status === 401) {
+          toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
+            onClose: () => navigate("/login"),
+          });
+        } else {
+          toast.error(data.message || "Failed to fetch contacts.", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
+    } catch (err) {
+      console.error("Error fetching contacts:", err);
+      toast.error("Error fetching contacts. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
-  } catch (err) {
-    console.error("Error fetching contacts:", err);
-    toast.error("Error fetching contacts. Please try again.", {
-      position: "top-right",
-      autoClose: 3000,
-    });
-  }
-};
+  };
 
   useEffect(() => {
     console.log("Fetching contacts");
@@ -624,76 +625,138 @@ const AddNomineeForm = ({
   };
 
   const contacts = allContacts.map((item) => ({
-  value: item.phone_number || "",
-  label: [
-    item.first_name || "",
-    item.middle_name || "",
-    item.last_name || "",
-  ]
-    .filter(Boolean)
-    .join(" "),
-  fName: item.first_name || "",
-  mName: item.middle_name || "",
-  lName: item.last_name || "",
-  email: item.email || "",
-  phone: item.phone_number || "",
-  phone_number1: item.phone_number1 || "", // Add phone_number1
-  phone_number2: item.phone_number2 || "", // Add phone_number2
-  category: item.category || "",
-  relation: item.relation || "",
-}));
-
-  if (!isOpen) {
-    console.log("Form not open, rendering null");
-    return null;
-  }
-
-  console.log("Rendering AddNomineeForm", { formData, imagePreview });
+    value: item.phone_number || "",
+    label: [
+      item.first_name || "",
+      item.middle_name || "",
+      item.last_name || "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+    fName: item.first_name || "",
+    mName: item.middle_name || "",
+    lName: item.last_name || "",
+    email: item.email || "",
+    phone: item.phone_number || "",
+    phone_number1: item.phone_number1 || "",
+    phone_number2: item.phone_number2 || "",
+    category: item.category || "",
+    relation: item.relation || "",
+    contact_image: item.contact_image || "",
+  }));
 
   return (
-    <div className="nominee-add-popup-overlay nominee-add">
-      <div className="nominee-add-popup-content nominee-add-form">
+    <div>
+      <div
+        className="nominee-add-popup-overlay nominee-add"
+        style={{ display: isOpen ? "block" : "none" }}
+        onClick={onClose}
+      ></div>
+      <div className={`nominee-add-drawer ${isOpen ? "open" : ""}`}>
+        <div className="nominee-add-drawer-top">
+          <button className="nominee-add-drawer-close" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="nominee-add-drawer-divider"></div>
         <h2 className="nominee-add-form-title-add-nominee">
           {editNominee ? "Edit Nominee" : "Add New Nominee"}
         </h2>
-        <div className="nominee-add-form-line-add-nominee"></div>
-        <div className="nominee-add-form-layout">
-          <div className="nominee-add-form-fields-add-nominee">
+        <div className="nominee-add-form-content">
+          <div className="nominee-add-form-row">
+            <div className="nominee-add-field-group full-width">
+              <div className="nominee-add-profile-section">
+                <div className="nominee-add-avatar-wrapper-add-nominee">
+                  <div
+                    className="nominee-add-avatar-add-nominee"
+                    style={
+                      imagePreview
+                        ? {
+                            backgroundImage: `url(${imagePreview})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }
+                        : { backgroundColor: "#DAE8E8" }
+                    }
+                  >
+                    <label
+                      htmlFor="avatar-upload-form"
+                      className="nominee-add-avatar-upload"
+                    >
+                      <img
+                        src={cameraIcon}
+                        alt="Camera"
+                        className="nominee-add-camera-icon"
+                      />
+                      <input
+                        type="file"
+                        id="avatar-upload-form"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={handleImageUpload}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <label
+                  htmlFor="avatar-upload-form"
+                  className="nominee-add-profile-label"
+                  style={{ cursor: "pointer" }}
+                >
+                  Add Photo
+                </label>
+              </div>
+            </div>
+          </div>
+          <div className="nominee-add-form-row">
             <div className="nominee-add-field-group full-width">
               <label className="nominee-add-form-label-add-nominee">
                 Search Contact
               </label>
               <Select
-  options={contacts}
-  value={formData.contact}
-  name="contact"
-  styles={customStyles}
-  placeholder="Search Contact..."
-  onChange={(selectedOption) => {
-    const newCategory = selectedOption?.category || "";
-    setFormData((prev) => ({
-      ...prev,
-      contact: selectedOption,
-      firstName: selectedOption?.fName || "",
-      middleName: selectedOption?.mName || "",
-      lastName: selectedOption?.lName || "",
-      email: selectedOption?.email || "",
-      phone_number: selectedOption?.phone || "",
-      phone_number1: selectedOption?.phone_number1 || "",
-      phone_number2: selectedOption?.phone_number2 || "",
-      category: newCategory,
-      relation: newCategory === "Family" ? selectedOption?.relation || "" : "",
-    }));
-    setShowPhone1(!!selectedOption?.phone_number1);
-    setShowPhone2(!!selectedOption?.phone_number2);
-    setShowRelationInput(newCategory === "Family");
-    setIsCustomRelation(
-      selectedOption?.relation && !relationOptions.includes(selectedOption?.relation)
-    );
-    setCustomRelation(newCategory === "Family" ? selectedOption?.relation || "" : "");
-  }}
-/>
+                options={contacts}
+                value={formData.contact}
+                name="contact"
+                styles={customStyles}
+                placeholder="Search Contact..."
+                onChange={(selectedOption) => {
+                  const newCategory = selectedOption?.category || "";
+                  const contactImageUrl = selectedOption?.contact_image
+                    ? `${import.meta.env.VITE_API_URL}${selectedOption.contact_image.startsWith("/") ? "" : "/"}${selectedOption.contact_image}`
+                    : null;
+                  setFormData((prev) => ({
+                    ...prev,
+                    contact: selectedOption,
+                    firstName: selectedOption?.fName || "",
+                    middleName: selectedOption?.mName || "",
+                    lastName: selectedOption?.lName || "",
+                    email: selectedOption?.email || "",
+                    phone_number: selectedOption?.phone || "",
+                    phone_number1: selectedOption?.phone_number1 || "",
+                    phone_number2: selectedOption?.phone_number2 || "",
+                    category: newCategory,
+                    relation:
+                      newCategory === "Family"
+                        ? selectedOption?.relation || ""
+                        : "",
+                    profileImage: null, // Reset profileImage to allow contact_image to take precedence
+                  }));
+                  setShowPhone1(!!selectedOption?.phone_number1);
+                  setShowPhone2(!!selectedOption?.phone_number2);
+                  setShowRelationInput(newCategory === "Family");
+                  setIsCustomRelation(
+                    selectedOption?.relation &&
+                      !relationOptions.includes(selectedOption?.relation)
+                  );
+                  setCustomRelation(
+                    newCategory === "Family" ? selectedOption?.relation || "" : ""
+                  );
+                  setImagePreview(contactImageUrl); // Set imagePreview to contact_image URL
+                }}
+              />
             </div>
+          </div>
+          <div className="nominee-add-form-row">
             <div className="nominee-add-field-group">
               <label className="nominee-add-form-label-add-nominee">
                 First Name
@@ -731,6 +794,8 @@ const AddNomineeForm = ({
                 onChange={(e) => handleInputChange("lastName", e.target.value)}
               />
             </div>
+          </div>
+          <div className="nominee-add-form-row">
             <div className="nominee-add-field-group">
               <label className="nominee-add-form-label-add-nominee">
                 Email Address
@@ -759,6 +824,51 @@ const AddNomineeForm = ({
                 disableDropdown={false}
               />
             </div>
+            {(!showPhone1 || !showPhone2) && (
+              <div className="nominee-add-field-group">
+                <button
+                  type="button"
+                  className="nominee-add-button-add-nominee nominee-add-button-add-number-add-nominee"
+                  onClick={handleAddPhoneNumber}
+                >
+                  + Add Another Number
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="nominee-add-form-row">
+            {showPhone1 && (
+              <div className="nominee-add-field-group">
+                <label className="nominee-add-form-label-add-nominee">
+                  Phone Number 1
+                </label>
+                <PhoneInput
+                  country="in"
+                  value={formData.phone_number1}
+                  onChange={(phone) => handleInputChange("phone_number1", phone)}
+                  inputClass="nominee-add-input-field-add-nominee"
+                  containerClass="nominee-add-phone-input-container"
+                  enableSearch
+                  disableDropdown={false}
+                />
+              </div>
+            )}
+            {showPhone2 && (
+              <div className="nominee-add-field-group">
+                <label className="nominee-add-form-label-add-nominee">
+                  Phone Number 2
+                </label>
+                <PhoneInput
+                  country="in"
+                  value={formData.phone_number2}
+                  onChange={(phone) => handleInputChange("phone_number2", phone)}
+                  inputClass="nominee-add-input-field-add-nominee"
+                  containerClass="nominee-add-phone-input-container"
+                  enableSearch
+                  disableDropdown={false}
+                />
+              </div>
+            )}
             <div className="nominee-add-field-group">
               <label className="nominee-add-form-label-add-nominee">
                 Category
@@ -776,54 +886,9 @@ const AddNomineeForm = ({
                 <option value="Work">Work</option>
               </select>
             </div>
-            {showPhone1 && (
-              <div className="nominee-add-field-group">
-                <label className="nominee-add-form-label-add-nominee">
-                  Phone Number 1
-                </label>
-                <PhoneInput
-                  country="in"
-                  value={formData.phone_number1}
-                  onChange={(phone) =>
-                    handleInputChange("phone_number1", phone)
-                  }
-                  inputClass="nominee-add-input-field-add-nominee"
-                  containerClass="nominee-add-phone-input-container"
-                  enableSearch
-                  disableDropdown={false}
-                />
-              </div>
-            )}
-            {showPhone2 && (
-              <div className="nominee-add-field-group">
-                <label className="nominee-add-form-label-add-nominee">
-                  Phone Number 2
-                </label>
-                <PhoneInput
-                  country="in"
-                  value={formData.phone_number2}
-                  onChange={(phone) =>
-                    handleInputChange("phone_number2", phone)
-                  }
-                  inputClass="nominee-add-input-field-add-nominee"
-                  containerClass="nominee-add-phone-input-container"
-                  enableSearch
-                  disableDropdown={false}
-                />
-              </div>
-            )}
-            {(!showPhone1 || !showPhone2) && (
-              <div className="nominee-add-field-group full-width">
-                <button
-                  type="button"
-                  className="nominee-add-button-add-nominee nominee-add-button-add-number-add-nominee"
-                  onClick={handleAddPhoneNumber}
-                >
-                  + Add Another Number
-                </button>
-              </div>
-            )}
-            {showRelationInput && (
+          </div>
+          {showRelationInput && (
+            <div className="nominee-add-form-row">
               <div className="nominee-add-field-group">
                 <label className="nominee-add-form-label-add-nominee">
                   Relationship
@@ -858,61 +923,24 @@ const AddNomineeForm = ({
                   />
                 )}
               </div>
-            )}
+            </div>
+          )}
+          <div className="nominee-add-form-actions-add-nominee">
+            <button
+              type="button"
+              className="nominee-add-button-add-nominee nominee-add-button-cancel-add-nominee"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="nominee-add-button-add-nominee nominee-add-button-submit-add-nominee"
+              onClick={handleSubmit}
+            >
+              {editNominee ? "Update Nominee" : "Add New Nominee"}
+            </button>
           </div>
-          <div className="nominee-add-profile-section">
-  <div className="nominee-add-avatar-wrapper-add-nominee">
-    <div
-      className="nominee-add-avatar-add-nominee"
-      style={
-        imagePreview
-          ? {
-              backgroundImage: `url(${imagePreview})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }
-          : { backgroundColor: "#DAE8E8" }
-      }
-    >
-      <label
-        htmlFor="avatar-upload-form"
-        className="nominee-add-avatar-upload"
-      >
-        <img src={cameraIcon} alt="Camera" className="nominee-add-camera-icon" />
-        <input
-          type="file"
-          id="avatar-upload-form"
-          accept="image/*"
-          style={{ display: "none" }}
-          onChange={handleImageUpload}
-        />
-      </label>
-    </div>
-  </div>
-  <label
-    htmlFor="avatar-upload-form"
-    className="nominee-add-profile-label"
-    style={{ cursor: "pointer" }}
-  >
-    Add Photo
-  </label>
-</div>
-        </div>
-        <div className="nominee-add-form-actions-add-nominee">
-          <button
-            type="submit"
-            className="nominee-add-button-add-nominee nominee-add-button-submit-add-nominee"
-            onClick={handleSubmit}
-          >
-            {editNominee ? "Update Nominee" : "Add New Nominee"}
-          </button>
-          <button
-            type="button"
-            className="nominee-add-button-add-nominee nominee-add-button-cancel-add-nominee"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
         </div>
       </div>
     </div>

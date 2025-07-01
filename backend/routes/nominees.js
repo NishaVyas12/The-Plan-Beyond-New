@@ -67,7 +67,7 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
     );
     if (existingNominees.length >= 5) {
       return sendError(res, 400, "Maximum of five nominees already added.");
-  }
+    }
     if (nomineeType && existingNominees.some((n) => n.nominee_type === nomineeType)) {
       return sendError(res, 400, `A ${nomineeType} nominee already exists.`);
     }
@@ -90,6 +90,18 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
         imagePath = `/images/${req.session.userId}/${profileImage.filename}`;
         if (imagePath.length > 255) {
           throw new Error("Profile image path exceeds 255 characters");
+        }
+      } else {
+        // Check if there's a contact with matching email or phone numbers and use its contact_image
+        const tableName = `contacts_user_${req.session.userId}`;
+        await createUserContactsTable(req.session.userId);
+        const [existingContact] = await connection.query(
+          `SELECT contact_image FROM ${tableName} 
+           WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,
+          [req.session.userId, email, phoneNumbers, phoneNumbers, phoneNumbers]
+        );
+        if (existingContact.length > 0 && existingContact[0].contact_image) {
+          imagePath = existingContact[0].contact_image;
         }
       }
 
@@ -144,7 +156,8 @@ router.post("/nominees", checkAuth, upload, async (req, res) => {
         );
       } else {
         await connection.query(
-          `INSERT INTO ${tableName} (user_id, first_name, middle_name, last_name, phone_number, phone_number1, phone_number2, email, category, relation, is_nominee, contact_image)
+          `INSERT INTO ${tableName} 
+           (user_id, first_name, middle_name, last_name, phone_number, phone_number1, phone_number2, email, category, relation, is_nominee, contact_image)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             req.session.userId,
@@ -279,6 +292,18 @@ router.put("/nominees/:id", checkAuth, upload, async (req, res) => {
         imagePath = `/images/${req.session.userId}/${profileImage.filename}`;
         if (imagePath.length > 255) {
           throw new Error("Profile image path exceeds 255 characters");
+        }
+      } else if (!imagePath) {
+        // Check if there's a contact with matching email or phone numbers and use its contact_image
+        const tableName = `contacts_user_${req.session.userId}`;
+        await createUserContactsTable(req.session.userId);
+        const [existingContact] = await connection.query(
+          `SELECT contact_image FROM ${tableName} 
+           WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,
+          [req.session.userId, email, phoneNumbers, phoneNumbers, phoneNumbers]
+        );
+        if (existingContact.length > 0 && existingContact[0].contact_image) {
+          imagePath = existingContact[0].contact_image;
         }
       }
 
@@ -452,21 +477,10 @@ router.delete("/nominees/:id", checkAuth, async (req, res) => {
       await createUserContactsTable(userId);
 
       await connection.query(
-        `UPDATE ${tableName} SET is_nominee = 0, contact_image = NULL 
+        `UPDATE ${tableName} SET is_nominee = 0
          WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?)) AND is_nominee = 1`,
         [userId, email, phoneNumbers, phoneNumbers, phoneNumbers]
       );
-
-      // Delete profile image if it exists
-      if (profile_image) {
-        const imagePath = path.join(__dirname, "..", profile_image);
-        try {
-          await fs.unlink(imagePath);
-          console.log(`Deleted profile image: ${imagePath}`);
-        } catch (unlinkErr) {
-          console.error(`Error deleting profile image ${imagePath}:`, unlinkErr);
-        }
-      }
 
       await connection.commit();
 

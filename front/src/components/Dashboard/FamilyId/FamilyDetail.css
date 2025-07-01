@@ -1,47 +1,82 @@
 .family-detail-page {
-  margin-left: 300px;
-  padding: 2rem 20px 2rem;
+  margin-left: 250px; 
+  padding: 2rem 80px;
   background-color: #fff;
-  height: 100%;
   margin-top: 4rem;
-  min-height: calc(100vh - 6rem);
+  overflow-y: auto; 
 }
 
 .family-detail-header {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  width: 100%;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  top: 0;
+  background: #fff;
+  z-index: 10;
 }
 
 .family-detail-title {
   font-weight: 600;
-  font-size: 1.8rem;
-  color: #1a1a1a;
+  font-size: 1.5rem;
+  color: var(--secondary-color);
   margin: 0;
+  font-family: "New Spirit";
+}
+
+.family-detail-add-button-container {
+  position: relative;
+  display: inline-block;
 }
 
 .family-detail-add-button {
-  padding: 0.65rem 1.5rem;
-  background-color: #28a745;
+  padding: 8px 16px;
+  background-color: #007C6A;
   color: #fff;
   border: none;
-  border-radius: 15px;
+  border-radius: 25px;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background-color 0.2s;
-  margin-left: auto;
+  white-space: nowrap;
 }
 
-.family-detail-add-button:hover {
-  background-color: #218838;
+.family-detail-add-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #fff;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  min-width: 180px;
+  z-index: 100;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.family-detail-add-dropdown div {
+  padding: 10px 15px;
+  cursor: pointer;
+  color: #1a1a1a;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.family-detail-add-dropdown div:hover {
+  background-color: #f5f5f5;
+  color: #007C6A;
+}
+
+.family-detail-add-dropdown div:not(:last-child) {
+  border-bottom: 1px solid #eee;
 }
 
 .family-detail-container {
   margin: 0;
-  padding: 1rem;
   background: #fff;
   border-radius: 10px;
+  min-height: 100%; 
 }
 
 .family-detail-loading {
@@ -60,26 +95,28 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  min-height: 100%; 
 }
 
 .family-detail-card {
   background: #fff;
+  box-shadow: 0px 3px 15.7px 0px #00000014;
   border: 1px solid #EBEBEB;
   border-radius: 10px;
-  padding: 1rem;
+  padding: 1.2rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-height: 150px;
   position: relative;
+  min-height: 200px; 
 }
 
 .family-detail-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .family-detail-card-label {
@@ -100,8 +137,8 @@
 .family-detail-card-upload {
   text-align: center;
   color: #1a1a1a;
-  border: 2px dashed #ccc;
-  padding: 15px;
+  border: 1.5px dashed #EBEBEB;
+  padding: 24px;
   border-radius: 8px;
   width: 100%;
   box-sizing: border-box;
@@ -109,10 +146,34 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  margin-bottom: 1rem;
+  position: relative; /* Ensure input positioning works */
+}
+
+.family-detail-card-upload .upload-text-group p:nth-child(1) {
+  color: #1F1F2A;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.family-detail-card-upload .upload-text-group p:nth-child(2) {
+  color: #6B7483;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+.family-detail-card-upload .upload-text-group p:nth-child(3) {
+  color: #007C6A;
+  font-weight: 500;
+}
+
+.family-upload-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 10px;
 }
 
 .family-detail-card-upload p {
-  color: #1a1a1a;
   margin: 5px 0;
 }
 
@@ -145,6 +206,7 @@
   margin-top: 0.5rem;
   text-align: center;
   width: 100%;
+  margin-bottom: 1rem;
 }
 
 .family-detail-form-actions {
@@ -159,27 +221,13 @@
   cursor: pointer;
 }
 
-.family-detail-form-button.save {
-  background-color: #28a745;
-  color: #fff;
-}
-
-.family-detail-form-button.save:hover {
-  background-color: #218838;
-}
-
-/* Specific style for Birthday card - NO dashed border and custom layout */
-.family-detail-card.birthday-card {
-  /* No specific min-height adjustments here, let content define */
-}
-
 .family-detail-card.birthday-card .birthday-content {
   display: flex;
-  flex-direction: column; /* Changed to column to stack parts */
-  align-items: flex-start; /* Align content to the left */
+  flex-direction: column;
+  align-items: flex-start;
   width: 100%;
-  flex-grow: 1; /* Allow content to fill space */
-  justify-content: flex-end; /* Push content to the bottom */
+  flex-grow: 1;
+  justify-content: flex-end;
 }
 
 .family-detail-card.birthday-card .birthday-date-row {
@@ -187,39 +235,91 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-top: auto; /* Push this row to the bottom of the card */
-  padding-bottom: 5px; /* Little spacing from card bottom */
+  padding-bottom: 5px;
+  margin-top: auto;
 }
 
 .family-detail-card.birthday-card .birthday-date-display {
   font-size: 0.9rem;
   color: #1a1a1a;
-  margin-right: 15px; /* Spacing between date and remaining days */
-  white-space: nowrap; /* Prevent wrapping */
+  margin-right: 15px;
+  white-space: nowrap;
 }
 
 .family-detail-card.birthday-card .remaining-days {
   font-size: 0.9rem;
-  color: #1a1a1a; /* Black color */
-  white-space: nowrap; /* Prevent wrapping */
+  color: #1a1a1a;
+  white-space: nowrap;
   text-align: right;
 }
 
-
-/* Notes Card - Textarea specific styling */
 .family-detail-card.notes-card .notes-textarea {
   width: 100%;
-  min-height: 100px;
+  min-height: inherit;
   padding: 10px;
   border: 1px solid #EBEBEB;
   border-radius: 8px;
   font-size: 0.9rem;
   color: #1a1a1a;
   box-sizing: border-box;
-  resize: vertical; /* Allow vertical resizing */
+  resize: vertical;
+  flex-grow: 1;
 }
 
 .family-detail-card.notes-card .notes-textarea:focus {
   outline: none;
   border-color: #28a745;
+}
+
+.family-detail-input-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.family-detail-two-column-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.family-detail-single-column {
+  width: calc(50% - 7.5px);
+  margin-right: auto;
+}
+
+.family-detail-label {
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.family-detail-text-input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #EBEBEB;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.family-detail-text-input:focus {
+  outline: none;
+  border-color: #007C6A;
+  box-shadow: 0 0 0 2px rgba(0, 124, 106, 0.2);
+}
+
+.family-detail-card > .family-detail-input-group:last-child,
+.family-detail-card > .family-detail-two-column-group:last-child {
+  margin-bottom: 0;
+}
+
+.family-detail-card.other-document-card .family-detail-card-label {
+  color: var(--secondary-color);
+  font-weight: 600;
 }

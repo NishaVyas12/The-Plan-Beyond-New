@@ -37,6 +37,17 @@ const FamilyInfo = () => {
   const [filteredContacts, setFilteredContacts] = useState([]);
   const navigate = useNavigate();
 
+  // Utility function to format date to MM/DD/YYYY
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    if (isNaN(date)) return '-';
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const fetchFamilyInfo = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo`, {
@@ -250,6 +261,10 @@ const FamilyInfo = () => {
   };
 
   const handleSelectContact = (contact) => {
+    // Format date_of_birth to YYYY-MM-DD for input type="date"
+    const formattedDate = contact.date_of_birth
+      ? new Date(contact.date_of_birth).toISOString().split('T')[0]
+      : '';
     setFormData({
       firstName: contact.first_name || '',
       middleName: contact.middle_name || '',
@@ -267,7 +282,7 @@ const FamilyInfo = () => {
       city: contact.city || '',
       zipcode: contact.postal_code || '',
       profileImage: contact.contact_image || '',
-      birthday: contact.date_of_birth || '',
+      birthday: formattedDate,
       relation: contact.relation || '',
     });
     setShowPhone1(!!contact.phone_number1);
@@ -322,13 +337,12 @@ const FamilyInfo = () => {
                   </h3>
                   <span className="family-id-card-options">...</span>
                 </div>
-               
-                <p className="family-id-card-value">{member.relation || '-'}</p>
+                <p className="family-id-card-value-relation">{member.relation || '-'}</p>
               </div>
             </div>
             <div className="family-id-card-info">
               <p className="family-id-card-label">Birthday</p>
-              <p className="family-id-card-value">{member.birthday || '-'}</p>
+              <p className="family-id-card-value">{formatDate(member.birthday)}</p>
             </div>
           </div>
         ))}

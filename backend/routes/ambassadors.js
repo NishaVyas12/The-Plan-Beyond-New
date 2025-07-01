@@ -95,6 +95,18 @@ router.post("/", checkAuth, upload, async (req, res) => {
         if (imagePath.length > 255) {
           throw new Error("Profile image path exceeds 255 characters");
         }
+      } else {
+        // Check if there's a contact with matching email or phone numbers and use its contact_image
+        const tableName = `contacts_user_${req.session.userId}`;
+        await createUserContactsTable(req.session.userId);
+        const [existingContact] = await connection.query(
+          `SELECT contact_image FROM ${tableName} 
+           WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,
+          [req.session.userId, email, phoneNumbers, phoneNumbers, phoneNumbers]
+        );
+        if (existingContact.length > 0 && existingContact[0].contact_image) {
+          imagePath = existingContact[0].contact_image;
+        }
       }
 
       const [result] = await connection.query(
@@ -303,6 +315,18 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
         imagePath = `/images/${req.session.userId}/${profileImage.filename}`;
         if (imagePath.length > 255) {
           throw new Error("Profile image path exceeds 255 characters");
+        }
+      } else if (!imagePath) {
+        // Check if there's a contact with matching email or phone numbers and use its contact_image
+        const tableName = `contacts_user_${req.session.userId}`;
+        await createUserContactsTable(req.session.userId);
+        const [existingContact] = await connection.query(
+          `SELECT contact_image FROM ${tableName} 
+           WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,
+          [req.session.userId, email, phoneNumbers, phoneNumbers, phoneNumbers]
+        );
+        if (existingContact.length > 0 && existingContact[0].contact_image) {
+          imagePath = existingContact[0].contact_image;
         }
       }
 
@@ -542,21 +566,10 @@ router.delete("/:id", checkAuth, async (req, res) => {
       await createUserContactsTable(userId);
 
       await connection.query(
-        `UPDATE ${tableName} SET is_ambassador = 0, contact_image = NULL 
+        `UPDATE ${tableName} SET is_ambassador = 0 
          WHERE (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?)) AND is_ambassador = 1`,
         [email, phoneNumbers, phoneNumbers, phoneNumbers]
       );
-
-      // Delete profile image
-      if (profile_image) {
-        const imagePath = path.join(__dirname, "..", profile_image);
-        try {
-          await fs.unlink(imagePath);
-          console.log(`Deleted profile image: ${imagePath}`);
-        } catch (unlinkErr) {
-          console.error(`Error deleting profile image ${imagePath}:`, unlinkErr);
-        }
-      }
 
       await connection.commit();
       return res.json({

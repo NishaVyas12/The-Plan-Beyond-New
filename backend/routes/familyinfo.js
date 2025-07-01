@@ -38,7 +38,7 @@ router.post("/save", checkAuth, async (req, res) => {
     zipcode,
     profile_image,
     birthday,
-    relation, // Added relation field
+    relation,
   } = req.body;
 
   const familyMember = {
@@ -59,7 +59,7 @@ router.post("/save", checkAuth, async (req, res) => {
     zipcode: zipcode || "",
     profile_image: profile_image || "",
     birthday: birthday || null,
-    relation: relation || "", // Added relation field
+    relation: relation || "",
   };
 
   const validationError = validateFamilyMember(familyMember);
@@ -116,7 +116,7 @@ router.post("/save", checkAuth, async (req, res) => {
           familyMember.zipcode,
           familyMember.profile_image,
           familyMember.birthday,
-          familyMember.relation, // Added relation field
+          familyMember.relation,
         ]
       );
 
@@ -188,7 +188,7 @@ router.get("/", checkAuth, async (req, res) => {
         city, 
         zipcode, 
         profile_image,
-        birthday,
+        DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday,
         relation,
         created_at
       FROM familyinfo WHERE user_id = ?`,
@@ -217,12 +217,105 @@ router.get("/", checkAuth, async (req, res) => {
         zipcode: member.zipcode || "",
         profile_image: member.profile_image || "",
         birthday: member.birthday || "",
-        relation: member.relation || "", // Added relation field
+        relation: member.relation || "",
         created_at: member.created_at
       })),
     });
   } catch (err) {
     console.error("Error fetching family members:", err);
+    res.status(500).json({
+      success: false,
+      message: `Server error: ${err.message}`,
+    });
+  }
+});
+
+// GET /api/familyinfo/:id
+router.get("/:id", checkAuth, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Verify user exists
+    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [req.session.userId]);
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    // Check if familyinfo table exists
+    const tableExists = await checkTableExists("familyinfo");
+    if (!tableExists) {
+      return res.status(500).json({
+        success: false,
+        message: "FamilyInfo table not found.",
+      });
+    }
+
+    // Fetch family member by ID and user_id
+    const [familyMembers] = await pool.query(
+      `SELECT 
+        id, 
+        first_name, 
+        middle_name, 
+        last_name, 
+        nickname, 
+        email, 
+        phone_number, 
+        phone_number1, 
+        phone_number2, 
+        phone_number3, 
+        flat_building_no, 
+        street, 
+        country, 
+        state, 
+        city, 
+        zipcode, 
+        profile_image,
+        DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday,
+        relation,
+        created_at
+      FROM familyinfo WHERE id = ? AND user_id = ?`,
+      [id, req.session.userId]
+    );
+
+    if (familyMembers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Family member not found.",
+      });
+    }
+
+    const member = familyMembers[0];
+    res.json({
+      success: true,
+      message: "Family member retrieved successfully.",
+      familyMember: {
+        id: member.id,
+        first_name: member.first_name || "",
+        middle_name: member.middle_name || "",
+        last_name: member.last_name || "",
+        nickname: member.nickname || "",
+        email: member.email || "",
+        phone_number: member.phone_number || "",
+        phone_number1: member.phone_number1 || "",
+        phone_number2: member.phone_number2 || "",
+        phone_number3: member.phone_number3 || "",
+        flat_building_no: member.flat_building_no || "",
+        street: member.street || "",
+        country: member.country || "",
+        state: member.state || "",
+        city: member.city || "",
+        zipcode: member.zipcode || "",
+        profile_image: member.profile_image || "",
+        birthday: member.birthday || "",
+        relation: member.relation || "",
+        created_at: member.created_at
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching family member:", err);
     res.status(500).json({
       success: false,
       message: `Server error: ${err.message}`,

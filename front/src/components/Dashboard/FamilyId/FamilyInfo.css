@@ -37,12 +37,9 @@
   border-radius: 25px;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.family-id-contact-add-button:hover {
-  background-color: #006958;
-}
+
 
 .family-id-card-container {
   display: grid;
@@ -121,7 +118,8 @@
 .family-id-card-label {
     margin-top: 30px;
   font-size: 0.8rem;
-  color: var(--tertiary-color);
+  color: #6B7483;
+  margin-bottom: 10px;
   display: block;
 }
 
@@ -129,6 +127,13 @@
   font-size: 0.8rem;
   color: var(--secondary-color);
 }
+
+.family-id-card-value-relation{
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #6B7483;
+}
+
 
 .family-id-add-contact-drawer-backdrop {
   position: fixed;

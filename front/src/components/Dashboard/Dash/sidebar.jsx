@@ -105,22 +105,6 @@ const Sidebar = () => {
                     <li
                         className="dash-sidebar-item"
                         onClick={() => {
-                            navigate("/personal-info");
-                            closeSidebar()
-                        }}
-                    >
-                        <div className="dash-icon">
-                            <img
-                                src={personalIcon}
-                                alt="Personal icon"
-                                className="dash-sidebar-icon"
-                            />
-                        </div>
-                        Personal Info & IDs
-                    </li>
-                    <li
-                        className="dash-sidebar-item"
-                        onClick={() => {
                             navigate("/family-id");
                             closeSidebar()
                         }}
@@ -134,6 +118,23 @@ const Sidebar = () => {
                         </div>
                         Family Info & IDs
                     </li>
+                    <li
+                        className="dash-sidebar-item"
+                        onClick={() => {
+                            navigate("/personal-info");
+                            closeSidebar()
+                        }}
+                    >
+                        <div className="dash-icon">
+                            <img
+                                src={personalIcon}
+                                alt="Personal icon"
+                                className="dash-sidebar-icon"
+                            />
+                        </div>
+                        Personal Info & IDs
+                    </li>
+                    
                     <li className="dash-sidebar-item"
                         onClick={() => {
                             navigate("/ambassador");
