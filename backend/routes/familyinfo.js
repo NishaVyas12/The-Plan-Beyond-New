@@ -3,6 +3,7 @@ const router = express.Router();
 const { pool } = require("../config/database");
 const { checkTableExists } = require("../database/schema");
 const { checkAuth } = require("../middleware/auth");
+const { upload } = require("../middleware/multer");
 
 // Validate family member data
 const validateFamilyMember = (member) => {
@@ -233,93 +234,90 @@ router.get("/", checkAuth, async (req, res) => {
 // GET /api/familyinfo/:id
 router.get("/:id", checkAuth, async (req, res) => {
   const { id } = req.params;
-
   try {
-    // Verify user exists
-    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [req.session.userId]);
-    if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-
-    // Check if familyinfo table exists
-    const tableExists = await checkTableExists("familyinfo");
-    if (!tableExists) {
-      return res.status(500).json({
-        success: false,
-        message: "FamilyInfo table not found.",
-      });
-    }
-
-    // Fetch family member by ID and user_id
-    const [familyMembers] = await pool.query(
-      `SELECT 
-        id, 
-        first_name, 
-        middle_name, 
-        last_name, 
-        nickname, 
-        email, 
-        phone_number, 
-        phone_number1, 
-        phone_number2, 
-        phone_number3, 
-        flat_building_no, 
-        street, 
-        country, 
-        state, 
-        city, 
-        zipcode, 
-        profile_image,
-        DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday,
-        relation,
-        created_at
-      FROM familyinfo WHERE id = ? AND user_id = ?`,
+    const [rows] = await pool.query(
+      `SELECT * FROM familyinfo WHERE id = ? AND user_id = ?`,
       [id, req.session.userId]
     );
 
-    if (familyMembers.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Family member not found.",
-      });
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: "Family member not found or unauthorized." });
     }
 
-    const member = familyMembers[0];
-    res.json({
-      success: true,
-      message: "Family member retrieved successfully.",
-      familyMember: {
-        id: member.id,
-        first_name: member.first_name || "",
-        middle_name: member.middle_name || "",
-        last_name: member.last_name || "",
-        nickname: member.nickname || "",
-        email: member.email || "",
-        phone_number: member.phone_number || "",
-        phone_number1: member.phone_number1 || "",
-        phone_number2: member.phone_number2 || "",
-        phone_number3: member.phone_number3 || "",
-        flat_building_no: member.flat_building_no || "",
-        street: member.street || "",
-        country: member.country || "",
-        state: member.state || "",
-        city: member.city || "",
-        zipcode: member.zipcode || "",
-        profile_image: member.profile_image || "",
-        birthday: member.birthday || "",
-        relation: member.relation || "",
-        created_at: member.created_at
-      },
-    });
+    res.json({ success: true, familyMember: rows[0] });
   } catch (err) {
-    console.error("Error fetching family member:", err);
-    res.status(500).json({
-      success: false,
-      message: `Server error: ${err.message}`,
-    });
+    console.error("Error fetching family member details:", err);
+    res.status(500).json({ success: false, message: `Server error: ${err.message}` });
+  }
+});
+
+// PUT /api/familyinfo/:id
+router.put("/:id", checkAuth, upload, async (req, res) => {
+  const { id } = req.params;
+  const birth_certificate = req.files?.birth_certificate?.[0]?.filename || "";
+  const driver_license_document = req.files?.driver_license_document?.[0]?.filename || "";
+  const {
+    driver_license_number,
+    driver_license_state_issued,
+    driver_license_expiration,
+    aadhaar_number,
+    pan_number,
+    passport_number,
+    passport_state_issued,
+    passport_expiration,
+    notes
+  } = req.body;
+
+  try {
+    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [req.session.userId]);
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const tableExists = await checkTableExists("familyinfo");
+    if (!tableExists) {
+      return res.status(500).json({ success: false, message: "FamilyInfo table not found." });
+    }
+
+    const [result] = await pool.query(
+      `UPDATE familyinfo SET
+        driver_license_number = ?,
+        driver_license_document = ?,
+        birth_certificate = ?,
+        driver_license_state_issued = ?,
+        driver_license_expiration = ?,
+        aadhaar_number = ?,
+        pan_number = ?,
+        passport_number = ?,
+        passport_state_issued = ?,
+        passport_expiration = ?,
+        notes = ?
+      WHERE id = ? AND user_id = ?`,
+      [
+        driver_license_number || "",
+        driver_license_document || "",
+        birth_certificate || "",
+        driver_license_state_issued || "",
+        driver_license_expiration || null,
+        aadhaar_number || "",
+        pan_number || "",
+        passport_number || "",
+        passport_state_issued || "",
+        passport_expiration || null,
+        notes || "",
+        id,
+        req.session.userId
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "Family member not found or unauthorized." });
+    }
+
+    res.json({ success: true, message: "Family member updated successfully." });
+  } catch (err) {
+    console.error("Error updating family member:", err);
+    res.status(500).json({ success: false, message: `Server error: ${err.message}` });
   }
 });
 

@@ -18,6 +18,18 @@ const storage = multer.diskStorage({
       uploadPath = path.join("images", `${userId}`); // Store in images/user_id/
     } else if (file.fieldname === "additionalFiles") {
       uploadPath = path.join("images", `${userId}`, "sendfile"); // Store in images/user_id/sendfile/
+    } else if (
+      [
+        "driver_license_document",
+        "aadhaar_card_document",
+        "birth_certificate",
+        "pan_card_document",
+        "passport_document",
+        "voter_id_document",
+        "other_document",
+      ].includes(file.fieldname)
+    ) {
+      uploadPath = path.join("images", file.fieldname); // You can adjust path per field if needed
     } else {
       return cb(new Error("Invalid file field name"));
     }
@@ -115,6 +127,8 @@ const upload = multer({
 }).fields([
   { name: "profileImage", maxCount: 1 },
   { name: "additionalFiles", maxCount: 15 },
+  { name: "driver_license_document", maxCount: 1 },
+  { name: "birth_certificate", maxCount: 1 },
 ]);
 
 // Profile image upload for images/user_id.file

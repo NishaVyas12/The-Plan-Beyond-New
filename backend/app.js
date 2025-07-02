@@ -18,7 +18,7 @@ const familyInfoRoutes = require("./routes/familyinfo");
 initializeDatabase().then(() => {
   const app = express();
 
-  app.use(express.json({limit: '15mb'}));
+  app.use(express.json({ limit: '15mb' }));
   app.use(
     cors({
       origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -29,7 +29,7 @@ initializeDatabase().then(() => {
 
   // Static file serving
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-  app.use("/images", express.static(path.join(__dirname, "images"))); // Add this line
+  app.use("/images", express.static(path.join(__dirname, "images")));
 
   // Routes
   app.use("/api", authRoutes);
