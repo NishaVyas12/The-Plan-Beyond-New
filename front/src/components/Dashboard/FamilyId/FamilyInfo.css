@@ -25,7 +25,7 @@
   font-weight: 600;
   font-size: 1.5rem;
   color: var(--secondary-color);
-  margin: 0 ;
+  margin: 0;
   font-family: "New Spirit";
 }
 
@@ -38,8 +38,6 @@
   font-size: 0.95rem;
   cursor: pointer;
 }
-
-
 
 .family-id-card-container {
   display: grid;
@@ -110,12 +108,12 @@
 }
 
 .family-id-card-info {
-  margin-top: 10px; 
+  margin-top: 10px;
   text-align: left;
 }
 
 .family-id-card-label {
-    margin-top: 30px;
+  margin-top: 30px;
   font-size: 0.8rem;
   color: #6B7483;
   margin-bottom: 10px;
@@ -123,10 +121,9 @@
 }
 
 .family-id-card-label-add {
-    margin-top: 55px;
+  margin-top: 55px;
   font-size: 0.8rem;
   color: var(--primary-color);
-  
   display: block;
 }
 
@@ -135,12 +132,11 @@
   color: var(--secondary-color);
 }
 
-.family-id-card-value-relation{
+.family-id-card-value-relation {
   margin-top: 10px;
   font-size: 0.8rem;
   color: #6B7483;
 }
-
 
 .family-id-add-contact-drawer-backdrop {
   position: fixed;
@@ -322,4 +318,94 @@
   margin: 0 0 1rem;
   border: none;
   text-align: left;
+}
+
+/* New styles for pet section and dropdown */
+.family-id-add-button-container {
+  position: relative;
+}
+
+.family-id-add-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: #fff;
+  border: 1px solid #EBEBEB;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1009;
+  min-width: 120px;
+}
+
+.family-id-add-dropdown-option {
+  padding: 0.8rem 1rem;
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+  cursor: pointer;
+}
+
+.family-id-add-dropdown-option:hover {
+  background-color: #D4EEEA;
+}
+
+.family-id-section-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--secondary-color);
+  margin: 2rem 0 1rem;
+  font-family: "New Spirit";
+}
+
+.pet-drawer-layout {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.pet-drawer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pet-drawer-fields {
+  flex: 1;
+}
+
+.pet-drawer-image {
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pet-image-circle .family-id-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 1px solid #DAE8E8;
+  background-size: cover;
+  background-position: center;
+}
+
+.pet-image-input {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  border: 1px solid #EBEBEB;
+  border-radius: 10px;
+  width: 100%;
+  color: var(--secondary-color);
+}
+
+.pet-image-input::-webkit-file-upload-button {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.pet-image-input::-webkit-file-upload-button:hover {
+  background-color: #006958;
 }

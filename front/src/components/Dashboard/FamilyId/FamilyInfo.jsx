@@ -5,10 +5,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import './FamilyInfo.css';
-import addPersonImage from '../../../assets/images/dash_icon/family_icon.svg'; 
+import addPersonImage from '../../../assets/images/dash_icon/family_icon.svg';
 
 const FamilyInfo = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isPetDrawerOpen, setIsPetDrawerOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showPhone1, setShowPhone1] = useState(false);
@@ -33,7 +35,15 @@ const FamilyInfo = () => {
     birthday: '',
     relation: '',
   });
+  const [petFormData, setPetFormData] = useState({
+    name: '',
+    type: '',
+    breed: '',
+    birthday: '',
+    profileImage: '',
+  });
   const [familyMembers, setFamilyMembers] = useState([]);
+  const [pets, setPets] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [filteredContacts, setFilteredContacts] = useState([]);
   const navigate = useNavigate();
@@ -77,6 +87,40 @@ const FamilyInfo = () => {
     } catch (err) {
       console.error('Error fetching family members:', err);
       toast.error('Error fetching family members. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+  };
+
+  const fetchPetInfo = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/petinfo`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setPets(data.pets || []);
+      } else {
+        if (response.status === 401) {
+          toast.error('Session expired. Please log in again.', {
+            position: 'top-right',
+            autoClose: 3000,
+            onClose: () => navigate('/login'),
+          });
+        } else {
+          toast.error(data.message || 'Failed to fetch pets.', {
+            position: 'top-right',
+            autoClose: 3000,
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching pets:', err);
+      toast.error('Error fetching pets. Please try again.', {
         position: 'top-right',
         autoClose: 3000,
       });
@@ -143,6 +187,7 @@ const FamilyInfo = () => {
 
   useEffect(() => {
     fetchFamilyInfo();
+    fetchPetInfo();
     fetchAllContacts();
   }, []);
 
@@ -161,8 +206,22 @@ const FamilyInfo = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handlePetInputChange = (name, value) => {
+    setPetFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleAddClick = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleFamilyAddClick = () => {
     setIsDrawerOpen(true);
+    setIsDropdownOpen(false);
+  };
+
+  const handlePetAddClick = () => {
+    setIsPetDrawerOpen(true);
+    setIsDropdownOpen(false);
   };
 
   const handleCloseDrawer = () => {
@@ -191,6 +250,17 @@ const FamilyInfo = () => {
       profileImage: '',
       birthday: '',
       relation: '',
+    });
+  };
+
+  const handleClosePetDrawer = () => {
+    setIsPetDrawerOpen(false);
+    setPetFormData({
+      name: '',
+      type: '',
+      breed: '',
+      birthday: '',
+      profileImage: '',
     });
   };
 
@@ -261,8 +331,53 @@ const FamilyInfo = () => {
     }
   };
 
+  const handleSavePet = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/petinfo/save`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: petFormData.name,
+          type: petFormData.type,
+          breed: petFormData.breed,
+          birthday: petFormData.birthday,
+          profile_image: petFormData.profileImage,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Pet saved successfully.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+        handleClosePetDrawer();
+        await fetchPetInfo();
+      } else {
+        if (response.status === 401) {
+          toast.error('Session expired. Please log in again.', {
+            position: 'top-right',
+            autoClose: 3000,
+            onClose: () => navigate('/login'),
+          });
+        } else {
+          toast.error(data.message || 'Failed to save pet.', {
+            position: 'top-right',
+            autoClose: 3000,
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error saving pet:', err);
+      toast.error('Error saving pet. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+  };
+
   const handleSelectContact = (contact) => {
-    // Format date_of_birth to YYYY-MM-DD for input type="date"
     const formattedDate = contact.date_of_birth
       ? new Date(contact.date_of_birth).toISOString().split('T')[0]
       : '';
@@ -300,25 +415,52 @@ const FamilyInfo = () => {
     return 'NA';
   };
 
+  const getPetInitials = (name) => {
+    return name ? name[0].toUpperCase() : 'NA';
+  };
+
   const handleCardClick = (id) => {
-    navigate(`/family-detail/${id}`);
+    if (!id) {
+      setIsDrawerOpen(true);
+    } else {
+      navigate(`/family-detail/${id}`);
+    }
+  };
+
+  const handlePetCardClick = (id) => {
+    if (!id) {
+      setIsPetDrawerOpen(true);
+    } else {
+      navigate(`/pet-detail/${id}`);
+    }
   };
 
   return (
     <div className="family-id-add-contact-page">
       <ToastContainer />
+      {/* Family Info Section */}
       <div className="family-id-contact-header">
         <div className="family-id-contact-header-actions">
           <h1 className="family-id-add-contact-title">Family Info and IDs</h1>
-          <button className="family-id-contact-add-button" onClick={handleAddClick}>
-            + Add
-          </button>
+          <div className="family-id-contact-add-button-container">
+            <button className="family-id-contact-add-button" onClick={handleAddClick}>
+              + Add
+            </button>
+            {isDropdownOpen && (
+              <div className="family-id-contact-add-dropdown">
+                <div className="family-id-contact-add-option" onClick={handleFamilyAddClick}>
+                  Family
+                </div>
+                <div className="family-id-contact-add-option" onClick={handlePetAddClick}>
+                  Pet
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+      <h2 className="family-id-section-heading">Family</h2>
       <div className="family-id-card-container">
-        {/* Static Add Person Card */}
-        
-        {/* Dynamic Family Member Cards */}
         {familyMembers.map((member, index) => (
           <div key={index} className="family-id-card" onClick={() => handleCardClick(member.id)}>
             <div className="family-id-card-content">
@@ -350,7 +492,7 @@ const FamilyInfo = () => {
             </div>
           </div>
         ))}
-        <div className="family-id-card" onClick={handleAddClick}>
+        <div className="family-id-card" onClick={() => handleCardClick(null)}>
           <div className="family-id-card-content">
             <div className="family-id-avatar-wrapper">
               <div
@@ -372,10 +514,67 @@ const FamilyInfo = () => {
           </div>
           <div className="family-id-card-info-add">
             <p className="family-id-card-label-add">+Add Person</p>
-           
           </div>
         </div>
       </div>
+      {/* Pet Info Section */}
+      <div className="family-id-contact-header">
+        <div className="family-id-contact-header-actions">
+          <h1 className="family-id-add-contact-title">Pet Info</h1>
+        </div>
+      </div>
+      <h2 className="family-id-section-heading">Pets</h2>
+      <div className="family-id-card-container">
+        {pets.map((pet, index) => (
+          <div key={index} className="family-id-card" onClick={() => handlePetCardClick(pet.id)}>
+            <div className="family-id-card-content">
+              <div className="family-id-avatar-wrapper">
+                <div
+                  className="family-id-avatar"
+                  style={
+                    pet.profile_image
+                      ? { backgroundImage: `url(${import.meta.env.VITE_API_URL}${pet.profile_image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                      : {}
+                  }
+                >
+                  {!pet.profile_image && <span>{getPetInitials(pet.name)}</span>}
+                </div>
+              </div>
+              <div className="family-id-details">
+                <div className="family-id-name-options">
+                  <h3 className="family-id-card-name">{pet.name || 'Not Assigned'}</h3>
+                  <span className="family-id-card-options">...</span>
+                </div>
+                <p className="family-id-card-value-relation">{pet.type || '-'}</p>
+                <p className="family-id-card-value">{formatDate(pet.birthday)}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+        <div className="family-id-card" onClick={() => handlePetCardClick(null)}>
+          <div className="family-id-card-content">
+            <div className="family-id-avatar-wrapper">
+              <div
+                className="family-id-avatar"
+                style={{
+                  backgroundImage: `url(${addPersonImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              ></div>
+            </div>
+            <div className="family-id-details">
+              <div className="family-id-name-options">
+                <h3 className="family-id-card-name">New Pet</h3>
+                <span className="family-id-card-options">...</span>
+              </div>
+              <p className="family-id-card-value-relation">-</p>
+              <p className="family-id-card-value">Click to add</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Family Drawer */}
       <div
         className="family-id-add-contact-drawer-backdrop"
         style={{ display: isDrawerOpen ? 'block' : 'none' }}
@@ -617,6 +816,85 @@ const FamilyInfo = () => {
               Cancel
             </button>
             <button className="family-id-add-contact-form-button save" onClick={handleSave}>
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* Pet Drawer */}
+      <div
+        className="family-id-add-contact-drawer-backdrop"
+        style={{ display: isPetDrawerOpen ? 'block' : 'none' }}
+        onClick={handleClosePetDrawer}
+      ></div>
+      <div className={`family-id-add-contact-drawer ${isPetDrawerOpen ? 'open' : ''}`}>
+        <div className="family-id-add-contact-drawer-top">
+          <button className="family-id-add-contact-drawer-close" onClick={handleClosePetDrawer}>
+            ×
+          </button>
+        </div>
+        <div className="family-id-add-contact-drawer-divider"></div>
+        <h2 className="family-id-add-contact-drawer-heading">Add Pet</h2>
+        <div className="family-id-add-contact-form-content">
+          <div className="family-id-add-contact-form-group full-width">
+            <label className="family-id-add-contact-form-label">Add Image</label>
+            <input
+              type="text"
+              name="profileImage"
+              className="family-id-add-contact-form-input"
+              value={petFormData.profileImage}
+              onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+              placeholder="Enter image URL"
+            />
+          </div>
+          <div className="family-id-add-contact-form-row">
+            <div className="family-id-add-contact-form-group">
+              <label className="family-id-add-contact-form-label">Animal Name</label>
+              <input
+                type="text"
+                name="name"
+                className="family-id-add-contact-form-input"
+                value={petFormData.name}
+                onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+              />
+            </div>
+            <div className="family-id-add-contact-form-group">
+              <label className="family-id-add-contact-form-label">Pet Type</label>
+              <input
+                type="text"
+                name="type"
+                className="family-id-add-contact-form-input"
+                value={petFormData.type}
+                onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+                placeholder="e.g., Dog, Cat"
+              />
+            </div>
+            <div className="family-id-add-contact-form-group">
+              <label className="family-id-add-contact-form-label">Breed</label>
+              <input
+                type="text"
+                name="breed"
+                className="family-id-add-contact-form-input"
+                value={petFormData.breed}
+                onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+              />
+            </div>
+            <div className="family-id-add-contact-form-group">
+              <label className="family-id-add-contact-form-label">Birthday</label>
+              <input
+                type="date"
+                name="birthday"
+                className="family-id-add-contact-form-input"
+                value={petFormData.birthday}
+                onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="family-id-add-contact-form-actions">
+            <button className="family-id-add-contact-form-button cancel" onClick={handleClosePetDrawer}>
+              Cancel
+            </button>
+            <button className="family-id-add-contact-form-button save" onClick={handleSavePet}>
               Save
             </button>
           </div>
