@@ -102,10 +102,10 @@ const NomineeCard = ({
             style={
               profileImage
                 ? {
-                    backgroundImage: `url(${import.meta.env.VITE_API_URL}${profileImage.startsWith("/") ? "" : "/"}${profileImage})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }
+                  backgroundImage: `url(${import.meta.env.VITE_API_URL}${profileImage.startsWith("/") ? "" : "/"}${profileImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
                 : {}
             }
           />
@@ -278,36 +278,36 @@ const AddNomineeForm = ({
       setFormData({
         contact: matchingContact
           ? {
-              value: matchingContact.phone_number || "",
-              label: [
-                matchingContact.first_name || "",
-                matchingContact.middle_name || "",
-                matchingContact.last_name || "",
-              ]
-                .filter(Boolean)
-                .join(" ")
-                .trim() || matchingContact.phone_number,
-              fName: matchingContact.first_name || "",
-              mName: matchingContact.middle_name || "",
-              lName: matchingContact.last_name || "",
-              email: matchingContact.email || "",
-              phone: matchingContact.phone_number || "",
-              category: matchingContact.category || "",
-              relation: matchingContact.relation || "",
-              contact_image: matchingContact.contact_image || "",
-            }
+            value: matchingContact.phone_number || "",
+            label: [
+              matchingContact.first_name || "",
+              matchingContact.middle_name || "",
+              matchingContact.last_name || "",
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .trim() || matchingContact.phone_number,
+            fName: matchingContact.first_name || "",
+            mName: matchingContact.middle_name || "",
+            lName: matchingContact.last_name || "",
+            email: matchingContact.email || "",
+            phone: matchingContact.phone_number || "",
+            category: matchingContact.category || "",
+            relation: matchingContact.relation || "",
+            contact_image: matchingContact.contact_image || "",
+          }
           : {
-              value: editNominee.phone_number || "",
-              label: contactLabel || editNominee.phone_number || "",
-              fName: editNominee.firstName || "",
-              mName: editNominee.middleName || "",
-              lName: editNominee.lastName || "",
-              email: editNominee.email || "",
-              phone: editNominee.phone_number || "",
-              category: editNominee.category || "",
-              relation: editNominee.relation || "",
-              contact_image: "",
-            },
+            value: editNominee.phone_number || "",
+            label: contactLabel || editNominee.phone_number || "",
+            fName: editNominee.firstName || "",
+            mName: editNominee.middleName || "",
+            lName: editNominee.lastName || "",
+            email: editNominee.email || "",
+            phone: editNominee.phone_number || "",
+            category: editNominee.category || "",
+            relation: editNominee.relation || "",
+            contact_image: "",
+          },
         firstName: editNominee.firstName || "",
         middleName: editNominee.middleName || "",
         lastName: editNominee.lastName || "",
@@ -359,9 +359,9 @@ const AddNomineeForm = ({
       [name]: value,
       ...(name === "category"
         ? {
-            relation: value === "Family" ? prev.relation : "",
-            category: value,
-          }
+          relation: value === "Family" ? prev.relation : "",
+          category: value,
+        }
         : {}),
     }));
     if (name === "category") {
@@ -609,8 +609,8 @@ const AddNomineeForm = ({
       backgroundColor: state.isSelected
         ? "#2684FF"
         : state.isFocused
-        ? "#f0f8ff"
-        : "#fff",
+          ? "#f0f8ff"
+          : "#fff",
       color: state.isSelected ? "#fff" : "#333",
       padding: 10,
     }),
@@ -672,10 +672,10 @@ const AddNomineeForm = ({
                     style={
                       imagePreview
                         ? {
-                            backgroundImage: `url(${imagePreview})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }
+                          backgroundImage: `url(${imagePreview})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
                         : { backgroundColor: "#DAE8E8" }
                     }
                   >
@@ -746,7 +746,7 @@ const AddNomineeForm = ({
                   setShowRelationInput(newCategory === "Family");
                   setIsCustomRelation(
                     selectedOption?.relation &&
-                      !relationOptions.includes(selectedOption?.relation)
+                    !relationOptions.includes(selectedOption?.relation)
                   );
                   setCustomRelation(
                     newCategory === "Family" ? selectedOption?.relation || "" : ""

@@ -345,6 +345,29 @@ const createFamilyInfoTable = async () => {
   }
 };
 
+const createPetsTable = async () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS pets (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL, -- Assuming pets belong to users
+      name VARCHAR(100) NOT NULL,
+      type VARCHAR(50),
+      breed VARCHAR(100),
+      birthday DATE,
+      photo VARCHAR(255), -- Stores image file path
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `;
+  try {
+    await pool.query(query);
+  } catch (err) {
+    console.error("Error creating pets table:", err);
+    throw err;
+  }
+};
+
+
 const checkTableExists = async (tableName) => {
   const query = `
     SELECT COUNT(*) as count
@@ -375,7 +398,8 @@ const initializeDatabase = async () => {
     await createNomineesTable();
     await createAmbassadorsTable();
     await createFamilyInfoTable();
-    
+    await createPetsTable();
+
     // Alter existing user contacts tables
     const [users] = await pool.query("SELECT id FROM users");
     for (const user of users) {
@@ -401,4 +425,5 @@ module.exports = {
   createNomineesTable,
   createAmbassadorsTable,
   createFamilyInfoTable,
+  createPetsTable,
 };

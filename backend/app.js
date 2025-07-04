@@ -14,6 +14,7 @@ const contactsRoutes = require("./routes/contacts");
 const ambassadorsRoutes = require("./routes/ambassadors");
 const nomineesRoutes = require("./routes/nominees");
 const familyInfoRoutes = require("./routes/familyinfo");
+const petRoutes = require("./routes/pets");
 
 initializeDatabase().then(() => {
   const app = express();
@@ -39,6 +40,7 @@ initializeDatabase().then(() => {
   app.use("/api/ambassadors", ambassadorsRoutes);
   app.use("/api", nomineesRoutes);
   app.use("/api/familyinfo", familyInfoRoutes);
+  app.use("/api", petRoutes);
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

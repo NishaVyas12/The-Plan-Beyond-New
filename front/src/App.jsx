@@ -34,6 +34,7 @@ import FamilyIDPage from "./pages/FamilyIdPage";
 import FamilyDetail from "./components/Dashboard/FamilyId/FamilyDetail";
 import Navbar from "./components/Dashboard/Dash/navbar";
 import Sidebar from "./components/Dashboard/Dash/sidebar";
+import PetDetails from "./components/Dashboard/FamilyId/PetDetails";
 const PrivateRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
@@ -268,7 +269,7 @@ function App() {
               </>
             }
           />
-          
+
           <Route
             path="/confirmation"
             element={
@@ -299,7 +300,7 @@ function App() {
               </>
             }
           />
-           <Route
+          <Route
             path="/profile"
             element={
               <>
@@ -341,13 +342,24 @@ function App() {
                 <Navbar />
                 <Sidebar />
                 <FamilyDetail />
+                <PetDetails />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/pet-detail/:id"
+            element={
+              <PrivateRoute>
+                <Navbar />
+                <Sidebar />
+                <PetDetails />
               </PrivateRoute>
             }
           />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Routes>
-       
+
       </div>
     </Router>
   );

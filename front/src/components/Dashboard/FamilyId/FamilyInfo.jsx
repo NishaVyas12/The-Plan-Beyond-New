@@ -6,6 +6,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import './FamilyInfo.css';
 import addPersonImage from '../../../assets/images/dash_icon/family_icon.svg';
+import cameraIcon from "../../../assets/images/dash_icon/camera.svg";
 
 const FamilyInfo = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -24,6 +25,7 @@ const FamilyInfo = () => {
     phone: '',
     phoneNumber1: '',
     phoneNumber2: '',
+    petImage: "",
     phoneNumber3: '',
     flatBuildingNo: '',
     street: '',
@@ -40,7 +42,7 @@ const FamilyInfo = () => {
     type: '',
     breed: '',
     birthday: '',
-    profileImage: '',
+    profileImage: "",
   });
   const [familyMembers, setFamilyMembers] = useState([]);
   const [pets, setPets] = useState([]);
@@ -58,7 +60,20 @@ const FamilyInfo = () => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
-
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      setFormData((prev) => ({
+        ...prev,
+        petImage: file,
+      }));
+    }
+  };
   const fetchFamilyInfo = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo`, {
@@ -95,7 +110,7 @@ const FamilyInfo = () => {
 
   const fetchPetInfo = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/petinfo`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets`, {
         method: 'GET',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -333,7 +348,7 @@ const FamilyInfo = () => {
 
   const handleSavePet = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/petinfo/save`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -376,6 +391,7 @@ const FamilyInfo = () => {
       });
     }
   };
+  const [imagePreview, setImagePreview] = useState(null);
 
   const handleSelectContact = (contact) => {
     const formattedDate = contact.date_of_birth
@@ -836,20 +852,54 @@ const FamilyInfo = () => {
         <div className="family-id-add-contact-drawer-divider"></div>
         <h2 className="family-id-add-contact-drawer-heading">Add Pet</h2>
         <div className="family-id-add-contact-form-content">
-          <div className="family-id-add-contact-form-group full-width">
-            <label className="family-id-add-contact-form-label">Add Image</label>
-            <input
-              type="text"
-              name="profileImage"
-              className="family-id-add-contact-form-input"
-              value={petFormData.profileImage}
-              onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
-              placeholder="Enter image URL"
-            />
+          <div className="nominee-add-form-row">
+            <div className="nominee-add-field-group full-width">
+              <div className="nominee-add-profile-section">
+                <div className="nominee-add-avatar-wrapper-add-nominee">
+                  <div
+                    className="nominee-add-avatar-add-nominee"
+                    style={
+                      imagePreview
+                        ? {
+                          backgroundImage: `url(${imagePreview})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                        : { backgroundColor: "#DAE8E8" }
+                    }
+                  >
+                    <label
+                      htmlFor="avatar-upload-form"
+                      className="nominee-add-avatar-upload"
+                    >
+                      <img
+                        src={cameraIcon}
+                        alt="Camera"
+                        className="nominee-add-camera-icon"
+                      />
+                      <input
+                        type="file"
+                        id="avatar-upload-form"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={handleImageUpload}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <label
+                  htmlFor="avatar-upload-form"
+                  className="nominee-add-profile-label"
+                  style={{ cursor: "pointer" }}
+                >
+                  Add Photo
+                </label>
+              </div>
+            </div>
           </div>
           <div className="family-id-add-contact-form-row">
             <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Animal Name</label>
+              <label className="family-id-add-contact-form-label">Pet Name</label>
               <input
                 type="text"
                 name="name"
