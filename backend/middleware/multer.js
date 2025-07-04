@@ -4,10 +4,11 @@ const path = require("path");
 const fs = require("fs").promises;
 const sanitize = require("sanitize-filename");
 
-// Storage for main upload (contact images and additional files)
+// Storage for main upload (contact images and documents)
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const userId = req.session.userId;
+    const familyId = req.body.family_id || req.params.id; // Use family_id from body or params
     let uploadPath;
 
     if (!userId) {
@@ -15,21 +16,23 @@ const storage = multer.diskStorage({
     }
 
     if (file.fieldname === "profileImage") {
-      uploadPath = path.join("images", `${userId}`); // Store in images/user_id/
-    } else if (file.fieldname === "additionalFiles") {
-      uploadPath = path.join("images", `${userId}`, "sendfile"); // Store in images/user_id/sendfile/
+      uploadPath = path.join("images", `${userId}`); // Store profile images in images/user_id/
     } else if (
       [
         "driver_license_document",
         "aadhaar_card_document",
-        "birth_certificate",
+        "birth_certificate_document",
         "pan_card_document",
         "passport_document",
-        "voter_id_document",
-        "other_document",
+        "other_file",
       ].includes(file.fieldname)
     ) {
-      uploadPath = path.join("images", file.fieldname); // You can adjust path per field if needed
+      if (!familyId) {
+        return cb(new Error("Family ID is required for document uploads"));
+      }
+      uploadPath = path.join("images", `${userId}`, "family", `${familyId}`); // Store documents in images/user_id/family/family_id/
+    } else if (file.fieldname === "additionalFiles") {
+      uploadPath = path.join("images", `${userId}`, "sendfile"); // Store additional files in images/user_id/sendfile/
     } else {
       return cb(new Error("Invalid file field name"));
     }
@@ -47,19 +50,21 @@ const storage = multer.diskStorage({
     const basename = path.basename(sanitizedFilename, ext);
     let finalName = sanitizedFilename;
     let counter = 0;
-    const destination = file.fieldname === "profileImage"
-      ? path.join("images", `${req.session.userId}`)
-      : path.join("images", `${req.session.userId}`, "sendfile");
+    const userId = req.session.userId;
+    const familyId = req.body.family_id || req.params.id;
+    const destination =
+      file.fieldname === "profileImage"
+        ? path.join("images", `${userId}`)
+        : file.fieldname === "additionalFiles"
+        ? path.join("images", `${userId}`, "sendfile")
+        : path.join("images", `${userId}`, "family", `${familyId}`);
 
-    // Check for existing files and append counter if necessary
     while (true) {
       try {
         await fs.access(path.join(destination, finalName));
-        // File exists, increment counter
         counter++;
         finalName = `${basename}${counter}${ext}`;
       } catch (err) {
-        // File does not exist, use this name
         break;
       }
     }
@@ -68,32 +73,30 @@ const storage = multer.diskStorage({
   },
 });
 
-// Storage for profile images (images/user_id.file)
 const profileImageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const userId = req.session.userId;
     if (!userId) {
       return cb(new Error("Session timed out, login again."));
     }
-    const uploadPath = path.join(__dirname, "../images"); // Store in images/
-    fsSync.mkdirSync(uploadPath, { recursive: true }); // Use fsSync.mkdirSync
+    const uploadPath = path.join(__dirname, "../images");
+    fsSync.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    const sanitizedFilename = sanitize(file.originalname); // Sanitize original filename
+    const sanitizedFilename = sanitize(file.originalname);
     const ext = path.extname(sanitizedFilename);
     const basename = path.basename(sanitizedFilename, ext);
     let finalName = sanitizedFilename;
     let counter = 0;
     const destination = path.join(__dirname, "../images");
 
-    // Check for existing files and append counter if necessary
     while (fsSync.existsSync(path.join(destination, finalName))) {
       counter++;
       finalName = `${basename}${counter}${ext}`;
     }
 
-    cb(null, finalName); // Save as images/sanitizedFilename (e.g., images/profile.jpg)
+    cb(null, finalName);
   },
 });
 
@@ -119,19 +122,21 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Main upload for contact images (images/user_id/file) and additional files (images/user_id/sendfile/file)
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
 }).fields([
   { name: "profileImage", maxCount: 1 },
   { name: "additionalFiles", maxCount: 15 },
   { name: "driver_license_document", maxCount: 1 },
-  { name: "birth_certificate", maxCount: 1 },
+  { name: "birth_certificate_document", maxCount: 1 },
+  { name: "pan_card_document", maxCount: 1 },
+  { name: "passport_document", maxCount: 1 },
+  { name: "aadhaar_card_document", maxCount: 1 },
+  { name: "other_file", maxCount: 1 },
 ]);
 
-// Profile image upload for images/user_id.file
 const profileImageUpload = multer({
   storage: profileImageStorage,
   fileFilter: (req, file, cb) => {
@@ -140,7 +145,7 @@ const profileImageUpload = multer({
     }
     cb(null, true);
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
 }).single("profileImage");
 
 module.exports = { upload, profileImageUpload };

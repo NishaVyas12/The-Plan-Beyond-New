@@ -25,7 +25,7 @@
   font-weight: 600;
   font-size: 1.5rem;
   color: var(--secondary-color);
-  margin: 0 0 30px;
+  margin: 0 ;
   font-family: "New Spirit";
 }
 
@@ -45,7 +45,7 @@
   display: grid;
   grid-template-columns: repeat(3, 3fr);
   gap: 20px;
-  margin-bottom: 20px;
+  margin: 40px 0 20px;
 }
 
 .family-id-card {
@@ -72,7 +72,6 @@
 .family-id-avatar {
   width: 100px;
   height: 100px;
-  background-color: #DAE8E8;
   border-radius: 50%;
   border: 1px solid #DAE8E8;
   display: flex;
@@ -111,7 +110,7 @@
 }
 
 .family-id-card-info {
-  margin-top: 10px; /* Added spacing between name/options and birthday */
+  margin-top: 10px; 
   text-align: left;
 }
 
@@ -120,6 +119,14 @@
   font-size: 0.8rem;
   color: #6B7483;
   margin-bottom: 10px;
+  display: block;
+}
+
+.family-id-card-label-add {
+    margin-top: 55px;
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  
   display: block;
 }
 

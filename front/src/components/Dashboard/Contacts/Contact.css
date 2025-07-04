@@ -1422,6 +1422,9 @@
     line-height: 1;
 }
 
+.country-name{
+    color: #000;
+}
 .contact-category {
     padding: 4px 8px;
     border-radius: 10px;

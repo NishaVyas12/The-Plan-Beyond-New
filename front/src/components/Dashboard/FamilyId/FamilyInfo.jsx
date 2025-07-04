@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import './FamilyInfo.css';
+import addPersonImage from '../../../assets/images/dash_icon/family_icon.svg'; 
 
 const FamilyInfo = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -315,6 +316,9 @@ const FamilyInfo = () => {
         </div>
       </div>
       <div className="family-id-card-container">
+        {/* Static Add Person Card */}
+        
+        {/* Dynamic Family Member Cards */}
         {familyMembers.map((member, index) => (
           <div key={index} className="family-id-card" onClick={() => handleCardClick(member.id)}>
             <div className="family-id-card-content">
@@ -346,6 +350,31 @@ const FamilyInfo = () => {
             </div>
           </div>
         ))}
+        <div className="family-id-card" onClick={handleAddClick}>
+          <div className="family-id-card-content">
+            <div className="family-id-avatar-wrapper">
+              <div
+                className="family-id-avatar"
+                style={{
+                  backgroundImage: `url(${addPersonImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              ></div>
+            </div>
+            <div className="family-id-details">
+              <div className="family-id-name-options">
+                <h3 className="family-id-card-name">New Family ID</h3>
+                <span className="family-id-card-options">...</span>
+              </div>
+              <p className="family-id-card-value-relation">-</p>
+            </div>
+          </div>
+          <div className="family-id-card-info-add">
+            <p className="family-id-card-label-add">+Add Person</p>
+           
+          </div>
+        </div>
       </div>
       <div
         className="family-id-add-contact-drawer-backdrop"
