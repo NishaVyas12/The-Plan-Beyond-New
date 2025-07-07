@@ -25,31 +25,43 @@ const PetDetails = () => {
         insurance_expiration: '',
         notes: '',
         breed: '',
-        profile_image: '',
+        photo: '',
+        tag_document: null,
+        tag_number: '',
+        tag_type: '',
+        vet_document: null,
+        vet_clinic_name: '',
+        vet_contact_info: '',
+        vaccine_date: '',
     });
     const [initialFormData, setInitialFormData] = useState(null);
     const [tempInputData, setTempInputData] = useState({});
     const [loading, setLoading] = useState(true);
+    const [cardLoading, setCardLoading] = useState({});
     const [showAddDropdown, setShowAddDropdown] = useState(false);
     const [scrollToId, setScrollToId] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
     const [previewFile, setPreviewFile] = useState(null);
     const [openDropdownId, setOpenDropdownId] = useState(null);
     const [editMode, setEditMode] = useState({});
+    const [fileInputKey, setFileInputKey] = useState(Date.now());
     const cardRefs = useRef({});
 
     const handleSaveCard = async (fieldName) => {
+        setCardLoading((prev) => ({ ...prev, [fieldName]: true }));
         let payload = {};
         if (fieldName === 'notes') {
-            payload = { notes: tempInputData.notes || formData.notes };
+            payload = { notes: tempInputData.notes || formData.notes, name: formData.name };
         } else if (fieldName === 'birthday') {
             payload = {
                 birthday: tempInputData.birthday
                     ? tempInputData.birthday.split("T")[0]
                     : formData.birthday || '',
+                name: formData.name,
             };
         } else if (fieldName === 'insurance_document') {
             payload = {
+                name: formData.name,
                 insurance_provider: tempInputData.insurance_provider || formData.insurance_provider,
                 policy_number: tempInputData.policy_number || formData.policy_number,
                 policy_holder: tempInputData.policy_holder || formData.policy_holder,
@@ -63,6 +75,21 @@ const PetDetails = () => {
                     ? tempInputData.insurance_expiration.split("T")[0]
                     : formData.insurance_expiration || '',
             };
+        } else if (fieldName === 'tag_document') {
+            payload = {
+                name: formData.name,
+                tag_number: tempInputData.tag_number || formData.tag_number,
+                tag_type: tempInputData.tag_type || formData.tag_type,
+            };
+        } else if (fieldName === 'vet_document') {
+            payload = {
+                name: formData.name,
+                vet_clinic_name: tempInputData.vet_clinic_name || formData.vet_clinic_name,
+                vet_contact_info: tempInputData.vet_contact_info || formData.vet_contact_info,
+                vaccine_date: tempInputData.vaccine_date
+                    ? tempInputData.vaccine_date.split("T")[0]
+                    : formData.vaccine_date || '',
+            };
         }
 
         const formDataToSend = new FormData();
@@ -70,9 +97,12 @@ const PetDetails = () => {
         Object.entries(payload).forEach(([key, value]) => {
             formDataToSend.append(key, value);
         });
-        if (fieldName === 'insurance_document' && formData.insurance_document && typeof formData.insurance_document === 'object') {
-            formDataToSend.append('insurance_document', formData.insurance_document);
+        if (tempInputData[fieldName] && typeof tempInputData[fieldName] === 'object') {
+            formDataToSend.append(fieldName, tempInputData[fieldName]);
         }
+
+        // Log the FormData contents for debugging
+        console.log('Sending FormData for save:', Object.fromEntries(formDataToSend));
 
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${id}`, {
@@ -89,24 +119,28 @@ const PetDetails = () => {
                 setFormData((prev) => ({
                     ...prev,
                     ...payload,
-                    [fieldName]: data.pet[fieldName] || formData[fieldName],
+                    [fieldName]: data.pet[fieldName] || tempInputData[fieldName] || formData[fieldName],
                 }));
                 setInitialFormData((prev) => ({
                     ...prev,
                     ...payload,
-                    [fieldName]: data.pet[fieldName] || formData[fieldName],
+                    [fieldName]: data.pet[fieldName] || tempInputData[fieldName] || formData[fieldName],
                 }));
                 setTempInputData((prev) => {
                     const newTemp = { ...prev };
                     Object.keys(payload).forEach((key) => delete newTemp[key]);
+                    delete newTemp[fieldName];
                     return newTemp;
                 });
                 setEditMode((prev) => ({ ...prev, [fieldName]: false }));
+                setFileInputKey(Date.now());
             } else {
                 handleApiError(response, data, `Failed to update ${fieldName.replace('_document', '')}.`);
             }
         } catch (err) {
             handleNetworkError(err, `Error updating ${fieldName.replace('_document', '')}.`);
+        } finally {
+            setCardLoading((prev) => ({ ...prev, [fieldName]: false }));
         }
     };
 
@@ -121,29 +155,39 @@ const PetDetails = () => {
                 'nominee_name',
                 'insurance_issued',
                 'insurance_expiration',
+                'insurance_document',
             ],
             notes: ['notes'],
             birthday: ['birthday'],
+            tag_document: ['tag_number', 'tag_type', 'tag_document'],
+            vet_document: ['vet_clinic_name', 'vet_contact_info', 'vaccine_date', 'vet_document'],
         };
         setTempInputData((prev) => {
             const newTemp = { ...prev };
             (cardFields[fieldName] || []).forEach((key) => delete newTemp[key]);
             return newTemp;
         });
-        if (fieldName === 'insurance_document' && formData.insurance_document && typeof formData.insurance_document === 'object') {
-            setFormData((prev) => ({ ...prev, insurance_document: initialFormData.insurance_document || null }));
-        } else if (fieldName === 'birthday') {
-            setFormData((prev) => ({ ...prev, birthday: initialFormData.birthday || '' }));
-        } else if (fieldName === 'notes') {
-            setFormData((prev) => ({ ...prev, notes: initialFormData.notes || '' }));
-        }
+        setFormData((prev) => ({
+            ...prev,
+            [fieldName]: initialFormData[fieldName] || null,
+            ...(cardFields[fieldName] || []).reduce((acc, key) => ({
+                ...acc,
+                [key]: initialFormData[key] || '',
+            }), {}),
+        }));
         setEditMode((prev) => ({ ...prev, [fieldName]: false }));
+        setFileInputKey(Date.now());
     };
 
     const handleDeleteFile = async (fieldName) => {
+        setCardLoading((prev) => ({ ...prev, [fieldName]: true }));
         const formDataToSend = new FormData();
         formDataToSend.append('id', id);
+        formDataToSend.append('name', formData.name);
         formDataToSend.append(fieldName, '');
+
+        // Log the FormData contents for debugging
+        console.log('Sending FormData for delete:', Object.fromEntries(formDataToSend));
 
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${id}`, {
@@ -159,15 +203,24 @@ const PetDetails = () => {
                 });
                 setFormData((prev) => ({ ...prev, [fieldName]: null }));
                 setInitialFormData((prev) => ({ ...prev, [fieldName]: null }));
+                setTempInputData((prev) => {
+                    const newTemp = { ...prev };
+                    delete newTemp[fieldName];
+                    return newTemp;
+                });
+                setFileInputKey(Date.now());
             } else {
                 handleApiError(response, data, `Failed to delete ${fieldName.replace('_document', '')} file.`);
             }
         } catch (err) {
             handleNetworkError(err, `Error deleting ${fieldName.replace('_document', '')} file.`);
+        } finally {
+            setCardLoading((prev) => ({ ...prev, [fieldName]: false }));
         }
     };
 
     const handleDeleteCard = async (fieldName) => {
+        setCardLoading((prev) => ({ ...prev, [fieldName]: true }));
         const cardFields = {
             insurance_document: {
                 insurance_provider: '',
@@ -182,14 +235,28 @@ const PetDetails = () => {
             },
             notes: { notes: '' },
             birthday: { birthday: '' },
+            tag_document: {
+                tag_number: '',
+                tag_type: '',
+                tag_document: '',
+            },
+            vet_document: {
+                vet_clinic_name: '',
+                vet_contact_info: '',
+                vaccine_date: '',
+                vet_document: '',
+            },
         };
 
-        const payload = cardFields[fieldName] || {};
+        const payload = { ...cardFields[fieldName], name: formData.name };
         const formDataToSend = new FormData();
         formDataToSend.append('id', id);
         Object.entries(payload).forEach(([key, value]) => {
             formDataToSend.append(key, value);
         });
+
+        // Log the FormData contents for debugging
+        console.log('Sending FormData for card delete:', Object.fromEntries(formDataToSend));
 
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${id}`, {
@@ -215,6 +282,7 @@ const PetDetails = () => {
                     return newTemp;
                 });
                 setEditMode((prev) => ({ ...prev, [fieldName]: false }));
+                setFileInputKey(Date.now());
                 toast.success(`${fieldName.replace('_document', '')} deleted successfully.`, {
                     position: 'top-right',
                     autoClose: 3000,
@@ -224,6 +292,8 @@ const PetDetails = () => {
             }
         } catch (err) {
             handleNetworkError(err, `Error deleting ${fieldName.replace('_document', '')}.`);
+        } finally {
+            setCardLoading((prev) => ({ ...prev, [fieldName]: false }));
         }
     };
 
@@ -276,7 +346,14 @@ const PetDetails = () => {
                         insurance_expiration: data.pet.insurance_expiration || '',
                         notes: data.pet.notes || '',
                         breed: data.pet.breed || '',
-                        profile_image: data.pet.profile_image || '',
+                        photo: data.pet.photo || '',
+                        tag_document: data.pet.tag_document || null,
+                        tag_number: data.pet.tag_number || '',
+                        tag_type: data.pet.tag_type || '',
+                        vet_document: data.pet.vet_document || null,
+                        vet_clinic_name: data.pet.vet_clinic_name || '',
+                        vet_contact_info: data.pet.vet_contact_info || '',
+                        vaccine_date: data.pet.vaccine_date || '',
                     };
                     setFormData(fetchedData);
                     setInitialFormData(fetchedData);
@@ -296,12 +373,44 @@ const PetDetails = () => {
         const { name, files } = e.target;
         const file = files[0];
         if (file) {
-            setFormData((prev) => ({ ...prev, [name]: file }));
+            const allowedTypes = [
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/vcard',
+            ];
+            if (!allowedTypes.includes(file.type) && !file.name.endsWith('.vcf')) {
+                toast.error('Only JPEG, PNG, GIF, PDF, DOC, DOCX, and VCF files are allowed.', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('File size exceeds 5MB limit.', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+                return;
+            }
+            setTempInputData((prev) => ({ ...prev, [name]: file }));
+            setEditMode((prev) => ({ ...prev, [name]: true }));
         }
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'birthday') {
+            if (value) {
+                const selectedDate = new Date(value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                selectedDate.setHours(0, 0, 0, 0);
+            }
+        }
         setTempInputData((prev) => ({ ...prev, [name]: value }));
     };
 
@@ -365,10 +474,13 @@ const PetDetails = () => {
             'Birthday': 'birthdayCard',
             'Insurance': 'insurance_document',
             'Notes': 'notesCard',
+            'Pet Tag': 'tagCard',
+            'Vet Details': 'vetCard',
         };
         const targetId = cardMapping[option];
         if (targetId) {
             setScrollToId(targetId);
+            setEditMode((prev) => ({ ...prev, [cardMapping[option]]: true }));
         } else {
             toast.info(`Card for '${option}' is not available.`, {
                 position: 'top-right',
@@ -406,12 +518,29 @@ const PetDetails = () => {
                     formData.agent_contact ||
                     formData.nominee_name ||
                     formData.insurance_issued ||
-                    formData.insurance_expiration
+                    formData.insurance_expiration ||
+                    formData.insurance_document ||
+                    tempInputData.insurance_document
                 );
             case 'notes':
                 return formData.notes;
             case 'birthday':
                 return formData.birthday;
+            case 'tag_document':
+                return (
+                    formData.tag_number ||
+                    formData.tag_type ||
+                    formData.tag_document ||
+                    tempInputData.tag_document
+                );
+            case 'vet_document':
+                return (
+                    formData.vet_clinic_name ||
+                    formData.vet_contact_info ||
+                    formData.vaccine_date ||
+                    formData.vet_document ||
+                    tempInputData.vet_document
+                );
             default:
                 return false;
         }
@@ -428,14 +557,16 @@ const PetDetails = () => {
                 'nominee_name',
                 'insurance_issued',
                 'insurance_expiration',
+                'insurance_document',
             ],
             notes: ['notes'],
             birthday: ['birthday'],
+            tag_document: ['tag_number', 'tag_type', 'tag_document'],
+            vet_document: ['vet_clinic_name', 'vet_contact_info', 'vaccine_date', 'vet_document'],
         };
         return (
             !isCardFilled(fieldName) ||
-            cardFields[fieldName]?.some((key) => tempInputData[key] !== undefined) ||
-            (fieldName === 'insurance_document' && formData.insurance_document && typeof formData.insurance_document === 'object') ||
+            (cardFields[fieldName]?.some((key) => tempInputData[key] !== undefined)) ||
             editMode[fieldName]
         );
     };
@@ -457,6 +588,8 @@ const PetDetails = () => {
                     <span
                         className="family-detail-card-options"
                         onClick={() => toggleOptionsDropdown('birthday')}
+                        role="button"
+                        aria-label="Birthday card options"
                     >
                         ...
                     </span>
@@ -478,6 +611,7 @@ const PetDetails = () => {
                     </div>
                 ) : (
                     <div className="family-detail-input-group family-detail-single-column">
+                        <label htmlFor="birthday" className="family-detail-label">Birthday:</label>
                         <input
                             type="date"
                             id="birthday"
@@ -491,6 +625,7 @@ const PetDetails = () => {
                             }
                             onChange={handleInputChange}
                             className="family-detail-text-input"
+                            aria-label="Pet birthday"
                         />
                     </div>
                 )}
@@ -500,13 +635,15 @@ const PetDetails = () => {
                             type="button"
                             className="family-detail-save-button"
                             onClick={() => handleSaveCard('birthday')}
+                            disabled={cardLoading.birthday}
                         >
-                            Save
+                            {cardLoading.birthday ? 'Saving...' : 'Save'}
                         </button>
                         <button
                             type="button"
                             className="family-detail-cancel-button"
                             onClick={() => handleCancelCard('birthday')}
+                            disabled={cardLoading.birthday}
                         >
                             Cancel
                         </button>
@@ -519,6 +656,7 @@ const PetDetails = () => {
     const renderInsuranceCard = () => {
         const isFilled = isCardFilled('insurance_document');
         const showButtons = shouldShowButtons('insurance_document');
+        const displayFile = tempInputData.insurance_document || formData.insurance_document;
 
         return (
             <div
@@ -533,6 +671,8 @@ const PetDetails = () => {
                     <span
                         className="family-detail-card-options"
                         onClick={() => toggleOptionsDropdown('insurance_document')}
+                        role="button"
+                        aria-label="Insurance card options"
                     >
                         ...
                     </span>
@@ -543,26 +683,30 @@ const PetDetails = () => {
                         </div>
                     )}
                 </div>
-                {formData.insurance_document ? (
+                {displayFile ? (
                     <div className="family-detail-file-container">
                         <img
-                            src={getFileIcon(formData.insurance_document)}
+                            src={getFileIcon(displayFile)}
                             alt="Insurance Icon"
                             className="family-detail-file-icon"
                         />
                         <span
                             className={`family-detail-file-name ${isFilled ? 'family-detail-text-filled' : ''}`}
-                            onClick={() => handlePreview(formData.insurance_document)}
+                            onClick={() => handlePreview(displayFile)}
+                            role="button"
+                            aria-label="Preview insurance document"
                         >
-                            {typeof formData.insurance_document === 'object'
-                                ? formData.insurance_document.name
-                                : formData.insurance_document.split('/').pop()}
+                            {typeof displayFile === 'object'
+                                ? displayFile.name
+                                : displayFile.split('/').pop()}
                         </span>
                         <img
                             src={CrossIcon}
                             alt="Delete Icon"
                             className="family-detail-delete-icon"
                             onClick={() => handleDeleteFile('insurance_document')}
+                            role="button"
+                            aria-label="Delete insurance document"
                         />
                     </div>
                 ) : (
@@ -574,10 +718,13 @@ const PetDetails = () => {
                             <p>Browse files</p>
                         </div>
                         <input
+                            key={fileInputKey}
                             type="file"
                             name="insurance_document"
                             className="family-detail-card-input"
                             onChange={handleFileChange}
+                            aria-label="Upload insurance document"
+                            accept="image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/vcard,.vcf"
                         />
                     </div>
                 )}
@@ -640,6 +787,7 @@ const PetDetails = () => {
                                     value={tempInputData.insurance_provider || formData.insurance_provider}
                                     onChange={handleInputChange}
                                     className="family-detail-text-input"
+                                    aria-label="Insurance provider"
                                 />
                             </div>
                             <div className="family-detail-input-group">
@@ -651,6 +799,7 @@ const PetDetails = () => {
                                     value={tempInputData.policy_number || formData.policy_number}
                                     onChange={handleInputChange}
                                     className="family-detail-text-input"
+                                    aria-label="Policy number"
                                 />
                             </div>
                         </div>
@@ -664,6 +813,7 @@ const PetDetails = () => {
                                     value={tempInputData.policy_holder || formData.policy_holder}
                                     onChange={handleInputChange}
                                     className="family-detail-text-input"
+                                    aria-label="Policy holder"
                                 />
                             </div>
                             <div className="family-detail-input-group">
@@ -675,6 +825,7 @@ const PetDetails = () => {
                                     value={tempInputData.company_name || formData.company_name}
                                     onChange={handleInputChange}
                                     className="family-detail-text-input"
+                                    aria-label="Company name"
                                 />
                             </div>
                         </div>
@@ -688,6 +839,7 @@ const PetDetails = () => {
                                     value={tempInputData.agent_contact || formData.agent_contact}
                                     onChange={handleInputChange}
                                     className="family-detail-text-input"
+                                    aria-label="Agent contact"
                                 />
                             </div>
                             <div className="family-detail-input-group">
@@ -699,6 +851,7 @@ const PetDetails = () => {
                                     value={tempInputData.nominee_name || formData.nominee_name}
                                     onChange={handleInputChange}
                                     className="family-detail-text-input"
+                                    aria-label="Nominee name"
                                 />
                             </div>
                         </div>
@@ -718,6 +871,7 @@ const PetDetails = () => {
                                     }
                                     onChange={handleInputChange}
                                     className="family-detail-text-input"
+                                    aria-label="Insurance issued date"
                                 />
                             </div>
                             <div className="family-detail-input-group">
@@ -735,6 +889,7 @@ const PetDetails = () => {
                                     }
                                     onChange={handleInputChange}
                                     className="family-detail-text-input"
+                                    aria-label="Insurance expiration date"
                                 />
                             </div>
                         </div>
@@ -746,13 +901,15 @@ const PetDetails = () => {
                             type="button"
                             className="family-detail-save-button"
                             onClick={() => handleSaveCard('insurance_document')}
+                            disabled={cardLoading.insurance_document}
                         >
-                            Save
+                            {cardLoading.insurance_document ? 'Saving...' : 'Save'}
                         </button>
                         <button
                             type="button"
                             className="family-detail-cancel-button"
                             onClick={() => handleCancelCard('insurance_document')}
+                            disabled={cardLoading.insurance_document}
                         >
                             Cancel
                         </button>
@@ -779,6 +936,8 @@ const PetDetails = () => {
                     <span
                         className="family-detail-card-options"
                         onClick={() => toggleOptionsDropdown('notes')}
+                        role="button"
+                        aria-label="Notes card options"
                     >
                         ...
                     </span>
@@ -799,6 +958,7 @@ const PetDetails = () => {
                         className="notes-textarea"
                         value={tempInputData.notes || formData.notes}
                         onChange={handleInputChange}
+                        aria-label="Pet notes"
                     />
                 )}
                 {showButtons && (
@@ -807,13 +967,327 @@ const PetDetails = () => {
                             type="button"
                             className="family-detail-save-button"
                             onClick={() => handleSaveCard('notes')}
+                            disabled={cardLoading.notes}
                         >
-                            Save
+                            {cardLoading.notes ? 'Saving...' : 'Save'}
                         </button>
                         <button
                             type="button"
                             className="family-detail-cancel-button"
                             onClick={() => handleCancelCard('notes')}
+                            disabled={cardLoading.notes}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderPetTagCard = () => {
+        const isFilled = isCardFilled('tag_document');
+        const showButtons = shouldShowButtons('tag_document');
+        const displayFile = tempInputData.tag_document || formData.tag_document;
+
+        return (
+            <div
+                id="card-tag_document"
+                className="family-detail-card"
+                ref={(el) => (cardRefs.current['tagCard'] = el)}
+            >
+                <div className="family-detail-card-header">
+                    <label className={`family-detail-card-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                        Pet Tag
+                    </label>
+                    <span
+                        className="family-detail-card-options"
+                        onClick={() => toggleOptionsDropdown('tag_document')}
+                        role="button"
+                        aria-label="Pet Tag card options"
+                    >
+                        ...
+                    </span>
+                    {openDropdownId === 'tag_document' && (
+                        <div className="family-detail-card-options-dropdown">
+                            <div onClick={() => handleEditCard('tag_document')}>Edit</div>
+                            <div onClick={() => handleDeleteCard('tag_document')}>Delete</div>
+                        </div>
+                    )}
+                </div>
+                {displayFile ? (
+                    <div className="family-detail-file-container">
+                        <img
+                            src={getFileIcon(displayFile)}
+                            alt="Tag Icon"
+                            className="family-detail-file-icon"
+                        />
+                        <span
+                            className={`family-detail-file-name ${isFilled ? 'family-detail-text-filled' : ''}`}
+                            onClick={() => handlePreview(displayFile)}
+                            role="button"
+                            aria-label="Preview tag document"
+                        >
+                            {typeof displayFile === 'object'
+                                ? displayFile.name
+                                : displayFile.split('/').pop()}
+                        </span>
+                        <img
+                            src={CrossIcon}
+                            alt="Delete Icon"
+                            className="family-detail-delete-icon"
+                            onClick={() => handleDeleteFile('tag_document')}
+                            role="button"
+                            aria-label="Delete tag document"
+                        />
+                    </div>
+                ) : (
+                    <div className="family-detail-card-upload">
+                        <img src={UploadIcon} alt="Upload Icon" className="family-upload-icon" />
+                        <div className="upload-text-group">
+                            <p>Drag and drop files here</p>
+                            <p>OR</p>
+                            <p>Browse files</p>
+                        </div>
+                        <input
+                            key={fileInputKey}
+                            type="file"
+                            name="tag_document"
+                            className="family-detail-card-input"
+                            onChange={handleFileChange}
+                            aria-label="Upload tag document"
+                            accept="image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/vcard,.vcf"
+                        />
+                    </div>
+                )}
+                {(isFilled && !editMode.tag_document) ? (
+                    <>
+                        <div className="family-detail-two-column-group">
+                            <div className="family-detail-input-group">
+                                <label className="family-detail-label">Tag Number:</label>
+                                <span className="family-detail-text">{formData.tag_number || 'N/A'}</span>
+                            </div>
+                            <div className="family-detail-input-group">
+                                <label className="family-detail-label">Tag Type:</label>
+                                <span className="family-detail-text">{formData.tag_type || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="family-detail-two-column-group">
+                            <div className="family-detail-input-group">
+                                <label htmlFor="tag_number" className="family-detail-label">Tag Number:</label>
+                                <input
+                                    type="text"
+                                    id="tag_number"
+                                    name="tag_number"
+                                    value={tempInputData.tag_number || formData.tag_number}
+                                    onChange={handleInputChange}
+                                    className="family-detail-text-input"
+                                    aria-label="Tag number"
+                                />
+                            </div>
+                            <div className="family-detail-input-group">
+                                <label htmlFor="tag_type" className="family-detail-label">Tag Type:</label>
+                                <input
+                                    type="text"
+                                    id="tag_type"
+                                    name="tag_type"
+                                    value={tempInputData.tag_type || formData.tag_type}
+                                    onChange={handleInputChange}
+                                    className="family-detail-text-input"
+                                    aria-label="Tag type"
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
+                {showButtons && (
+                    <div className="family-detail-button-group">
+                        <button
+                            type="button"
+                            className="family-detail-save-button"
+                            onClick={() => handleSaveCard('tag_document')}
+                            disabled={cardLoading.tag_document}
+                        >
+                            {cardLoading.tag_document ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                            type="button"
+                            className="family-detail-cancel-button"
+                            onClick={() => handleCancelCard('tag_document')}
+                            disabled={cardLoading.tag_document}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderVetDetailsCard = () => {
+        const isFilled = isCardFilled('vet_document');
+        const showButtons = shouldShowButtons('vet_document');
+        const displayFile = tempInputData.vet_document || formData.vet_document;
+
+        return (
+            <div
+                id="card-vet_document"
+                className="family-detail-card"
+                ref={(el) => (cardRefs.current['vetCard'] = el)}
+            >
+                <div className="family-detail-card-header">
+                    <label className={`family-detail-card-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                        Vet Details
+                    </label>
+                    <span
+                        className="family-detail-card-options"
+                        onClick={() => toggleOptionsDropdown('vet_document')}
+                        role="button"
+                        aria-label="Vet Details card options"
+                    >
+                        ...
+                    </span>
+                    {openDropdownId === 'vet_document' && (
+                        <div className="family-detail-card-options-dropdown">
+                            <div onClick={() => handleEditCard('vet_document')}>Edit</div>
+                            <div onClick={() => handleDeleteCard('vet_document')}>Delete</div>
+                        </div>
+                    )}
+                </div>
+                {displayFile ? (
+                    <div className="family-detail-file-container">
+                        <img
+                            src={getFileIcon(displayFile)}
+                            alt="Vet Icon"
+                            className="family-detail-file-icon"
+                        />
+                        <span
+                            className={`family-detail-file-name ${isFilled ? 'family-detail-text-filled' : ''}`}
+                            onClick={() => handlePreview(displayFile)}
+                            role="button"
+                            aria-label="Preview vet document"
+                        >
+                            {typeof displayFile === 'object'
+                                ? displayFile.name
+                                : displayFile.split('/').pop()}
+                        </span>
+                        <img
+                            src={CrossIcon}
+                            alt="Delete Icon"
+                            className="family-detail-delete-icon"
+                            onClick={() => handleDeleteFile('vet_document')}
+                            role="button"
+                            aria-label="Delete vet document"
+                        />
+                    </div>
+                ) : (
+                    <div className="family-detail-card-upload">
+                        <img src={UploadIcon} alt="Upload Icon" className="family-upload-icon" />
+                        <div className="upload-text-group">
+                            <p>Drag and drop files here</p>
+                            <p>OR</p>
+                            <p>Browse files</p>
+                        </div>
+                        <input
+                            key={fileInputKey}
+                            type="file"
+                            name="vet_document"
+                            className="family-detail-card-input"
+                            onChange={handleFileChange}
+                            aria-label="Upload vet document"
+                            accept="image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/vcard,.vcf"
+                        />
+                    </div>
+                )}
+                {(isFilled && !editMode.vet_document) ? (
+                    <>
+                        <div className="family-detail-two-column-group">
+                            <div className="family-detail-input-group">
+                                <label className="family-detail-label">Vet Clinic Name:</label>
+                                <span className="family-detail-text">{formData.vet_clinic_name || 'N/A'}</span>
+                            </div>
+                            <div className="family-detail-input-group">
+                                <label className="family-detail-label">Vet Contact Info:</label>
+                                <span className="family-detail-text">{formData.vet_contact_info || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div className="family-detail-two-column-group">
+                            <div className="family-detail-input-group">
+                                <label className="family-detail-label">Vaccine Date:</label>
+                                <span className="family-detail-text">
+                                    {formData.vaccine_date ? formatDisplayDate(formData.vaccine_date) : 'N/A'}
+                                </span>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="family-detail-two-column-group">
+                            <div className="family-detail-input-group">
+                                <label htmlFor="vet_clinic_name" className="family-detail-label">Vet Clinic Name:</label>
+                                <input
+                                    type="text"
+                                    id="vet_clinic_name"
+                                    name="vet_clinic_name"
+                                    value={tempInputData.vet_clinic_name || formData.vet_clinic_name}
+                                    onChange={handleInputChange}
+                                    className="family-detail-text-input"
+                                    aria-label="Vet clinic name"
+                                />
+                            </div>
+                            <div className="family-detail-input-group">
+                                <label htmlFor="vet_contact_info" className="family-detail-label">Vet Contact Info:</label>
+                                <input
+                                    type="text"
+                                    id="vet_contact_info"
+                                    name="vet_contact_info"
+                                    value={tempInputData.vet_contact_info || formData.vet_contact_info}
+                                    onChange={handleInputChange}
+                                    className="family-detail-text-input"
+                                    aria-label="Vet contact info"
+                                />
+                            </div>
+                        </div>
+                        <div className="family-detail-two-column-group">
+                            <div className="family-detail-input-group">
+                                <label htmlFor="vaccine_date" className="family-detail-label">Vaccine Date:</label>
+                                <input
+                                    type="date"
+                                    id="vaccine_date"
+                                    name="vaccine_date"
+                                    value={
+                                        tempInputData.vaccine_date
+                                            ? tempInputData.vaccine_date.split("T")[0]
+                                            : formData.vaccine_date
+                                                ? formData.vaccine_date.split("T")[0]
+                                                : ''
+                                    }
+                                    onChange={handleInputChange}
+                                    className="family-detail-text-input"
+                                    aria-label="Vaccine date"
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
+                {showButtons && (
+                    <div className="family-detail-button-group">
+                        <button
+                            type="button"
+                            className="family-detail-save-button"
+                            onClick={() => handleSaveCard('vet_document')}
+                            disabled={cardLoading.vet_document}
+                        >
+                            {cardLoading.vet_document ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                            type="button"
+                            className="family-detail-cancel-button"
+                            onClick={() => handleCancelCard('vet_document')}
+                            disabled={cardLoading.vet_document}
                         >
                             Cancel
                         </button>
@@ -827,12 +1301,16 @@ const PetDetails = () => {
         if (!showPreview || !previewFile) return null;
         const fileName = typeof previewFile === 'object' ? previewFile.name : previewFile;
         const isImage = /\.(jpg|jpeg|png|gif)$/i.test(fileName);
-        const fileUrl = typeof previewFile === 'object' ? URL.createObjectURL(previewFile) : `${import.meta.env.VITE_API_URL}/${previewFile}`;
+        const fileUrl = typeof previewFile === 'object' ? URL.createObjectURL(previewFile) : `${import.meta.env.VITE_API_URL}${previewFile}`;
 
         return (
-            <div className="family-detail-preview-popup">
+            <div className="family-detail-preview-popup" role="dialog" aria-label="File preview">
                 <div className="family-detail-preview-content">
-                    <button className="family-detail-preview-close" onClick={closePreview}>
+                    <button
+                        className="family-detail-preview-close"
+                        onClick={closePreview}
+                        aria-label="Close preview"
+                    >
                         ×
                     </button>
                     {isImage ? (
@@ -868,6 +1346,7 @@ const PetDetails = () => {
                             className="family-detail-add-button"
                             onClick={handleAddButtonClick}
                             type="button"
+                            aria-label="Add new card"
                         >
                             + Add
                         </button>
@@ -876,6 +1355,8 @@ const PetDetails = () => {
                                 <div onClick={() => handleAddOptionClick('Birthday')}>Birthday</div>
                                 <div onClick={() => handleAddOptionClick('Insurance')}>Insurance</div>
                                 <div onClick={() => handleAddOptionClick('Notes')}>Notes</div>
+                                <div onClick={() => handleAddOptionClick('Pet Tag')}>Pet Tag</div>
+                                <div onClick={() => handleAddOptionClick('Vet Details')}>Vet Details</div>
                             </div>
                         )}
                     </div>
@@ -885,8 +1366,8 @@ const PetDetails = () => {
                 <div className="family-detail-info-container">
                     <img
                         src={
-                            formData.profile_image
-                                ? `${import.meta.env.VITE_API_URL}${formData.profile_image.replace(/\\/g, '/')}`
+                            formData.photo
+                                ? `${import.meta.env.VITE_API_URL}${formData.photo.replace(/\\/g, '/')}`
                                 : 'https://via.placeholder.com/100'
                         }
                         alt="Pet"
@@ -908,6 +1389,8 @@ const PetDetails = () => {
                         {renderInsuranceCard()}
                         {renderNotesCard()}
                         {renderBirthdayCard()}
+                        {renderPetTagCard()}
+                        {renderVetDetailsCard()}
                     </div>
                 </form>
             </div>

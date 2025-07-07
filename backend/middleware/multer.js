@@ -4,11 +4,12 @@ const path = require("path");
 const fs = require("fs").promises;
 const sanitize = require("sanitize-filename");
 
-// Storage for main upload (contact images and documents)
+// Storage for main upload (contact images, pet images, and documents)
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const userId = req.session.userId;
-    const familyId = req.body.family_id || req.params.id; // Use family_id from body or params
+    const familyId = req.body.family_id || req.params.id;
+    const petId = req.body.pet_id || req.params.id;
     let uploadPath;
 
     if (!userId) {
@@ -16,7 +17,22 @@ const storage = multer.diskStorage({
     }
 
     if (file.fieldname === "profileImage") {
-      uploadPath = path.join("images", `${userId}`); // Store profile images in images/user_id/
+      if (req.path.includes("/pets")) {
+        if (!petId && req.method === "POST") {
+          uploadPath = path.join("images", `${userId}`, "pet", "temp");
+        } else if (petId) {
+          uploadPath = path.join("images", `${userId}`, "pet", `${petId}`);
+        } else {
+          return cb(new Error("Pet ID is required for pet profile image uploads"));
+        }
+      } else {
+        uploadPath = path.join("images", `${userId}`);
+      }
+    } else if (["insurance_document", "tag_document", "vet_document"].includes(file.fieldname)) {
+      if (!petId) {
+        return cb(new Error("Pet ID is required for document uploads"));
+      }
+      uploadPath = path.join("images", `${userId}`, "pet", `${petId}`, "file");
     } else if (
       [
         "driver_license_document",
@@ -30,9 +46,9 @@ const storage = multer.diskStorage({
       if (!familyId) {
         return cb(new Error("Family ID is required for document uploads"));
       }
-      uploadPath = path.join("images", `${userId}`, "family", `${familyId}`); // Store documents in images/user_id/family/family_id/
+      uploadPath = path.join("images", `${userId}`, "family", `${familyId}`);
     } else if (file.fieldname === "additionalFiles") {
-      uploadPath = path.join("images", `${userId}`, "sendfile"); // Store additional files in images/user_id/sendfile/
+      uploadPath = path.join("images", `${userId}`, "sendfile");
     } else {
       return cb(new Error("Invalid file field name"));
     }
@@ -52,12 +68,24 @@ const storage = multer.diskStorage({
     let counter = 0;
     const userId = req.session.userId;
     const familyId = req.body.family_id || req.params.id;
-    const destination =
-      file.fieldname === "profileImage"
-        ? path.join("images", `${userId}`)
-        : file.fieldname === "additionalFiles"
-        ? path.join("images", `${userId}`, "sendfile")
-        : path.join("images", `${userId}`, "family", `${familyId}`);
+    const petId = req.body.pet_id || req.params.id;
+    let destination;
+
+    if (file.fieldname === "profileImage") {
+      if (req.path.includes("/pets")) {
+        destination = petId
+          ? path.join("images", `${userId}`, "pet", `${petId}`)
+          : path.join("images", `${userId}`, "pet", "temp");
+      } else {
+        destination = path.join("images", `${userId}`);
+      }
+    } else if (["insurance_document", "tag_document", "vet_document"].includes(file.fieldname)) {
+      destination = path.join("images", `${userId}`, "pet", `${petId}`, "file");
+    } else if (file.fieldname === "additionalFiles") {
+      destination = path.join("images", `${userId}`, "sendfile");
+    } else {
+      destination = path.join("images", `${userId}`, "family", `${familyId}`);
+    }
 
     while (true) {
       try {
@@ -128,6 +156,9 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 }).fields([
   { name: "profileImage", maxCount: 1 },
+  { name: "insurance_document", maxCount: 1 },
+  { name: "tag_document", maxCount: 1 },
+  { name: "vet_document", maxCount: 1 },
   { name: "additionalFiles", maxCount: 15 },
   { name: "driver_license_document", maxCount: 1 },
   { name: "birth_certificate_document", maxCount: 1 },

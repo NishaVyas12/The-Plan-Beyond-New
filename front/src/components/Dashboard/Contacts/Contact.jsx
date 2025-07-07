@@ -23,10 +23,9 @@ import uploadFileIcon from "../../../assets/images/dash_icon/upload.svg";
 import debounce from 'lodash.debounce';
 import ViewContact from "./ViewContact";
 import FilterDropdown from "./FilterDropdown";
-import deleteIcon from "../../../assets/images/Contact/Tuning.svg"; // Adjust path to your delete icon
+import deleteIcon from "../../../assets/images/Contact/Tuning.svg"; 
 const OPENCAGE_API_KEY = "4cd0370d3cee487181c2d52e3fc22370";
 
-// New CategorizeDropdown Component
 const CategorizeDropdown = ({
   selectedContacts,
   contacts,
@@ -47,12 +46,13 @@ const CategorizeDropdown = ({
     isNominee: false,
   });
   const [customRelation, setCustomRelation] = useState("");
-  const [customCategory, setCustomCategory] = useState(""); // New state for custom category
+  const [customCategory, setCustomCategory] = useState("");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showRelationDropdown, setShowRelationDropdown] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false); // New state for custom category input
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
   const [showCustomRelationInput, setShowCustomRelationInput] = useState(false);
+  const [showCategorizeConfirm, setShowCategorizeConfirm] = useState(false);
 
   const handleCategorize = async (
     category,
@@ -206,16 +206,7 @@ const CategorizeDropdown = ({
         isAmbassador: false,
         isNominee: false,
       }));
-      handleCategorize(
-        categorizeData.category === "Custom" ? customCategory : categorizeData.category || "Other",
-        categorizeData.category === "Family" && categorizeData.relation === "Custom"
-          ? customRelation
-          : categorizeData.category === "Family"
-            ? categorizeData.relation
-            : "",
-        false,
-        false
-      );
+      setShowCategorizeConfirm(true);
     } else {
       setCategorizeData((prev) => ({
         ...prev,
@@ -227,13 +218,63 @@ const CategorizeDropdown = ({
   };
 
   const handleRoleConfirm = () => {
+    setShowCategorizeConfirm(true);
+  };
+
+  const confirmCategorize = () => {
     const { category, relation, isAmbassador, isNominee } = categorizeData;
     handleCategorize(
-      category === "Custom" ? customCategory : category,
-      relation === "Custom" ? customRelation : relation,
+      category === "Custom" ? customCategory : category || "Other",
+      category === "Family" && relation === "Custom"
+        ? customRelation
+        : category === "Family"
+        ? relation
+        : "",
       isAmbassador,
       isNominee
     );
+    setShowCategorizeConfirm(false);
+  };
+
+  const cancelCategorize = () => {
+    setShowCategorizeConfirm(false);
+    setShowCategoryDropdown(false);
+    setShowRelationDropdown(false);
+    setShowRoleDropdown(false);
+    setShowCustomCategoryInput(false);
+    setShowCustomRelationInput(false);
+  };
+
+  const getCategoryDisplay = () => {
+    const { category, relation, isAmbassador, isNominee } = categorizeData;
+    const finalCategory = category === "Custom" ? customCategory.trim() : category || "Other";
+    const finalRelation =
+      category === "Family" && relation === "Custom"
+        ? customRelation.trim()
+        : category === "Family"
+        ? relation
+        : "";
+    const parts = [finalCategory];
+    if (finalRelation) parts.push(finalRelation);
+    if (isAmbassador) parts.push("Ambassador");
+    if (isNominee) parts.push("Nominee");
+    return parts.length > 0 ? parts.join("/") : "None";
+  };
+
+  const getContactNames = () => {
+    const selectedContactNames = selectedContacts
+      .map((id) => {
+        const contact = contacts.find((c) => c.id === id);
+        if (!contact) return null;
+        return [contact.first_name, contact.middle_name, contact.last_name]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || "Unknown";
+      })
+      .filter(Boolean);
+    return selectedContactNames.length > 0
+      ? selectedContactNames.join(", ")
+      : "selected contacts";
   };
 
   return (
@@ -249,13 +290,17 @@ const CategorizeDropdown = ({
           {categoryOptions.map((option) => (
             <div
               key={option}
-              className={`add-contact-categorize-option ${categorizeData.category === option ? "selected" : ""}`}
+              className={`add-contact-categorize-option ${
+                categorizeData.category === option ? "selected" : ""
+              }`}
               onClick={() => handleCategorySelect(option)}
             >
               {option}
-              {categorizeData.category === option && option !== "Family" && !showCustomCategoryInput && (
-                <span className="add-contact-checkmark">✔</span>
-              )}
+              {categorizeData.category === option &&
+                option !== "Family" &&
+                !showCustomCategoryInput && (
+                  <span className="add-contact-checkmark">✔</span>
+                )}
             </div>
           ))}
           <div
@@ -337,57 +382,87 @@ const CategorizeDropdown = ({
             )}
           </div>
         </div>
-      )}
-      {showRoleDropdown &&
-        (categorizeData.category &&
-          (categorizeData.category !== "Family" ||
-            categorizeData.relation ||
-            (categorizeData.relation === "Custom" && customRelation))) && (
-          <div
-            className="add-contact-categorize-options add-contact-sub-options add-contact-sub-sub-options"
-            ref={roleDropdownRef}
-          >
+        )}
+        {showRoleDropdown &&
+          (categorizeData.category &&
+            (categorizeData.category !== "Family" ||
+              categorizeData.relation ||
+              (categorizeData.relation === "Custom" && customRelation))) && (
             <div
-              className="add-contact-categorize-option"
-              onClick={() => handleRoleChange("none")}
+              className="add-contact-categorize-options add-contact-sub-options add-contact-sub-sub-options"
+              ref={roleDropdownRef}
             >
-              None
-              {!categorizeData.isAmbassador && !categorizeData.isNominee && (
-                <span className="add-contact-checkmark">✔</span>
-              )}
+              <div
+                className="add-contact-categorize-option"
+                onClick={() => handleRoleChange("none")}
+              >
+                None
+                {!categorizeData.isAmbassador && !categorizeData.isNominee && (
+                  <span className="add-contact-checkmark">✔</span>
+                )}
+              </div>
+              <label className="add-contact-categorize-checkbox">
+                <input
+                  type="checkbox"
+                  checked={categorizeData.isAmbassador}
+                  onChange={() => handleRoleChange("isAmbassador")}
+                />
+                Ambassador
+                {categorizeData.isAmbassador && (
+                  <span className="add-contact-checkmark">✔</span>
+                )}
+              </label>
+              <label className="add-contact-categorize-checkbox">
+                <input
+                  type="checkbox"
+                  checked={categorizeData.isNominee}
+                  onChange={() => handleRoleChange("isNominee")}
+                />
+                Nominee
+                {categorizeData.isNominee && (
+                  <span className="add-contact-checkmark">✔</span>
+                )}
+              </label>
+              <div
+                className="add-contact-categorize-option add-contact-confirm"
+                onClick={handleRoleConfirm}
+              >
+                Confirm
+              </div>
             </div>
-            <label className="add-contact-categorize-checkbox">
-              <input
-                type="checkbox"
-                checked={categorizeData.isAmbassador}
-                onChange={() => handleRoleChange("isAmbassador")}
-              />
-              Ambassador
-              {categorizeData.isAmbassador && (
-                <span className="add-contact-checkmark">✔</span>
-              )}
-            </label>
-            <label className="add-contact-categorize-checkbox">
-              <input
-                type="checkbox"
-                checked={categorizeData.isNominee}
-                onChange={() => handleRoleChange("isNominee")}
-              />
-              Nominee
-              {categorizeData.isNominee && (
-                <span className="add-contact-checkmark">✔</span>
-              )}
-            </label>
-            <div
-              className="add-contact-categorize-option add-contact-confirm"
-              onClick={handleRoleConfirm}
-            >
-              Confirm
+          )}
+        {showCategorizeConfirm && (
+          <div className="delete-confirm-popup-backdrop">
+            <div className="delete-confirm-popup">
+              <button
+                className="delete-confirm-close"
+                onClick={cancelCategorize}
+              >
+                ×
+              </button>
+              <h3 className="delete-confirm-heading">Confirm Categorization</h3>
+              <p className="delete-confirm-message">
+                Are you sure you want to categorize {getContactNames()} as {getCategoryDisplay()}?.
+              </p>
+              <div className="delete-confirm-actions">
+                <button
+                  className="add-contact-form-button cancel"
+                  onClick={cancelCategorize}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="add-contact-form-button save"
+                  onClick={confirmCategorize}
+                >
+                  Confirm
+                </button>
+              </div>
             </div>
           </div>
         )}
-    </div>
-  );
+      </div>
+    );
 };
 
 const Contact = () => {
@@ -407,7 +482,7 @@ const Contact = () => {
     categories: [],
     relations: [],
     sharedAfterPassAway: false,
-    fetchedCategories: [], // Add this
+    fetchedCategories: [], 
     fetchedRelations: [],
   });
   const [limit] = useState(20);
@@ -518,9 +593,6 @@ const Contact = () => {
     docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   };
 
-
-
-
   const fetchContacts = async (page = 1, filterType = "ALL", search = "", filters = {}) => {
     try {
       const params = { filter: filterType };
@@ -545,13 +617,13 @@ const Contact = () => {
         safeFilters.relations.length > 0 ||
         safeFilters.sharedAfterPassAway
       ) {
-        params.all = true; // Fetch all contacts for filters
+        params.all = true; 
       } else {
         params.page = Number.isInteger(page) && page > 0 ? page : 1;
         params.limit = Number.isInteger(limit) && limit > 0 ? limit : 20;
       }
 
-      // Separate predefined categories and custom category
+      
       const predefinedCategories = safeFilters.categories.filter((cat) =>
         ["Family", "Friends", "Work"].includes(cat)
       );
@@ -566,7 +638,7 @@ const Contact = () => {
         params.category_like = customCategory.trim();
       }
 
-      // Separate predefined relations and custom relation
+      
       const predefinedRelations = safeFilters.relations.filter((rel) =>
         [
           "Son",
@@ -601,7 +673,7 @@ const Contact = () => {
       }
 
       if (safeFilters.sharedAfterPassAway) {
-        params.release_on_pass = 1; // Ensure this is sent as 1 for the API
+        params.release_on_pass = 1; 
       }
 
       console.log("Fetching contacts with params:", params);
@@ -614,7 +686,7 @@ const Contact = () => {
       console.log("API response:", response.data);
 
       if (response.data.success) {
-        // Normalize release_on_pass to boolean for consistency
+        
         const normalizedContacts = Array.isArray(response.data.contacts)
           ? response.data.contacts.map(contact => ({
             ...contact,
@@ -1406,7 +1478,7 @@ const Contact = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/contacts/delete-contacts`, // Updated endpoint
+        `${import.meta.env.VITE_API_URL}/api/contacts/delete-contacts`,
         { contactIds: selectedContacts },
         { withCredentials: true }
       );
@@ -1443,7 +1515,7 @@ const Contact = () => {
         email: contact.share_by?.email || contact.share_by_email || false,
       },
     });
-    setAddressSearch(contact.flat_building_no || ""); // Initialize addressSearch with flat_building_no
+    setAddressSearch(contact.flat_building_no || ""); 
     setProfileImageFile(null);
     setRelationSearch(contact.relation || "");
     setCategorySearch(contact.category || "");
@@ -1546,7 +1618,7 @@ const Contact = () => {
 
   const closeCustomForm = () => {
     setShowCustomForm(false);
-    // Reset all relevant states to their initial values
+
     setCustomContact({
       first_name: "",
       middle_name: "",
@@ -1581,7 +1653,7 @@ const Contact = () => {
         email: false,
       },
     });
-    setEditingContactId(null); // Ensure editing state is cleared
+    setEditingContactId(null); 
     setCustomRelation("");
     setRelationSearch("");
     setCategorySearch("");
@@ -1686,7 +1758,7 @@ const Contact = () => {
         }
         return contact.relation?.toLowerCase().includes(rel.toLowerCase());
       });
-    // Fix: Explicitly check release_on_pass as boolean or numeric
+    
     const matchesSharedAfterPassAway =
       !filterOptions.sharedAfterPassAway ||
       contact.release_on_pass === true ||
@@ -1885,7 +1957,7 @@ const Contact = () => {
     // Option 1: Comma-separated
     //return numbers.join(", ");
 
-    //Option 2: Line breaks (uncomment to use instead of comma-separated)
+    
     return numbers.map((num, index) => (
       <span key={index} className="contact-phone ">
         {num}
@@ -1946,10 +2018,10 @@ const Contact = () => {
       const components = result.components;
       const formatted = result.formatted;
 
-      // Split the formatted address into parts based on commas
+      
       const addressParts = formatted.split(",").map(part => part.trim());
 
-      // Initialize address fields
+      
       let flatBuildingNo = "";
       let street = "";
       let city = components.city || components.town || components.village || "";
@@ -1957,11 +2029,11 @@ const Contact = () => {
       let postalCode = components.postcode || "";
       let country = components.country || "";
 
-      // Handle address parts based on length and context
+      
       if (addressParts.length > 0) {
-        flatBuildingNo = addressParts[0]; // e.g., "Starbucks, Vatika Business Park"
+        flatBuildingNo = addressParts[0]; 
         if (addressParts.length > 1) {
-          street = addressParts.slice(1, addressParts.length - 3).join(", "); // e.g., "Sohna Road, Sector 49"
+          street = addressParts.slice(1, addressParts.length - 3).join(", "); 
         }
         if (addressParts.length >= 3) {
           city = city || addressParts[addressParts.length - 3] || "";
@@ -1993,7 +2065,7 @@ const Contact = () => {
       }));
       setAddressSuggestions([]);
       setShowAddressSuggestions(false);
-      setAddressSearch(addressSearch.trim()); // Retain the typed value in the input
+      setAddressSearch(addressSearch.trim()); 
     } else {
       toast.error("Please enter an address.", { autoClose: 3000 });
     }
@@ -2004,20 +2076,20 @@ const Contact = () => {
       if (!addressSuggestions.some(s => s.formatted.toLowerCase() === addressSearch.toLowerCase())) {
         handleAddCustomAddress();
       } else {
-        // Select the first matching suggestion if it exists
+       
         const matchingSuggestion = addressSuggestions.find(s => s.formatted.toLowerCase() === addressSearch.toLowerCase());
         if (matchingSuggestion) {
           handleAddressSelect(matchingSuggestion);
         }
       }
-      e.preventDefault(); // Prevent form submission or other default behavior
+      e.preventDefault(); 
     }
   };
 
   const handleLetterSelect = (letter) => {
     setClickedLetter(prev => (prev === letter || letter === '') ? '' : letter);
     setSelectedLetter(letter);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1); 
   };
 
 

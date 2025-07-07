@@ -169,21 +169,41 @@ const createUserContactsTable = async (userId) => {
 
 const alterUserContactsTable = async (userId) => {
   const tableName = `contacts_user_${userId}`;
-  const query = `
-    ALTER TABLE ${tableName}
-    ADD COLUMN IF NOT EXISTS share_on VARCHAR(255) DEFAULT '',
-    ADD COLUMN IF NOT EXISTS share_by_whatsapp BOOLEAN DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS share_by_sms BOOLEAN DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS share_by_email BOOLEAN DEFAULT FALSE
+  const checkColumnQuery = `
+    SELECT COLUMN_NAME 
+    FROM information_schema.columns 
+    WHERE table_schema = ? AND table_name = ? AND column_name = ?
   `;
+  const dbName = process.env.DB_NAME || "plan_beyond";
   try {
-    await pool.query(query);
+    // Check and add share_on column
+    const [shareOnRows] = await pool.query(checkColumnQuery, [dbName, tableName, 'share_on']);
+    if (shareOnRows.length === 0) {
+      await pool.query(`ALTER TABLE ${tableName} ADD COLUMN share_on VARCHAR(255) DEFAULT ''`);
+    }
+
+    // Check and add share_by_whatsapp column
+    const [whatsappRows] = await pool.query(checkColumnQuery, [dbName, tableName, 'share_by_whatsapp']);
+    if (whatsappRows.length === 0) {
+      await pool.query(`ALTER TABLE ${tableName} ADD COLUMN share_by_whatsapp BOOLEAN DEFAULT FALSE`);
+    }
+
+    // Check and add share_by_sms column
+    const [smsRows] = await pool.query(checkColumnQuery, [dbName, tableName, 'share_by_sms']);
+    if (smsRows.length === 0) {
+      await pool.query(`ALTER TABLE ${tableName} ADD COLUMN share_by_sms BOOLEAN DEFAULT FALSE`);
+    }
+
+    // Check and add share_by_email column
+    const [emailRows] = await pool.query(checkColumnQuery, [dbName, tableName, 'share_by_email']);
+    if (emailRows.length === 0) {
+      await pool.query(`ALTER TABLE ${tableName} ADD COLUMN share_by_email BOOLEAN DEFAULT FALSE`);
+    }
   } catch (err) {
     console.error(`Error altering contacts table for user ${userId}:`, err);
     throw err;
   }
 };
-
 const createUploadedFilesTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS uploaded_files (
@@ -324,13 +344,13 @@ const createFamilyInfoTable = async () => {
       passport_state_issued VARCHAR(100) DEFAULT '',
       passport_expiration DATE DEFAULT NULL,
       passport_document VARCHAR(1000) DEFAULT '',
-      document_type TEXT DEFAULT '',
-      document_name TEXT DEFAULT '',
-      file_path TEXT DEFAULT '',
-      other_document_number TEXT DEFAULT '',
-      other_document_issued TEXT DEFAULT '',
-      other_document_expiration TEXT DEFAULT '',
-      notes TEXT DEFAULT '',
+      document_type TEXT,
+      document_name TEXT,
+      file_path TEXT,
+      other_document_number TEXT,
+      other_document_issued TEXT,
+      other_document_expiration TEXT,
+      notes TEXT,
       emergency_contact TINYINT(1) DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -349,20 +369,38 @@ const createPetsTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS pets (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL, -- Assuming pets belong to users
+      user_id INT NOT NULL,
       name VARCHAR(100) NOT NULL,
-      type VARCHAR(50),
-      breed VARCHAR(100),
-      birthday DATE,
-      photo VARCHAR(255), -- Stores image file path
+      type VARCHAR(50) DEFAULT NULL,
+      breed VARCHAR(100) DEFAULT NULL,
+      birthday DATE DEFAULT NULL,
+      photo VARCHAR(255) DEFAULT NULL,
+      insurance_document VARCHAR(255) DEFAULT NULL,
+      insurance_provider VARCHAR(100) DEFAULT NULL,
+      policy_number VARCHAR(100) DEFAULT NULL,
+      policy_holder VARCHAR(100) DEFAULT NULL,
+      company_name VARCHAR(100) DEFAULT NULL,
+      agent_contact VARCHAR(100) DEFAULT NULL,
+      nominee_name VARCHAR(100) DEFAULT NULL,
+      insurance_issued DATE DEFAULT NULL,
+      insurance_expiration DATE DEFAULT NULL,
+      notes TEXT DEFAULT NULL,
+      tag_document VARCHAR(255) DEFAULT NULL,
+      tag_number VARCHAR(50) DEFAULT NULL,
+      tag_type VARCHAR(50) DEFAULT NULL,
+      vet_document VARCHAR(255) DEFAULT NULL,
+      vet_clinic_name VARCHAR(100) DEFAULT NULL,
+      vet_contact_info VARCHAR(100) DEFAULT NULL,
+      vaccine_date DATE DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `;
   try {
     await pool.query(query);
+    console.log("Pets table created successfully.");
   } catch (err) {
-    console.error("Error creating pets table:", err);
+    console.error("Error creating pets table:", err.message);
     throw err;
   }
 };

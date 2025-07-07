@@ -342,7 +342,7 @@ function App() {
                 <Navbar />
                 <Sidebar />
                 <FamilyDetail />
-                <PetDetails />
+                
               </PrivateRoute>
             }
           />
