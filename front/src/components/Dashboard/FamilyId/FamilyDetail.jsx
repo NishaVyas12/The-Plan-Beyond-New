@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Country, State } from 'country-state-city';
 import './FamilyDetail.css';
 import UploadIcon from '../../../assets/images/dash_icon/upload.svg';
 import ImageIcon from '../../../assets/images/dash_icon/image.svg';
@@ -45,137 +46,30 @@ const FamilyDetail = () => {
   const [pendingEmergencyValue, setPendingEmergencyValue] = useState(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [editMode, setEditMode] = useState({});
+  const [isDriverStateDropdownOpen, setIsDriverStateDropdownOpen] = useState(false);
+  const [isPassportCountryDropdownOpen, setIsPassportCountryDropdownOpen] = useState(false);
+  const [driverStateSearch, setDriverStateSearch] = useState('');
+  const [passportCountrySearch, setPassportCountrySearch] = useState('');
+  const [filteredDriverStates, setFilteredDriverStates] = useState([]);
+  const [filteredPassportCountries, setFilteredPassportCountries] = useState([]);
   const cardRefs = useRef({});
 
- const handleSaveAll = async () => {
-  const payload = {
-    driver_license_number: tempInputData.driver_license_number || formData.driver_license_number,
-    driver_license_state_issued: tempInputData.driverLicenseStateIssued || formData.driverLicenseStateIssued,
-    driver_license_expiration: tempInputData.driver_license_expiration
-      ? tempInputData.driver_license_expiration.split("T")[0]
-      : formData.driver_license_expiration,
-    aadhaar_number: tempInputData.aadhaarNumber || formData.aadhaarNumber,
-    pan_number: tempInputData.panNumber || formData.panNumber,
-    passport_number: tempInputData.passport_number || formData.passport_number,
-    passport_state_issued: tempInputData.passportStateIssued || formData.passportStateIssued,
-    passport_expiration: tempInputData.passportExpiration
-      ? tempInputData.passportExpiration.split("T")[0]
-      : formData.passportExpiration,
-    notes: tempInputData.notes || formData.notes,
-    emergency_contact: tempInputData.emergencyContact || formData.emergencyContact,
-  };
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      toast.success("Family member updated successfully!", { position: 'top-right', autoClose: 3000 });
-      setFormData((prev) => ({
-        ...prev,
-        ...payload,
-      }));
-      setInitialFormData((prev) => ({
-        ...prev,
-        ...payload,
-      }));
-      setTempInputData({});
-      window.location.reload(); // Reload page after successful save
-    } else {
-      handleApiError(response, data, "Failed to update family member.");
-    }
-  } catch (err) {
-    handleNetworkError(err, "Error updating family member.");
-  }
-};
-
-  const handleSaveCard = async (fieldName, docIndex = null) => {
-  if (docIndex !== null) {
-    const updatedOtherDocs = [...formData.otherDocuments];
-    const doc = updatedOtherDocs[docIndex];
-    const tempDoc = tempInputData[`other_document_${docIndex}`] || {};
+  const handleSaveAll = async () => {
     const payload = {
-      family_id: id,
-      other_document_name: tempDoc.other_document_name || doc.other_document_name || `Other Document ${Date.now()}`,
-      other_document_number: tempDoc.other_document_number || doc.other_document_number || '',
-      other_document_issued: tempDoc.other_document_issued
-        ? tempDoc.other_document_issued.split("T")[0]
-        : doc.other_document_issued || '',
-      other_document_expiration: tempDoc.other_document_expiration
-        ? tempDoc.other_document_expiration.split("T")[0]
-        : doc.other_document_expiration || '',
-    };
-
-    const formDataToSend = new FormData();
-    formDataToSend.append('family_id', id);
-    formDataToSend.append('other_document_name', payload.other_document_name);
-    formDataToSend.append('other_document_number', payload.other_document_number);
-    formDataToSend.append('other_document_issued', payload.other_document_issued);
-    formDataToSend.append('other_document_expiration', payload.other_document_expiration);
-    if (doc.other_file && typeof doc.other_file === 'object') {
-      formDataToSend.append('other_file', doc.other_file);
-    }
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/other-document`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formDataToSend,
-      });
-      const data = await response.json();
-      if (data.success && data.updatedDocument) {
-        toast.success(`'${payload.other_document_name}' updated.`, {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-        updatedOtherDocs[docIndex] = {
-          ...doc,
-          id: data.updatedDocument.id,
-          other_document_name: data.updatedDocument.document_name,
-          other_document_number: data.updatedDocument.number,
-          other_document_issued: data.updatedDocument.issued_date,
-          other_document_expiration: data.updatedDocument.expiration_date,
-          other_file: data.updatedDocument.file || doc.other_file,
-        };
-        setFormData((prev) => ({ ...prev, otherDocuments: updatedOtherDocs }));
-        setInitialFormData((prev) => ({
-          ...prev,
-          otherDocuments: prev.otherDocuments.map((d, i) =>
-            i === docIndex ? { ...updatedOtherDocs[docIndex] } : d
-          ),
-        }));
-        setTempInputData((prev) => {
-          const newTemp = { ...prev };
-          delete newTemp[`other_document_${docIndex}`];
-          return newTemp;
-        });
-        setEditMode((prev) => ({ ...prev, [`other_document_${docIndex}`]: false }));
-        window.location.reload(); // Reload page after successful save
-      } else {
-        handleApiError(response, data, `Failed to update '${payload.other_document_name}'.`);
-      }
-    } catch (err) {
-      handleNetworkError(err, `Error updating '${payload.other_document_name}'.`);
-    }
-  } else if (fieldName === 'notes') {
-    await handleSaveAll();
-    setEditMode((prev) => ({ ...prev, notes: false }));
-    setTempInputData((prev) => {
-      const newTemp = { ...prev };
-      delete newTemp.notes;
-      return newTemp;
-    });
-    window.location.reload(); // Reload page after successful save
-  } else if (fieldName === 'birthday') {
-    const payload = {
-      birthday: tempInputData.birthday
-        ? tempInputData.birthday.split("T")[0]
-        : formData.birthday || '',
+      driver_license_number: tempInputData.driver_license_number || formData.driver_license_number,
+      driver_license_state_issued: tempInputData.driverLicenseStateIssued || formData.driverLicenseStateIssued,
+      driver_license_expiration: tempInputData.driver_license_expiration
+        ? tempInputData.driver_license_expiration.split("T")[0]
+        : formData.driver_license_expiration,
+      aadhaar_number: tempInputData.aadhaarNumber || formData.aadhaarNumber,
+      pan_number: tempInputData.panNumber || formData.panNumber,
+      passport_number: tempInputData.passport_number || formData.passport_number,
+      passport_state_issued: tempInputData.passportStateIssued || formData.passportStateIssued,
+      passport_expiration: tempInputData.passportExpiration
+        ? tempInputData.passportExpiration.split("T")[0]
+        : formData.passportExpiration,
+      notes: tempInputData.notes || formData.notes,
+      emergency_contact: tempInputData.emergencyContact || formData.emergencyContact,
     };
 
     try {
@@ -185,95 +79,206 @@ const FamilyDetail = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
       const data = await response.json();
       if (data.success) {
-        toast.success('Birthday updated successfully.', { position: 'top-right', autoClose: 3000 });
+        toast.success("Family member updated successfully!", { position: 'top-right', autoClose: 3000 });
         setFormData((prev) => ({
           ...prev,
-          birthday: payload.birthday,
+          ...payload,
         }));
         setInitialFormData((prev) => ({
           ...prev,
-          birthday: payload.birthday,
+          ...payload,
         }));
-        setTempInputData((prev) => {
-          const newTemp = { ...prev };
-          delete newTemp.birthday;
-          return newTemp;
-        });
-        setEditMode((prev) => ({ ...prev, birthday: false }));
-        window.location.reload(); // Reload page after successful save
+        setTempInputData({});
+        window.location.reload();
       } else {
-        handleApiError(response, data, 'Failed to update birthday.');
+        handleApiError(response, data, "Failed to update family member.");
       }
     } catch (err) {
-      handleNetworkError(err, 'Error updating birthday.');
+      handleNetworkError(err, "Error updating family member.");
     }
-  } else {
-    const cardFields = {
-      driver_license_document: {
-        driver_license_number: tempInputData.driver_license_number || formData.driver_license_number,
-        driver_license_state_issued: tempInputData.driverLicenseStateIssued || formData.driverLicenseStateIssued,
-        driver_license_expiration: tempInputData.driver_license_expiration
-          ? tempInputData.driver_license_expiration.split("T")[0]
-          : formData.driver_license_expiration,
-      },
-      passport_document: {
-        passport_number: tempInputData.passport_number || formData.passport_number,
-        passport_state_issued: tempInputData.passportStateIssued || formData.passportStateIssued,
-        passport_expiration: tempInputData.passportExpiration
-          ? tempInputData.passportExpiration.split("T")[0]
-          : formData.passportExpiration,
-      },
-      aadhaar_card_document: { aadhaar_number: tempInputData.aadhaarNumber || formData.aadhaarNumber },
-      pan_card_document: { pan_number: tempInputData.panNumber || formData.panNumber },
-    };
+  };
 
-    const formDataToSend = new FormData();
-    formDataToSend.append('id', id);
-    Object.entries(cardFields[fieldName] || {}).forEach(([key, value]) => {
-      formDataToSend.append(key, value);
-    });
-    if (formData[fieldName] && typeof formData[fieldName] === 'object') {
-      formDataToSend.append(fieldName, formData[fieldName]);
-    }
+  const handleSaveCard = async (fieldName, docIndex = null) => {
+    if (docIndex !== null) {
+      const updatedOtherDocs = [...formData.otherDocuments];
+      const doc = updatedOtherDocs[docIndex];
+      const tempDoc = tempInputData[`other_document_${docIndex}`] || {};
+      const payload = {
+        family_id: id,
+        other_document_name: tempDoc.other_document_name || doc.other_document_name || `Other Document ${Date.now()}`,
+        other_document_number: tempDoc.other_document_number || doc.other_document_number || '',
+        other_document_issued: tempDoc.other_document_issued
+          ? tempDoc.other_document_issued.split("T")[0]
+          : doc.other_document_issued || '',
+        other_document_expiration: tempDoc.other_document_expiration
+          ? tempDoc.other_document_expiration.split("T")[0]
+          : doc.other_document_expiration || '',
+      };
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        body: formDataToSend,
+      const formDataToSend = new FormData();
+      formDataToSend.append('family_id', id);
+      formDataToSend.append('other_document_name', payload.other_document_name);
+      formDataToSend.append('other_document_number', payload.other_document_number);
+      formDataToSend.append('other_document_issued', payload.other_document_issued);
+      formDataToSend.append('other_document_expiration', payload.other_document_expiration);
+      if (doc.other_file && typeof doc.other_file === 'object') {
+        formDataToSend.append('other_file', doc.other_file);
+      }
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/other-document`, {
+          method: 'POST',
+          credentials: 'include',
+          body: formDataToSend,
+        });
+        const data = await response.json();
+        if (data.success && data.updatedDocument) {
+          toast.success(`'${payload.other_document_name}' updated.`, {
+            position: 'top-right',
+            autoClose: 3000,
+          });
+          updatedOtherDocs[docIndex] = {
+            ...doc,
+            id: data.updatedDocument.id,
+            other_document_name: data.updatedDocument.document_name,
+            other_document_number: data.updatedDocument.number,
+            other_document_issued: data.updatedDocument.issued_date,
+            other_document_expiration: data.updatedDocument.expiration_date,
+            other_file: data.updatedDocument.file || doc.other_file,
+          };
+          setFormData((prev) => ({ ...prev, otherDocuments: updatedOtherDocs }));
+          setInitialFormData((prev) => ({
+            ...prev,
+            otherDocuments: prev.otherDocuments.map((d, i) =>
+              i === docIndex ? { ...updatedOtherDocs[docIndex] } : d
+            ),
+          }));
+          setTempInputData((prev) => {
+            const newTemp = { ...prev };
+            delete newTemp[`other_document_${docIndex}`];
+            return newTemp;
+          });
+          setEditMode((prev) => ({ ...prev, [`other_document_${docIndex}`]: false }));
+          window.location.reload();
+        } else {
+          handleApiError(response, data, `Failed to update '${payload.other_document_name}'.`);
+        }
+      } catch (err) {
+        handleNetworkError(err, `Error updating '${payload.other_document_name}'.`);
+      }
+    } else if (fieldName === 'notes') {
+      await handleSaveAll();
+      setEditMode((prev) => ({ ...prev, notes: false }));
+      setTempInputData((prev) => {
+        const newTemp = { ...prev };
+        delete newTemp.notes;
+        return newTemp;
       });
-      const data = await response.json();
-      if (data.success) {
-        toast.success(`${fieldName} updated successfully.`, { position: 'top-right', autoClose: 3000 });
-        setFormData((prev) => ({
-          ...prev,
-          ...cardFields[fieldName],
-          [fieldName]: data.familyMember[fieldName] || formData[fieldName],
-        }));
-        setInitialFormData((prev) => ({
-          ...prev,
-          ...cardFields[fieldName],
-          [fieldName]: data.familyMember[fieldName] || formData[fieldName],
-        }));
-        setTempInputData((prev) => {
-          const newTemp = { ...prev };
-          Object.keys(cardFields[fieldName] || {}).forEach((key) => delete newTemp[key]);
-          return newTemp;
+      window.location.reload();
+    } else if (fieldName === 'birthday') {
+      const payload = {
+        birthday: tempInputData.birthday
+          ? tempInputData.birthday.split("T")[0]
+          : formData.birthday || '',
+      };
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
-        setEditMode((prev) => ({ ...prev, [fieldName]: false }));
-        window.location.reload(); // Reload page after successful save
-      } else {
-        handleApiError(response, data, `Failed to update ${fieldName}.`);
+        const data = await response.json();
+        if (data.success) {
+          toast.success('Birthday updated successfully.', { position: 'top-right', autoClose: 3000 });
+          setFormData((prev) => ({
+            ...prev,
+            birthday: payload.birthday,
+          }));
+          setInitialFormData((prev) => ({
+            ...prev,
+            birthday: payload.birthday,
+          }));
+          setTempInputData((prev) => {
+            const newTemp = { ...prev };
+            delete newTemp.birthday;
+            return newTemp;
+          });
+          setEditMode((prev) => ({ ...prev, birthday: false }));
+          window.location.reload();
+        } else {
+          handleApiError(response, data, 'Failed to update birthday.');
+        }
+      } catch (err) {
+        handleNetworkError(err, 'Error updating birthday.');
       }
-    } catch (err) {
-      handleNetworkError(err, `Error updating ${fieldName}.`);
+    } else {
+      const cardFields = {
+        driver_license_document: {
+          driver_license_number: tempInputData.driver_license_number || formData.driver_license_number,
+          driver_license_state_issued: tempInputData.driverLicenseStateIssued || formData.driverLicenseStateIssued,
+          driver_license_expiration: tempInputData.driver_license_expiration
+            ? tempInputData.driver_license_expiration.split("T")[0]
+            : formData.driver_license_expiration,
+        },
+        passport_document: {
+          passport_number: tempInputData.passport_number || formData.passport_number,
+          passport_state_issued: tempInputData.passportStateIssued || formData.passportStateIssued,
+          passport_expiration: tempInputData.passportExpiration
+            ? tempInputData.passportExpiration.split("T")[0]
+            : formData.passportExpiration,
+        },
+        aadhaar_card_document: { aadhaar_number: tempInputData.aadhaarNumber || formData.aadhaarNumber },
+        pan_card_document: { pan_number: tempInputData.panNumber || formData.panNumber },
+      };
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('id', id);
+      Object.entries(cardFields[fieldName] || {}).forEach(([key, value]) => {
+        formDataToSend.append(key, value);
+      });
+      if (formData[fieldName] && typeof formData[fieldName] === 'object') {
+        formDataToSend.append(fieldName, formData[fieldName]);
+      }
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
+          method: 'PUT',
+          credentials: 'include',
+          body: formDataToSend,
+        });
+        const data = await response.json();
+        if (data.success) {
+          toast.success(`${fieldName} updated successfully.`, { position: 'top-right', autoClose: 3000 });
+          setFormData((prev) => ({
+            ...prev,
+            ...cardFields[fieldName],
+            [fieldName]: data.familyMember[fieldName] || formData[fieldName],
+          }));
+          setInitialFormData((prev) => ({
+            ...prev,
+            ...cardFields[fieldName],
+            [fieldName]: data.familyMember[fieldName] || formData[fieldName],
+          }));
+          setTempInputData((prev) => {
+            const newTemp = { ...prev };
+            Object.keys(cardFields[fieldName] || {}).forEach((key) => delete newTemp[key]);
+            return newTemp;
+          });
+          setEditMode((prev) => ({ ...prev, [fieldName]: false }));
+          window.location.reload();
+        } else {
+          handleApiError(response, data, `Failed to update ${fieldName}.`);
+        }
+      } catch (err) {
+        handleNetworkError(err, `Error updating ${fieldName}.`);
+      }
     }
-  }
-};
-
-
+  };
 
   const handleCancelCard = (fieldName, docIndex = null) => {
     if (docIndex !== null) {
@@ -350,13 +355,13 @@ const FamilyDetail = () => {
         if (data.success) {
           const fetchedOtherDocs = Array.isArray(data.familyMember.other_documents)
             ? data.familyMember.other_documents.map((doc) => ({
-              id: doc.id || `other-${Date.now()}-${Math.random()}`,
-              other_document_name: doc.document_name || '',
-              other_document_number: doc.number || '',
-              other_document_issued: doc.issued_date || '',
-              other_document_expiration: doc.expiration_date || '',
-              other_file: doc.file || null,
-            }))
+                id: doc.id || `other-${Date.now()}-${Math.random()}`,
+                other_document_name: doc.document_name || '',
+                other_document_number: doc.number || '',
+                other_document_issued: doc.issued_date || '',
+                other_document_expiration: doc.expiration_date || '',
+                other_file: doc.file || null,
+              }))
             : [];
 
           const fetchedData = {
@@ -379,7 +384,7 @@ const FamilyDetail = () => {
             notes: data.familyMember.notes || '',
             relation: data.familyMember.relation || '',
             profile_image: data.familyMember.profile_image || '',
-            emergencyContact: data.familyMember.emergency_contact || false, // Added
+            emergencyContact: data.familyMember.emergency_contact || false,
             otherDocuments: fetchedOtherDocs,
           };
           setFormData(fetchedData);
@@ -410,6 +415,57 @@ const FamilyDetail = () => {
     };
     fetchFamilyMember();
   }, [id, navigate]);
+
+  // Initialize countries and states
+  useEffect(() => {
+    const countries = Country.getAllCountries().map(country => ({
+      name: country.name,
+      isoCode: country.isoCode,
+    }));
+    setFilteredPassportCountries(countries);
+
+    const states = State.getAllStates().map(state => ({
+      name: state.name,
+      isoCode: state.isoCode,
+      countryCode: state.countryCode,
+    }));
+    setFilteredDriverStates(states);
+  }, []);
+
+  // Filter countries for passport based on search
+  useEffect(() => {
+    const countries = Country.getAllCountries().map(country => ({
+      name: country.name,
+      isoCode: country.isoCode,
+    }));
+    if (passportCountrySearch) {
+      setFilteredPassportCountries(
+        countries.filter(country =>
+          country.name.toLowerCase().includes(passportCountrySearch.toLowerCase())
+        )
+      );
+    } else {
+      setFilteredPassportCountries(countries);
+    }
+  }, [passportCountrySearch]);
+
+  // Filter states for driver's license based on search
+  useEffect(() => {
+    const states = State.getAllStates().map(state => ({
+      name: state.name,
+      isoCode: state.isoCode,
+      countryCode: state.countryCode,
+    }));
+    if (driverStateSearch) {
+      setFilteredDriverStates(
+        states.filter(state =>
+          state.name.toLowerCase().includes(driverStateSearch.toLowerCase())
+        )
+      );
+    } else {
+      setFilteredDriverStates(states);
+    }
+  }, [driverStateSearch]);
 
   const handleFileChange = async (e, docIndex = null) => {
     const { name, files } = e.target;
@@ -485,10 +541,7 @@ const FamilyDetail = () => {
         const data = await response.json();
 
         if (data.success) {
-          toast.success(`${fieldName} deleted successfully.`, {
-            position: 'top-right',
-            autoClose: 3000,
-          });
+          toast.success(`${fieldName} deleted successfully.`, { position: 'top-right', autoClose: 3000 });
           setInitialFormData((prev) => ({ ...prev, [fieldName]: null }));
         } else {
           handleApiError(response, data, `Failed to delete ${fieldName}.`);
@@ -566,14 +619,13 @@ const FamilyDetail = () => {
 
   const handleAddButtonClick = () => {
     setShowAddDropdown(!showAddDropdown);
-    setOpenDropdownId(null); // Close any open card dropdown
+    setOpenDropdownId(null);
   };
 
   const toggleOptionsDropdown = (cardId) => {
     setOpenDropdownId(openDropdownId === cardId ? null : cardId);
-    setShowAddDropdown(false); // Close Add dropdown if open
+    setShowAddDropdown(false);
   };
-
 
   const handleEditCard = (fieldName, docIndex = null) => {
     setEditMode((prev) => ({
@@ -583,121 +635,120 @@ const FamilyDetail = () => {
     setOpenDropdownId(null);
   };
 
- const handleDeleteCard = async (fieldName, docIndex = null) => {
-  setOpenDropdownId(null);
-  if (docIndex !== null) {
-    const updatedOtherDocs = [...formData.otherDocuments];
-    const doc = updatedOtherDocs[docIndex];
-    const payload = {
-      other_document_index: docIndex,
-      other_document_name: null,
-      other_document_number: null,
-      other_document_issued: null,
-      other_document_expiration: null,
-      file_path: null,
-    };
+  const handleDeleteCard = async (fieldName, docIndex = null) => {
+    setOpenDropdownId(null);
+    if (docIndex !== null) {
+      const updatedOtherDocs = [...formData.otherDocuments];
+      const doc = updatedOtherDocs[docIndex];
+      const payload = {
+        other_document_index: docIndex,
+        other_document_name: null,
+        other_document_number: null,
+        other_document_issued: null,
+        other_document_expiration: null,
+        file_path: null,
+      };
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      if (data.success) {
-        updatedOtherDocs.splice(docIndex, 1);
-        setFormData((prev) => ({ ...prev, otherDocuments: updatedOtherDocs }));
-        setInitialFormData((prev) => ({ ...prev, otherDocuments: updatedOtherDocs }));
-        setTempInputData((prev) => {
-          const newTemp = { ...prev };
-          delete newTemp[`other_document_${docIndex}`];
-          return newTemp;
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
-        setEditMode((prev) => {
-          const newEditMode = { ...prev };
-          delete newEditMode[`other_document_${docIndex}`];
-          return newEditMode;
-        });
-        toast.success('Other document deleted successfully.', { position: 'top-right', autoClose: 3000 });
-        window.location.reload(); // Reload page after successful deletion
-      } else {
-        handleApiError(response, data, 'Failed to delete other document.');
+        const data = await response.json();
+        if (data.success) {
+          updatedOtherDocs.splice(docIndex, 1);
+          setFormData((prev) => ({ ...prev, otherDocuments: updatedOtherDocs }));
+          setInitialFormData((prev) => ({ ...prev, otherDocuments: updatedOtherDocs }));
+          setTempInputData((prev) => {
+            const newTemp = { ...prev };
+            delete newTemp[`other_document_${docIndex}`];
+            return newTemp;
+          });
+          setEditMode((prev) => {
+            const newEditMode = { ...prev };
+            delete newEditMode[`other_document_${docIndex}`];
+            return newEditMode;
+          });
+          toast.success('Other document deleted successfully.', { position: 'top-right', autoClose: 3000 });
+          window.location.reload();
+        } else {
+          handleApiError(response, data, 'Failed to delete other document.');
+        }
+      } catch (err) {
+        handleNetworkError(err, 'Error deleting other document.');
       }
-    } catch (err) {
-      handleNetworkError(err, 'Error deleting other document.');
-    }
-  } else {
-    const cardFields = {
-      driver_license_document: {
-        driver_license_number: '',
-        driver_license_state_issued: '',
-        driver_license_expiration: '',
-        driver_license_document: '',
-      },
-      passport_document: {
-        passport_number: '',
-        passport_state_issued: '',
-        passport_expiration: '',
-        passport_document: '',
-      },
-      aadhaar_card_document: {
-        aadhaar_number: '',
-        aadhaar_card_document: '',
-      },
-      pan_card_document: {
-        pan_number: '',
-        pan_card_document: '',
-      },
-      birth_certificate_document: {
-        birth_certificate_document: '',
-      },
-      notes: { notes: '' },
-      birthday: { birthday: '' },
-    };
+    } else {
+      const cardFields = {
+        driver_license_document: {
+          driver_license_number: '',
+          driver_license_state_issued: '',
+          driver_license_expiration: '',
+          driver_license_document: '',
+        },
+        passport_document: {
+          passport_number: '',
+          passport_state_issued: '',
+          passport_expiration: '',
+          passport_document: '',
+        },
+        aadhaar_card_document: {
+          aadhaar_number: '',
+          aadhaar_card_document: '',
+        },
+        pan_card_document: {
+          pan_number: '',
+          pan_card_document: '',
+        },
+        birth_certificate_document: {
+          birth_certificate_document: '',
+        },
+        notes: { notes: '' },
+        birthday: { birthday: '' },
+      };
 
-    const payload = cardFields[fieldName] || {};
-    const formDataToSend = new FormData();
-    formDataToSend.append('id', id);
-    Object.entries(payload).forEach(([key, value]) => {
-      formDataToSend.append(key, value);
-    });
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        body: formDataToSend,
+      const payload = cardFields[fieldName] || {};
+      const formDataToSend = new FormData();
+      formDataToSend.append('id', id);
+      Object.entries(payload).forEach(([key, value]) => {
+        formDataToSend.append(key, value);
       });
-      const data = await response.json();
-      if (data.success) {
-        setFormData((prev) => ({
-          ...prev,
-          ...cardFields[fieldName],
-          [fieldName]: null,
-        }));
-        setInitialFormData((prev) => ({
-          ...prev,
-          ...cardFields[fieldName],
-          [fieldName]: null,
-        }));
-        setTempInputData((prev) => {
-          const newTemp = { ...prev };
-          Object.keys(cardFields[fieldName]).forEach((key) => delete newTemp[key]);
-          return newTemp;
-        });
-        setEditMode((prev) => ({ ...prev, [fieldName]: false }));
-        toast.success(`${fieldName} deleted successfully.`, { position: 'top-right', autoClose: 3000 });
-        window.location.reload(); // Reload page after successful deletion
-      } else {
-        handleApiError(response, data, `Failed to delete ${fieldName}.`);
-      }
-    } catch (err) {
-      handleNetworkError(err, `Error deleting ${fieldName}.`);
-    }
-  }
-};
 
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
+          method: 'PUT',
+          credentials: 'include',
+          body: formDataToSend,
+        });
+        const data = await response.json();
+        if (data.success) {
+          setFormData((prev) => ({
+            ...prev,
+            ...cardFields[fieldName],
+            [fieldName]: null,
+          }));
+          setInitialFormData((prev) => ({
+            ...prev,
+            ...cardFields[fieldName],
+            [fieldName]: null,
+          }));
+          setTempInputData((prev) => {
+            const newTemp = { ...prev };
+            Object.keys(cardFields[fieldName]).forEach((key) => delete newTemp[key]);
+            return newTemp;
+          });
+          setEditMode((prev) => ({ ...prev, [fieldName]: false }));
+          toast.success(`${fieldName} deleted successfully.`, { position: 'top-right', autoClose: 3000 });
+          window.location.reload();
+        } else {
+          handleApiError(response, data, `Failed to delete ${fieldName}.`);
+        }
+      } catch (err) {
+        handleNetworkError(err, `Error deleting ${fieldName}.`);
+      }
+    }
+  };
 
   const handleAddOptionClick = (option) => {
     setShowAddDropdown(false);
@@ -788,7 +839,7 @@ const FamilyDetail = () => {
       case 'pan_card_document':
         return formData.panNumber;
       case 'birth_certificate_document':
-        return false; // Birth Certificate only has file upload, no inputs to consider filled
+        return false;
       case 'notes':
         return formData.notes;
       case 'birthday':
@@ -797,6 +848,7 @@ const FamilyDetail = () => {
         return false;
     }
   };
+
   const renderBirthdayCard = () => {
     const isFilled = isCardFilled('birthday');
     const showButtons = shouldShowButtons('birthday') || editMode.birthday;
@@ -904,20 +956,17 @@ const FamilyDetail = () => {
     );
   };
 
-
   const handleCheckboxChange = (e) => {
     const { checked } = e.target;
     setPendingEmergencyValue(checked);
     setShowEmergencyPopup(true);
   };
 
-
   const handleConfirmEmergency = async () => {
     setFormData((prev) => ({ ...prev, emergencyContact: pendingEmergencyValue }));
     setTempInputData((prev) => ({ ...prev, emergencyContact: pendingEmergencyValue }));
     setShowEmergencyPopup(false);
 
-    // Save the emergency contact change
     try {
       const payload = {
         emergency_contact: pendingEmergencyValue,
@@ -934,13 +983,11 @@ const FamilyDetail = () => {
         setInitialFormData((prev) => ({ ...prev, emergencyContact: pendingEmergencyValue }));
       } else {
         handleApiError(response, data, "Failed to update emergency contact.");
-        // Revert on failure
         setFormData((prev) => ({ ...prev, emergencyContact: prev.emergencyContact }));
         setTempInputData((prev) => ({ ...prev, emergencyContact: prev.emergencyContact }));
       }
     } catch (err) {
       handleNetworkError(err, "Error updating emergency contact.");
-      // Revert on failure
       setFormData((prev) => ({ ...prev, emergencyContact: prev.emergencyContact }));
       setTempInputData((prev) => ({ ...prev, emergencyContact: prev.emergencyContact }));
     }
@@ -951,303 +998,355 @@ const FamilyDetail = () => {
     setPendingEmergencyValue(null);
   };
 
-
   const renderDocumentCard = (fieldName, label) => {
-  const isFilled = isCardFilled(fieldName);
-  const showButtons = fieldName === 'birth_certificate_document'
-    ? (editMode[fieldName] || (formData[fieldName] && typeof formData[fieldName] === 'object'))
-    : (shouldShowButtons(fieldName) || editMode[fieldName] || (formData[fieldName] && typeof formData[fieldName] === 'object'));
+    const isFilled = isCardFilled(fieldName);
+    const showButtons = fieldName === 'birth_certificate_document'
+      ? (editMode[fieldName] || (formData[fieldName] && typeof formData[fieldName] === 'object'))
+      : (shouldShowButtons(fieldName) || editMode[fieldName] || (formData[fieldName] && typeof formData[fieldName] === 'object'));
 
-  return (
-    <div
-      id={`card-${fieldName}`}
-      className="family-detail-card"
-      ref={(el) => {
-        cardRefs.current[fieldName] = el;
-        console.log(`Ref assigned for ${fieldName}:`, el);
-      }}
-    >
-      <div className="family-detail-card-header">
-        <label className={`family-detail-card-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-          {label}
-        </label>
-        <span
-          className="family-detail-card-options"
-          onClick={() => toggleOptionsDropdown(fieldName)}
-        >
-          ...
-        </span>
-        {openDropdownId === fieldName && (
-          <div className="family-detail-card-options-dropdown">
-            <div onClick={() => handleEditCard(fieldName)}>Edit</div>
-            <div onClick={() => handleDeleteCard(fieldName)}>Delete</div>
+    return (
+      <div
+        id={`card-${fieldName}`}
+        className="family-detail-card"
+        ref={(el) => {
+          cardRefs.current[fieldName] = el;
+          console.log(`Ref assigned for ${fieldName}:`, el);
+        }}
+      >
+        <div className="family-detail-card-header">
+          <label className={`family-detail-card-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+            {label}
+          </label>
+          <span
+            className="family-detail-card-options"
+            onClick={() => toggleOptionsDropdown(fieldName)}
+          >
+            ...
+          </span>
+          {openDropdownId === fieldName && (
+            <div className="family-detail-card-options-dropdown">
+              <div onClick={() => handleEditCard(fieldName)}>Edit</div>
+              <div onClick={() => handleDeleteCard(fieldName)}>Delete</div>
+            </div>
+          )}
+        </div>
+        {formData[fieldName] ? (
+          <div className="family-detail-file-container">
+            <img
+              src={getFileIcon(formData[fieldName])}
+              alt={`${label} Icon`}
+              className="family-detail-file-icon"
+            />
+            <span
+              className={`family-detail-file-name ${isFilled ? 'family-detail-text-filled' : ''}`}
+              onClick={() => handlePreview(formData[fieldName])}
+            >
+              {typeof formData[fieldName] === 'object' ? formData[fieldName].name : formData[fieldName].split('/').pop()}
+            </span>
+            <img
+              src={CrossIcon}
+              alt="Delete Icon"
+              className="family-detail-delete-icon"
+              onClick={() => handleDeleteFile(fieldName)}
+            />
+          </div>
+        ) : (
+          <div className="family-detail-card-upload">
+            <img src={UploadIcon} alt="Upload Icon" className="family-upload-icon" />
+            <div className="upload-text-group">
+              <p>Drag and drop files here</p>
+              <p>OR</p>
+              <p>Browse files</p>
+            </div>
+            <input
+              type="file"
+              name={fieldName}
+              className="family-detail-card-input"
+              onChange={handleFileChange}
+            />
+          </div>
+        )}
+        {fieldName === 'driver_license_document' && (
+          (isFilled && !editMode[fieldName]) ? (
+            <>
+              <div className="family-detail-two-column-group">
+                <div className="family-detail-input-group">
+                  <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                    Number:
+                  </label>
+                  <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
+                    {formData.driver_license_number || 'N/A'}
+                  </span>
+                </div>
+                <div className="family-detail-input-group">
+                  <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                    State Issued:
+                  </label>
+                  <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
+                    {formData.driverLicenseStateIssued || 'N/A'}
+                  </span>
+                </div>
+              </div>
+              <div className="family-detail-input-group family-detail-single-column">
+                <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                  Expiration Date:
+                </label>
+                <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
+                  {formData.driver_license_expiration ? formatDisplayDate(formData.driver_license_expiration) : 'N/A'}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="family-detail-two-column-group">
+                <div className="family-detail-input-group">
+                  <label htmlFor="driver_license_number" className="family-detail-label">Number:</label>
+                  <input
+                    type="text"
+                    id="driver_license_number"
+                    name="driver_license_number"
+                    value={tempInputData.driver_license_number || formData.driver_license_number}
+                    onChange={handleInputChange}
+                    className="family-detail-text-input"
+                  />
+                </div>
+                <div className="family-detail-input-group">
+                  <label htmlFor="driverLicenseStateIssued" className="family-detail-label">State Issued:</label>
+                  <input
+                    type="text"
+                    id="driverLicenseStateIssued"
+                    name="driverLicenseStateIssued"
+                    value={tempInputData.driverLicenseStateIssued || formData.driverLicenseStateIssued}
+                    onChange={(e) => {
+                      setDriverStateSearch(e.target.value);
+                      handleInputChange(e);
+                    }}
+                    onFocus={() => setIsDriverStateDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setIsDriverStateDropdownOpen(false), 200)}
+                    className="family-detail-text-input"
+                    placeholder="Select or type state"
+                  />
+                  {isDriverStateDropdownOpen && (
+                    <div className="family-detail-card-options-dropdown family-detail-scrollable-dropdown">
+                      {filteredDriverStates.map((state) => (
+                        <div
+                          key={`${state.isoCode}-${state.countryCode}`}
+                          className="family-detail-card-options-item"
+                          onClick={() => {
+                            handleInputChange({ target: { name: 'driverLicenseStateIssued', value: state.name } });
+                            setDriverStateSearch('');
+                            setIsDriverStateDropdownOpen(false);
+                          }}
+                        >
+                          {state.name}
+                        </div>
+                      ))}
+                      {filteredDriverStates.length === 0 && (
+                        <div className="family-detail-card-options-item">
+                          No states found
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="family-detail-input-group family-detail-single-column">
+                <label htmlFor="driver_license_expiration" className="family-detail-label">Expiration Date:</label>
+                <input
+                  type="date"
+                  id="driver_license_expiration"
+                  name="driver_license_expiration"
+                  value={
+                    tempInputData.driver_license_expiration
+                      ? tempInputData.driver_license_expiration.split("T")[0]
+                      : formData.driver_license_expiration
+                        ? formData.driver_license_expiration.split("T")[0]
+                        : ''
+                  }
+                  onChange={handleInputChange}
+                  className="family-detail-text-input"
+                />
+              </div>
+            </>
+          )
+        )}
+        {fieldName === 'passport_document' && (
+          (isFilled && !editMode[fieldName]) ? (
+            <>
+              <div className="family-detail-two-column-group">
+                <div className="family-detail-input-group">
+                  <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                    Number:
+                  </label>
+                  <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
+                    {formData.passport_number || 'N/A'}
+                  </span>
+                </div>
+                <div className="family-detail-input-group">
+                  <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                    Country Issued:
+                  </label>
+                  <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
+                    {formData.passportStateIssued || 'N/A'}
+                  </span>
+                </div>
+              </div>
+              <div className="family-detail-input-group family-detail-single-column">
+                <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                  Expiration Date:
+                </label>
+                <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
+                  {formData.passportExpiration ? formatDisplayDate(formData.passportExpiration) : 'N/A'}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="family-detail-two-column-group">
+                <div className="family-detail-input-group">
+                  <label htmlFor="passport_number" className="family-detail-label">Number:</label>
+                  <input
+                    type="text"
+                    id="passport_number"
+                    name="passport_number"
+                    value={tempInputData.passport_number || formData.passport_number}
+                    onChange={handleInputChange}
+                    className="family-detail-text-input"
+                  />
+                </div>
+                <div className="family-detail-input-group">
+                  <label htmlFor="passportStateIssued" className="family-detail-label">Country Issued:</label>
+                  <input
+                    type="text"
+                    id="passportStateIssued"
+                    name="passportStateIssued"
+                    value={tempInputData.passportStateIssued || formData.passportStateIssued}
+                    onChange={(e) => {
+                      setPassportCountrySearch(e.target.value);
+                      handleInputChange(e);
+                    }}
+                    onFocus={() => setIsPassportCountryDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setIsPassportCountryDropdownOpen(false), 200)}
+                    className="family-detail-text-input"
+                    placeholder="Select or type country"
+                  />
+                  {isPassportCountryDropdownOpen && (
+                    <div className="family-detail-card-options-dropdown family-detail-scrollable-dropdown">
+                      {filteredPassportCountries.map((country) => (
+                        <div
+                          key={country.isoCode}
+                          className="family-detail-card-options-item"
+                          onClick={() => {
+                            handleInputChange({ target: { name: 'passportStateIssued', value: country.name } });
+                            setPassportCountrySearch('');
+                            setIsPassportCountryDropdownOpen(false);
+                          }}
+                        >
+                          {country.name}
+                        </div>
+                      ))}
+                      {filteredPassportCountries.length === 0 && (
+                        <div className="family-detail-card-options-item">
+                          No countries found
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="family-detail-input-group family-detail-single-column">
+                <label htmlFor="passportExpiration" className="family-detail-label">Expiration Date:</label>
+                <input
+                  type="date"
+                  id="passportExpiration"
+                  name="passportExpiration"
+                  value={
+                    tempInputData.passportExpiration
+                      ? tempInputData.passportExpiration.split("T")[0]
+                      : formData.passportExpiration
+                        ? formData.passportExpiration.split("T")[0]
+                        : ''
+                  }
+                  onChange={handleInputChange}
+                  className="family-detail-text-input"
+                />
+              </div>
+            </>
+          )
+        )}
+        {fieldName === 'aadhaar_card_document' && (
+          (isFilled && !editMode[fieldName]) ? (
+            <div className="family-detail-input-group">
+              <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                Number:
+              </label>
+              <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
+                {formData.aadhaarNumber || 'N/A'}
+              </span>
+            </div>
+          ) : (
+            <div className="family-detail-input-group">
+              <label htmlFor="aadhaarNumber" className="family-detail-label">Number:</label>
+              <input
+                type="text"
+                id="aadhaarNumber"
+                name="aadhaarNumber"
+                value={tempInputData.aadhaarNumber || formData.aadhaarNumber}
+                onChange={handleInputChange}
+                className="family-detail-text-input"
+              />
+            </div>
+          )
+        )}
+        {fieldName === 'pan_card_document' && (
+          (isFilled && !editMode[fieldName]) ? (
+            <div className="family-detail-input-group">
+              <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+                Number:
+              </label>
+              <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
+                {formData.panNumber || 'N/A'}
+              </span>
+            </div>
+          ) : (
+            <div className="family-detail-input-group">
+              <label htmlFor="panNumber" className="family-detail-label">Number:</label>
+              <input
+                type="text"
+                id="panNumber"
+                name="panNumber"
+                value={tempInputData.panNumber || formData.panNumber}
+                onChange={handleInputChange}
+                className="family-detail-text-input"
+              />
+            </div>
+          )
+        )}
+        {fieldName === 'birth_certificate_document' && (
+          <div className="family-detail-input-group">
+          </div>
+        )}
+        {showButtons && (
+          <div className="family-detail-button-group">
+            <button
+              type="button"
+              className="family-detail-save-button"
+              onClick={() => handleSaveCard(fieldName)}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              className="family-detail-cancel-button"
+              onClick={() => handleCancelCard(fieldName)}
+            >
+              Cancel
+            </button>
           </div>
         )}
       </div>
-      {/* File Upload Section */}
-      {formData[fieldName] ? (
-        <div className="family-detail-file-container">
-          <img
-            src={getFileIcon(formData[fieldName])}
-            alt={`${label} Icon`}
-            className="family-detail-file-icon"
-          />
-          <span
-            className={`family-detail-file-name ${isFilled ? 'family-detail-text-filled' : ''}`}
-            onClick={() => handlePreview(formData[fieldName])}
-          >
-            {typeof formData[fieldName] === 'object' ? formData[fieldName].name : formData[fieldName].split('/').pop()}
-          </span>
-          <img
-            src={CrossIcon}
-            alt="Delete Icon"
-            className="family-detail-delete-icon"
-            onClick={() => handleDeleteFile(fieldName)}
-          />
-        </div>
-      ) : (
-        <div className="family-detail-card-upload">
-          <img src={UploadIcon} alt="Upload Icon" className="family-upload-icon" />
-          <div className="upload-text-group">
-            <p>Drag and drop files here</p>
-            <p>OR</p>
-            <p>Browse files</p>
-          </div>
-          <input
-            type="file"
-            name={fieldName}
-            className="family-detail-card-input"
-            onChange={handleFileChange}
-          />
-        </div>
-      )}
-      {/* Input Fields Section */}
-      {fieldName === 'driver_license_document' && (
-        (isFilled && !editMode[fieldName]) ? (
-          <>
-            <div className="family-detail-two-column-group">
-              <div className="family-detail-input-group">
-                <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-                  Number:
-                </label>
-                <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
-                  {formData.driver_license_number || 'N/A'}
-                </span>
-              </div>
-              <div className="family-detail-input-group">
-                <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-                  State Issued:
-                </label>
-                <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
-                  {formData.driverLicenseStateIssued || 'N/A'}
-                </span>
-              </div>
-            </div>
-            <div className="family-detail-input-group family-detail-single-column">
-              <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-                Expiration Date:
-              </label>
-              <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
-                {formData.driver_license_expiration ? formatDisplayDate(formData.driver_license_expiration) : 'N/A'}
-              </span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="family-detail-two-column-group">
-              <div className="family-detail-input-group">
-                <label htmlFor="driver_license_number" className="family-detail-label">Number:</label>
-                <input
-                  type="text"
-                  id="driver_license_number"
-                  name="driver_license_number"
-                  value={tempInputData.driver_license_number || formData.driver_license_number}
-                  onChange={handleInputChange}
-                  className="family-detail-text-input"
-                />
-              </div>
-              <div className="family-detail-input-group">
-                <label htmlFor="driverLicenseStateIssued" className="family-detail-label">State Issued:</label>
-                <input
-                  type="text"
-                  id="driverLicenseStateIssued"
-                  name="driverLicenseStateIssued"
-                  value={tempInputData.driverLicenseStateIssued || formData.driverLicenseStateIssued}
-                  onChange={handleInputChange}
-                  className="family-detail-text-input"
-                />
-              </div>
-            </div>
-            <div className="family-detail-input-group family-detail-single-column">
-              <label htmlFor="driver_license_expiration" className="family-detail-label">Expiration Date:</label>
-              <input
-                type="date"
-                id="driver_license_expiration"
-                name="driver_license_expiration"
-                value={
-                  tempInputData.driver_license_expiration
-                    ? tempInputData.driver_license_expiration.split("T")[0]
-                    : formData.driver_license_expiration
-                      ? formData.driver_license_expiration.split("T")[0]
-                      : ''
-                }
-                onChange={handleInputChange}
-                className="family-detail-text-input"
-              />
-            </div>
-          </>
-        )
-      )}
-      {fieldName === 'passport_document' && (
-        (isFilled && !editMode[fieldName]) ? (
-          <>
-            <div className="family-detail-two-column-group">
-              <div className="family-detail-input-group">
-                <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-                  Number:
-                </label>
-                <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
-                  {formData.passport_number || 'N/A'}
-                </span>
-              </div>
-              <div className="family-detail-input-group">
-                <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-                  State Issued:
-                </label>
-                <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
-                  {formData.passportStateIssued || 'N/A'}
-                </span>
-              </div>
-            </div>
-            <div className="family-detail-input-group family-detail-single-column">
-              <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-                Expiration Date:
-              </label>
-              <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
-                {formData.passportExpiration ? formatDisplayDate(formData.passportExpiration) : 'N/A'}
-              </span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="family-detail-two-column-group">
-              <div className="family-detail-input-group">
-                <label htmlFor="passport_number" className="family-detail-label">Number:</label>
-                <input
-                  type="text"
-                  id="passport_number"
-                  name="passport_number"
-                  value={tempInputData.passport_number || formData.passport_number}
-                  onChange={handleInputChange}
-                  className="family-detail-text-input"
-                />
-              </div>
-              <div className="family-detail-input-group">
-                <label htmlFor="passportStateIssued" className="family-detail-label">Country Issued:</label>
-                <input
-                  type="text"
-                  id="passportStateIssued"
-                  name="passportStateIssued"
-                  value={tempInputData.passportStateIssued || formData.passportStateIssued}
-                  onChange={handleInputChange}
-                  className="family-detail-text-input"
-                />
-              </div>
-            </div>
-            <div className="family-detail-input-group family-detail-single-column">
-              <label htmlFor="passportExpiration" className="family-detail-label">Expiration Date:</label>
-              <input
-                type="date"
-                id="passportExpiration"
-                name="passportExpiration"
-                value={
-                  tempInputData.passportExpiration
-                    ? tempInputData.passportExpiration.split("T")[0]
-                    : formData.passportExpiration
-                      ? formData.passportExpiration.split("T")[0]
-                      : ''
-                }
-                onChange={handleInputChange}
-                className="family-detail-text-input"
-              />
-            </div>
-          </>
-        )
-      )}
-      {fieldName === 'aadhaar_card_document' && (
-        (isFilled && !editMode[fieldName]) ? (
-          <div className="family-detail-input-group">
-            <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-              Number:
-            </label>
-            <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
-              {formData.aadhaarNumber || 'N/A'}
-            </span>
-          </div>
-        ) : (
-          <div className="family-detail-input-group">
-            <label htmlFor="aadhaarNumber" className="family-detail-label">Number:</label>
-            <input
-              type="text"
-              id="aadhaarNumber"
-              name="aadhaarNumber"
-              value={tempInputData.aadhaarNumber || formData.aadhaarNumber}
-              onChange={handleInputChange}
-              className="family-detail-text-input"
-            />
-          </div>
-        )
-      )}
-      {fieldName === 'pan_card_document' && (
-        (isFilled && !editMode[fieldName]) ? (
-          <div className="family-detail-input-group">
-            <label className={`family-detail-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
-              Number:
-            </label>
-            <span className={`family-detail-text ${isFilled ? 'family-detail-text-filled' : ''}`}>
-        {formData.panNumber || 'N/A'}
-      </span>
-          </div>
-        ) : (
-          <div className="family-detail-input-group">
-            <label htmlFor="panNumber" className="family-detail-label">Number:</label>
-            <input
-              type="text"
-              id="panNumber"
-              name="panNumber"
-              value={tempInputData.panNumber || formData.panNumber}
-              onChange={handleInputChange}
-              className="family-detail-text-input"
-            />
-          </div>
-        )
-      )}
-      {fieldName === 'birth_certificate_document' && (
-        <div className="family-detail-input-group">
-          {/* Birth Certificate has no input fields */}
-        </div>
-      )}
-      {showButtons && (
-        <div className="family-detail-button-group">
-          <button
-            type="button"
-            className="family-detail-save-button"
-            onClick={() => handleSaveCard(fieldName)}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            className="family-detail-cancel-button"
-            onClick={() => handleCancelCard(fieldName)}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
+    );
+  };
 
   const renderOtherDocumentCard = (doc, index) => {
     const isFilled = isCardFilled(null, doc);
@@ -1281,7 +1380,6 @@ const FamilyDetail = () => {
             </div>
           )}
         </div>
-        {/* File Upload Section */}
         {doc.other_file ? (
           <div className="family-detail-file-container">
             <img
@@ -1304,7 +1402,7 @@ const FamilyDetail = () => {
           </div>
         ) : (
           <div className="family-detail-card-upload">
-            <img src={UploadIcon} alt="Upload Icon" className="family-upload-icon" />
+            <img src={UploadIcon} alt="Upload Icon" className="family-detail-upload-icon" />
             <div className="upload-text-group">
               <p>Drag and drop files here</p>
               <p>OR</p>
@@ -1318,7 +1416,6 @@ const FamilyDetail = () => {
             />
           </div>
         )}
-        {/* Input Fields Section */}
         {(isFilled && !editMode[`other_document_${index}`]) ? (
           <>
             <div className="family-detail-two-column-group">
@@ -1548,10 +1645,6 @@ const FamilyDetail = () => {
     );
   };
 
-  if (loading) {
-    return <div className="family-detail-loading">Loading...</div>;
-  }
-
   const EmergencyContactPopup = () => {
     if (!showEmergencyPopup) return null;
 
@@ -1584,6 +1677,10 @@ const FamilyDetail = () => {
       </div>
     );
   };
+
+  if (loading) {
+    return <div className="family-detail-loading">Loading...</div>;
+  }
 
   return (
     <div className="family-detail-page">
@@ -1654,18 +1751,13 @@ const FamilyDetail = () => {
             {renderDocumentCard('pan_card_document', 'PAN')}
             {renderDocumentCard('birth_certificate_document', 'Birth Certificate')}
             {renderNotesCard()}
-
-
             {renderBirthdayCard()}
-
-
-
             {formData.otherDocuments.map((doc, index) => renderOtherDocumentCard(doc, index))}
           </div>
         </form>
       </div>
       <PreviewPopup />
-      <EmergencyContactPopup /> {/* Added */}
+      <EmergencyContactPopup />
     </div>
   );
 };

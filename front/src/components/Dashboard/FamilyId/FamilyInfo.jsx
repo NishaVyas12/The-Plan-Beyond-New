@@ -4,6 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { Country, State, City } from 'country-state-city';
 import './FamilyInfo.css';
 import addPersonImage from '../../../assets/images/dash_icon/family_icon.svg';
 import cameraIcon from "../../../assets/images/dash_icon/camera.svg";
@@ -51,7 +52,122 @@ const FamilyInfo = () => {
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const [optionsMenu, setOptionsMenu] = useState(null);
+  // New state for country-state-city dropdowns
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [isStateDropdownOpen, setIsStateDropdownOpen] = useState(false);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [stateSearch, setStateSearch] = useState('');
+  const [citySearch, setCitySearch] = useState('');
+  const [filteredCountries, setFilteredCountries] = useState([]);
+  const [filteredStates, setFilteredStates] = useState([]);
+  const [filteredCities, setFilteredCities] = useState([]);
   const navigate = useNavigate();
+
+  // Initialize country data
+  useEffect(() => {
+    const countries = Country.getAllCountries().map(country => ({
+      name: country.name,
+      isoCode: country.isoCode,
+    }));
+    setFilteredCountries(countries);
+  }, []);
+
+  // Update states when country changes
+  useEffect(() => {
+    if (formData.country) {
+      const country = Country.getAllCountries().find(c => c.name === formData.country);
+      if (country) {
+        const states = State.getStatesOfCountry(country.isoCode).map(state => ({
+          name: state.name,
+          isoCode: state.isoCode,
+        }));
+        setFilteredStates(states);
+      } else {
+        setFilteredStates([]);
+      }
+      setFormData(prev => ({ ...prev, state: '', city: '' }));
+      setFilteredCities([]);
+    }
+  }, [formData.country]);
+
+  // Update cities when state changes
+  useEffect(() => {
+    if (formData.country && formData.state) {
+      const country = Country.getAllCountries().find(c => c.name === formData.country);
+      const state = State.getStatesOfCountry(country?.isoCode).find(s => s.name === formData.state);
+      if (country && state) {
+        const cities = City.getCitiesOfState(country.isoCode, state.isoCode).map(city => ({
+          name: city.name,
+        }));
+        setFilteredCities(cities);
+      } else {
+        setFilteredCities([]);
+      }
+      setFormData(prev => ({ ...prev, city: '' }));
+    }
+  }, [formData.country, formData.state]);
+
+  // Filter countries based on search
+  useEffect(() => {
+    const countries = Country.getAllCountries().map(country => ({
+      name: country.name,
+      isoCode: country.isoCode,
+    }));
+    if (countrySearch) {
+      setFilteredCountries(
+        countries.filter(country =>
+          country.name.toLowerCase().includes(countrySearch.toLowerCase())
+        )
+      );
+    } else {
+      setFilteredCountries(countries);
+    }
+  }, [countrySearch]);
+
+  // Filter states based on search
+  useEffect(() => {
+    if (formData.country) {
+      const country = Country.getAllCountries().find(c => c.name === formData.country);
+      if (country) {
+        const states = State.getStatesOfCountry(country.isoCode).map(state => ({
+          name: state.name,
+          isoCode: state.isoCode,
+        }));
+        if (stateSearch) {
+          setFilteredStates(
+            states.filter(state =>
+              state.name.toLowerCase().includes(stateSearch.toLowerCase())
+            )
+          );
+        } else {
+          setFilteredStates(states);
+        }
+      }
+    }
+  }, [stateSearch, formData.country]);
+
+  // Filter cities based on search
+  useEffect(() => {
+    if (formData.country && formData.state) {
+      const country = Country.getAllCountries().find(c => c.name === formData.country);
+      const state = State.getStatesOfCountry(country?.isoCode).find(s => s.name === formData.state);
+      if (country && state) {
+        const cities = City.getCitiesOfState(country.isoCode, state.isoCode).map(city => ({
+          name: city.name,
+        }));
+        if (citySearch) {
+          setFilteredCities(
+            cities.filter(city =>
+              city.name.toLowerCase().includes(citySearch.toLowerCase())
+            )
+          );
+        } else {
+          setFilteredCities(cities);
+        }
+      }
+    }
+  }, [citySearch, formData.country, formData.state]);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -263,6 +379,12 @@ const FamilyInfo = () => {
     setShowPhone2(false);
     setFilteredContacts([]);
     setImagePreview(null);
+    setCountrySearch('');
+    setStateSearch('');
+    setCitySearch('');
+    setIsCountryDropdownOpen(false);
+    setIsStateDropdownOpen(false);
+    setIsCityDropdownOpen(false);
     setFormData({
       firstName: '',
       middleName: '',
@@ -756,10 +878,10 @@ const FamilyInfo = () => {
                     style={
                       imagePreview
                         ? {
-                            backgroundImage: `url(${imagePreview})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }
+                          backgroundImage: `url(${imagePreview})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                        }
                         : { backgroundColor: '#DAE8E8' }
                     }
                   >
@@ -791,353 +913,432 @@ const FamilyInfo = () => {
                 </label>
               </div>
             </div>
-          <div className="family-id-add-contact-form-group full-width">
-            <label className="family-id-add-contact-form-label">Search Contact</label>
-            <input
-              type="text"
-              className="family-id-add-contact-form-input"
-              placeholder="Search existing contacts"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-            />
-            {isSearchFocused && (
-              <div className="family-id-contact-search-dropdown">
-                {(searchQuery ? filteredContacts : contacts).map((contact) => (
-                  <div
-                    key={contact.id}
-                    className="family-id-contact-search-option"
-                    onClick={() => handleSelectContact(contact)}
+            <div className="family-id-add-contact-form-group full-width">
+              <label className="family-id-add-contact-form-label">Search Contact</label>
+              <input
+                type="text"
+                className="family-id-add-contact-form-input"
+                placeholder="Search existing contacts"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+              />
+              {isSearchFocused && (
+                <div className="family-id-contact-search-dropdown">
+                  {(searchQuery ? filteredContacts : contacts).map((contact) => (
+                    <div
+                      key={contact.id}
+                      className="family-id-contact-search-option"
+                      onClick={() => handleSelectContact(contact)}
+                    >
+                      {contact.name} ({contact.phone})
+                    </div>
+                  ))}
+                  {(searchQuery ? filteredContacts : contacts).length === 0 && (
+                    <div className="family-id-contact-search-option">
+                      No contacts found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="family-id-add-contact-form-row">
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  className="family-id-add-contact-form-input"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                />
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Middle Name</label>
+                <input
+                  type="text"
+                  name="middleName"
+                  className="family-id-add-contact-form-input"
+                  value={formData.middleName}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                />
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  className="family-id-add-contact-form-input"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="family-id-add-contact-form-row">
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Nickname</label>
+                <input
+                  type="text"
+                  name="nickname"
+                  className="family-id-add-contact-form-input"
+                  value={formData.nickname}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                />
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  className="family-id-add-contact-form-input"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                />
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Birthday</label>
+                <input
+                  type="date"
+                  name="birthday"
+                  className="family-id-add-contact-form-input"
+                  value={formData.birthday}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                />
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Relation</label>
+                <input
+                  type="text"
+                  name="relation"
+                  className="family-id-add-contact-form-input"
+                  value={formData.relation}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                  placeholder="e.g., Mother, Father, Sibling"
+                />
+              </div>
+            </div>
+            <div className="family-id-add-contact-form-row">
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Phone</label>
+                <PhoneInput
+                  country="in"
+                  value={formData.phone}
+                  onChange={(phone) => handleInputChange('phone', phone)}
+                  inputClass="family-id-add-contact-form-input"
+                  containerClass="family-id-add-contact-phone-input-container"
+                  enableSearch
+                  disableDropdown={false}
+                />
+              </div>
+              {showPhone1 && (
+                <div className="family-id-add-contact-form-group">
+                  <label className="family-id-add-contact-form-label">Phone Number 1</label>
+                  <PhoneInput
+                    country="in"
+                    value={formData.phoneNumber1}
+                    onChange={(phone) => handleInputChange('phoneNumber1', phone)}
+                    inputClass="family-id-add-contact-form-input"
+                    containerClass="family-id-add-contact-phone-input-container"
+                    enableSearch
+                    disableDropdown={false}
+                  />
+                </div>
+              )}
+              {showPhone2 && (
+                <div className="family-id-add-contact-form-group">
+                  <label className="family-id-add-contact-form-label">Phone Number 2</label>
+                  <PhoneInput
+                    country="in"
+                    value={formData.phoneNumber2}
+                    onChange={(phone) => handleInputChange('phoneNumber2', phone)}
+                    inputClass="family-id-add-contact-form-input"
+                    containerClass="family-id-add-contact-phone-input-container"
+                    enableSearch
+                    disableDropdown={false}
+                  />
+                </div>
+              )}
+              {(!showPhone1 || !showPhone2) && (
+                <div className="family-id-add-contact-form-group full-width">
+                  <button
+                    type="button"
+                    className="family-id-add-contact-form-button add-number"
+                    onClick={handleAddPhoneNumber}
                   >
-                    {contact.name} ({contact.phone})
-                  </div>
-                ))}
-                {(searchQuery ? filteredContacts : contacts).length === 0 && (
-                  <div className="family-id-contact-search-option">
-                    No contacts found
+                    + Add Another Number
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="family-id-add-contact-form-row">
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Flat/Building No</label>
+                <input
+                  type="text"
+                  name="flatBuildingNo"
+                  className="family-id-add-contact-form-input"
+                  value={formData.flatBuildingNo}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                />
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Street</label>
+                <input
+                  type="text"
+                  name="street"
+                  className="family-id-add-contact-form-input"
+                  value={formData.street}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
+                />
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Country</label>
+                <input
+                  type="text"
+                  className="family-id-add-contact-form-input"
+                  value={formData.country}
+                  onChange={(e) => {
+                    setCountrySearch(e.target.value);
+                    handleInputChange('country', e.target.value);
+                  }}
+                  onFocus={() => setIsCountryDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsCountryDropdownOpen(false), 200)}
+                />
+                {isCountryDropdownOpen && (
+                  <div className="family-id-contact-search-dropdown">
+                    {filteredCountries.map((country) => (
+                      <div
+                        key={country.isoCode}
+                        className="family-id-contact-search-option"
+                        onClick={() => {
+                          handleInputChange('country', country.name);
+                          setCountrySearch('');
+                          setIsCountryDropdownOpen(false);
+                        }}
+                      >
+                        {country.name}
+                      </div>
+                    ))}
+                    {filteredCountries.length === 0 && (
+                      <div className="family-id-contact-search-option">
+                        No countries found
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-          <div className="family-id-add-contact-form-row">
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                className="family-id-add-contact-form-input"
-                value={formData.firstName}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
             </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Middle Name</label>
-              <input
-                type="text"
-                name="middleName"
-                className="family-id-add-contact-form-input"
-                value={formData.middleName}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                className="family-id-add-contact-form-input"
-                value={formData.lastName}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="family-id-add-contact-form-row">
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Nickname</label>
-              <input
-                type="text"
-                name="nickname"
-                className="family-id-add-contact-form-input"
-                value={formData.nickname}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Email</label>
-              <input
-                type="email"
-                name="email"
-                className="family-id-add-contact-form-input"
-                value={formData.email}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Birthday</label>
-              <input
-                type="date"
-                name="birthday"
-                className="family-id-add-contact-form-input"
-                value={formData.birthday}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Relation</label>
-              <input
-                type="text"
-                name="relation"
-                className="family-id-add-contact-form-input"
-                value={formData.relation}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-                placeholder="e.g., Mother, Father, Sibling"
-              />
-            </div>
-          </div>
-          <div className="family-id-add-contact-form-row">
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Phone</label>
-              <PhoneInput
-                country="in"
-                value={formData.phone}
-                onChange={(phone) => handleInputChange('phone', phone)}
-                inputClass="family-id-add-contact-form-input"
-                containerClass="family-id-add-contact-phone-input-container"
-                enableSearch
-                disableDropdown={false}
-              />
-            </div>
-            {showPhone1 && (
+            <div className="family-id-add-contact-form-row">
               <div className="family-id-add-contact-form-group">
-                <label className="family-id-add-contact-form-label">Phone Number 1</label>
-                <PhoneInput
-                  country="in"
-                  value={formData.phoneNumber1}
-                  onChange={(phone) => handleInputChange('phoneNumber1', phone)}
-                  inputClass="family-id-add-contact-form-input"
-                  containerClass="family-id-add-contact-phone-input-container"
-                  enableSearch
-                  disableDropdown={false}
+                <label className="family-id-add-contact-form-label">State</label>
+                <input
+                  type="text"
+                  className="family-id-add-contact-form-input"
+                  value={formData.state}
+                  onChange={(e) => {
+                    setStateSearch(e.target.value);
+                    handleInputChange('state', e.target.value);
+                  }}
+                  onFocus={() => setIsStateDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsStateDropdownOpen(false), 200)}
+                  disabled={!formData.country}
+                />
+                {isStateDropdownOpen && formData.country && (
+                  <div className="family-id-contact-search-dropdown">
+                    {filteredStates.map((state) => (
+                      <div
+                        key={state.isoCode}
+                        className="family-id-contact-search-option"
+                        onClick={() => {
+                          handleInputChange('state', state.name);
+                          setStateSearch('');
+                          setIsStateDropdownOpen(false);
+                        }}
+                      >
+                        {state.name}
+                      </div>
+                    ))}
+                    {filteredStates.length === 0 && (
+                      <div className="family-id-contact-search-option">
+                        No states found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">City</label>
+                <input
+                  type="text"
+                  className="family-id-add-contact-form-input"
+                  value={formData.city}
+                  onChange={(e) => {
+                    setCitySearch(e.target.value);
+                    handleInputChange('city', e.target.value);
+                  }}
+                  onFocus={() => setIsCityDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsCityDropdownOpen(false), 200)}
+                  disabled={!formData.state}
+                />
+                {isCityDropdownOpen && formData.country && formData.state && (
+                  <div className="family-id-contact-search-dropdown">
+                    {filteredCities.map((city) => (
+                      <div
+                        key={city.name}
+                        className="family-id-contact-search-option"
+                        onClick={() => {
+                          handleInputChange('city', city.name);
+                          setCitySearch('');
+                          setIsCityDropdownOpen(false);
+                        }}
+                      >
+                        {city.name}
+                      </div>
+                    ))}
+                    {filteredCities.length === 0 && (
+                      <div className="family-id-contact-search-option">
+                        No cities found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="family-id-add-contact-form-group">
+                <label className="family-id-add-contact-form-label">Zipcode</label>
+                <input
+                  type="text"
+                  name="zipcode"
+                  className="family-id-add-contact-form-input"
+                  value={formData.zipcode}
+                  onChange={(e) => handleInputChange(e.target.name, e.target.value)}
                 />
               </div>
-            )}
-            {showPhone2 && (
-              <div className="family-id-add-contact-form-group">
-                <label className="family-id-add-contact-form-label">Phone Number 2</label>
-                <PhoneInput
-                  country="in"
-                  value={formData.phoneNumber2}
-                  onChange={(phone) => handleInputChange('phoneNumber2', phone)}
-                  inputClass="family-id-add-contact-form-input"
-                  containerClass="family-id-add-contact-phone-input-container"
-                  enableSearch
-                  disableDropdown={false}
-                />
-              </div>
-            )}
-            {(!showPhone1 || !showPhone2) && (
-              <div className="family-id-add-contact-form-group full-width">
-                <button
-                  type="button"
-                  className="family-id-add-contact-form-button add-number"
-                  onClick={handleAddPhoneNumber}
-                >
-                  + Add Another Number
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="family-id-add-contact-form-row">
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Flat/Building No</label>
-              <input
-                type="text"
-                name="flatBuildingNo"
-                className="family-id-add-contact-form-input"
-                value={formData.flatBuildingNo}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
             </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Street</label>
-              <input
-                type="text"
-                name="street"
-                className="family-id-add-contact-form-input"
-                value={formData.street}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
+            <div className="family-id-add-contact-form-actions">
+              <button className="family-id-add-contact-form-button cancel" onClick={handleCloseDrawer}>
+                Cancel
+              </button>
+              <button className="family-id-add-contact-form-button save" onClick={handleSave}>
+                Save
+              </button>
             </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Country</label>
-              <input
-                type="text"
-                name="country"
-                className="family-id-add-contact-form-input"
-                value={formData.country}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="family-id-add-contact-form-row">
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">State</label>
-              <input
-                type="text"
-                name="state"
-                className="family-id-add-contact-form-input"
-                value={formData.state}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">City</label>
-              <input
-                type="text"
-                name="city"
-                className="family-id-add-contact-form-input"
-                value={formData.city}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Zipcode</label>
-              <input
-                type="text"
-                name="zipcode"
-                className="family-id-add-contact-form-input"
-                value={formData.zipcode}
-                onChange={(e) => handleInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="family-id-add-contact-form-actions">
-            <button className="family-id-add-contact-form-button cancel" onClick={handleCloseDrawer}>
-              Cancel
-            </button>
-            <button className="family-id-add-contact-form-button save" onClick={handleSave}>
-              Save
-            </button>
           </div>
         </div>
-      </div>
-      <div
-        className="family-id-add-contact-drawer-backdrop"
-        style={{ display: isPetDrawerOpen ? 'block' : 'none' }}
-        onClick={handleClosePetDrawer}
-      ></div>
-      <div className={`family-id-add-contact-drawer ${isPetDrawerOpen ? 'open' : ''}`}>
-        <div className="family-id-add-contact-drawer-top">
-          <button className="family-id-add-contact-drawer-close" onClick={handleClosePetDrawer}>
-            ×
-          </button>
-        </div>
-        <div className="family-id-add-contact-drawer-divider"></div>
-        <h2 className="family-id-add-contact-drawer-heading">Add Pet</h2>
-        <div className="family-id-add-contact-form-content">
-          <div className="nominee-add-form-row">
-            <div className="nominee-add-field-group full-width">
-              <div className="nominee-add-profile-section">
-                <div className="nominee-add-avatar-wrapper-add-nominee">
-                  <div
-                    className="nominee-add-avatar-add-nominee"
-                    style={
-                      imagePreview
-                        ? {
+        <div
+          className="family-id-add-contact-drawer-backdrop"
+          style={{ display: isPetDrawerOpen ? 'block' : 'none' }}
+          onClick={handleClosePetDrawer}
+        ></div>
+        <div className={`family-id-add-contact-drawer ${isPetDrawerOpen ? 'open' : ''}`}>
+          <div className="family-id-add-contact-drawer-top">
+            <button className="family-id-add-contact-drawer-close" onClick={handleClosePetDrawer}>
+              ×
+            </button>
+          </div>
+          <div className="family-id-add-contact-drawer-divider"></div>
+          <h2 className="family-id-add-contact-drawer-heading">Add Pet</h2>
+          <div className="family-id-add-contact-form-content">
+            <div className="nominee-add-form-row">
+              <div className="nominee-add-field-group full-width">
+                <div className="nominee-add-profile-section">
+                  <div className="nominee-add-avatar-wrapper-add-nominee">
+                    <div
+                      className="nominee-add-avatar-add-nominee"
+                      style={
+                        imagePreview
+                          ? {
                             backgroundImage: `url(${imagePreview})`,
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                           }
-                        : { backgroundColor: "#DAE8E8" }
-                    }
-                  >
-                    <label
-                      htmlFor="avatar-upload-form"
-                      className="nominee-add-avatar-upload"
+                          : { backgroundColor: "#DAE8E8" }
+                      }
                     >
-                      <img
-                        src={cameraIcon}
-                        alt="Camera"
-                        className="nominee-add-camera-icon"
-                      />
-                      <input
-                        type="file"
-                        id="avatar-upload-form"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={(e) => handleImageUpload(e, true)}
-                      />
-                    </label>
+                      <label
+                        htmlFor="avatar-upload-form"
+                        className="nominee-add-avatar-upload"
+                      >
+                        <img
+                          src={cameraIcon}
+                          alt="Camera"
+                          className="nominee-add-camera-icon"
+                        />
+                        <input
+                          type="file"
+                          id="avatar-upload-form"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => handleImageUpload(e, true)}
+                        />
+                      </label>
+                    </div>
                   </div>
+                  <label
+                    htmlFor="avatar-upload-form"
+                    className="nominee-add-profile-label"
+                    style={{ cursor: "pointer" }}
+                  >
+                    {imagePreview ? 'Change Photo' : 'Add Photo'}
+                  </label>
                 </div>
-                <label
-                  htmlFor="avatar-upload-form"
-                  className="nominee-add-profile-label"
-                  style={{ cursor: "pointer" }}
-                >
-                  {imagePreview ? 'Change Photo' : 'Add Photo'}
-                </label>
+              </div>
+              <div className="family-id-add-contact-form-row">
+                <div className="family-id-add-contact-form-group">
+                  <label className="family-id-add-contact-form-label">Pet Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    className="family-id-add-contact-form-input"
+                    value={petFormData.name}
+                    onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+                  />
+                </div>
+                <div className="family-id-add-contact-form-group">
+                  <label className="family-id-add-contact-form-label">Pet Type</label>
+                  <input
+                    type="text"
+                    name="type"
+                    className="family-id-add-contact-form-input"
+                    value={petFormData.type}
+                    onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+                    placeholder="e.g., Dog, Cat"
+                  />
+                </div>
+                <div className="family-id-add-contact-form-group">
+                  <label className="family-id-add-contact-form-label">Breed</label>
+                  <input
+                    type="text"
+                    name="breed"
+                    className="family-id-add-contact-form-input"
+                    value={petFormData.breed}
+                    onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+                  />
+                </div>
+                <div className="family-id-add-contact-form-group">
+                  <label className="family-id-add-contact-form-label">Birthday</label>
+                  <input
+                    type="date"
+                    name="birthday"
+                    className="family-id-add-contact-form-input"
+                    value={petFormData.birthday}
+                    onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="family-id-add-contact-form-actions">
+                <button className="family-id-add-contact-form-button cancel" onClick={handleClosePetDrawer}>
+                  Cancel
+                </button>
+                <button className="family-id-add-contact-form-button save" onClick={handleSavePet}>
+                  Save
+                </button>
               </div>
             </div>
-          <div className="family-id-add-contact-form-row">
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Pet Name</label>
-              <input
-                type="text"
-                name="name"
-                className="family-id-add-contact-form-input"
-                value={petFormData.name}
-                onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Pet Type</label>
-              <input
-                type="text"
-                name="type"
-                className="family-id-add-contact-form-input"
-                value={petFormData.type}
-                onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
-                placeholder="e.g., Dog, Cat"
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Breed</label>
-              <input
-                type="text"
-                name="breed"
-                className="family-id-add-contact-form-input"
-                value={petFormData.breed}
-                onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-            <div className="family-id-add-contact-form-group">
-              <label className="family-id-add-contact-form-label">Birthday</label>
-              <input
-                type="date"
-                name="birthday"
-                className="family-id-add-contact-form-input"
-                value={petFormData.birthday}
-                onChange={(e) => handlePetInputChange(e.target.name, e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="family-id-add-contact-form-actions">
-            <button className="family-id-add-contact-form-button cancel" onClick={handleClosePetDrawer}>
-              Cancel
-            </button>
-            <button className="family-id-add-contact-form-button save" onClick={handleSavePet}>
-              Save
-            </button>
           </div>
         </div>
-        </div>
-        </div>
-        </div>
-        </div>
-      
+      </div>
+    </div>
   );
 };
 

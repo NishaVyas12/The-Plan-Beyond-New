@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Select from 'react-select';
 import './FamilyDetail.css';
 import UploadIcon from '../../../assets/images/dash_icon/upload.svg';
 import ImageIcon from '../../../assets/images/dash_icon/image.svg';
@@ -45,7 +47,114 @@ const PetDetails = () => {
     const [openDropdownId, setOpenDropdownId] = useState(null);
     const [editMode, setEditMode] = useState({});
     const [fileInputKey, setFileInputKey] = useState(Date.now());
+    const [contacts, setContacts] = useState([]);
+    const [nominees, setNominees] = useState([]);
     const cardRefs = useRef({});
+
+    useEffect(() => {
+        const fetchPet = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${id}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const fetchedData = {
+                        name: data.pet.name || '',
+                        birthday: data.pet.birthday || '',
+                        insurance_document: data.pet.insurance_document || null,
+                        insurance_provider: data.pet.insurance_provider || '',
+                        policy_number: data.pet.policy_number || '',
+                        policy_holder: data.pet.policy_holder || '',
+                        company_name: data.pet.company_name || '',
+                        agent_contact: data.pet.agent_contact || '',
+                        nominee_name: data.pet.nominee_name || '',
+                        insurance_issued: data.pet.insurance_issued || '',
+                        insurance_expiration: data.pet.insurance_expiration || '',
+                        notes: data.pet.notes || '',
+                        breed: data.pet.breed || '',
+                        photo: data.pet.photo || '',
+                        tag_document: data.pet.tag_document || null,
+                        tag_number: data.pet.tag_number || '',
+                        tag_type: data.pet.tag_type || '',
+                        vet_document: data.pet.vet_document || null,
+                        vet_clinic_name: data.pet.vet_clinic_name || '',
+                        vet_contact_info: data.pet.vet_contact_info || '',
+                        vaccine_date: data.pet.vaccine_date || '',
+                    };
+                    setFormData(fetchedData);
+                    setInitialFormData(fetchedData);
+                } else {
+                    handleApiError(response, data, 'Failed to fetch pet details.');
+                }
+            } catch (err) {
+                handleNetworkError(err, 'Error fetching pet details.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const fetchContacts = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await response.json();
+                if (data.success) {
+                    setContacts(data.contacts.map(contact => ({
+                        value: contact.name,
+                        label: contact.name,
+                    })));
+                } else {
+                    toast.error('Failed to fetch contacts.', {
+                        position: 'top-right',
+                        autoClose: 3000,
+                    });
+                }
+            } catch (err) {
+                toast.error('Error fetching contacts.', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+            }
+        };
+
+        const fetchNominees = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await response.json();
+                if (data.success) {
+                    setNominees(data.nominees.map(nominee => ({
+                        value: nominee.first_name,
+                        label: nominee.first_name,
+                    })));
+                } else {
+                    toast.error('Failed to fetch nominees.', {
+                        position: 'top-right',
+                        autoClose: 3000,
+                    });
+                }
+            } catch (err) {
+                toast.error('Error fetching nominees.', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+            }
+        };
+
+        fetchPet();
+        fetchContacts();
+        fetchNominees();
+    }, [id, navigate]);
 
     const handleSaveCard = async (fieldName) => {
         setCardLoading((prev) => ({ ...prev, [fieldName]: true }));
@@ -66,8 +175,8 @@ const PetDetails = () => {
                 policy_number: tempInputData.policy_number || formData.policy_number,
                 policy_holder: tempInputData.policy_holder || formData.policy_holder,
                 company_name: tempInputData.company_name || formData.company_name,
-                agent_contact: tempInputData.agent_contact || formData.agent_contact,
-                nominee_name: tempInputData.nominee_name || formData.nominee_name,
+                agent_contact: tempInputData.agent_contact?.value || formData.agent_contact || '',
+                nominee_name: tempInputData.nominee_name?.value || formData.nominee_name || '',
                 insurance_issued: tempInputData.insurance_issued
                     ? tempInputData.insurance_issued.split("T")[0]
                     : formData.insurance_issued || '',
@@ -101,7 +210,6 @@ const PetDetails = () => {
             formDataToSend.append(fieldName, tempInputData[fieldName]);
         }
 
-        // Log the FormData contents for debugging
         console.log('Sending FormData for save:', Object.fromEntries(formDataToSend));
 
         try {
@@ -186,7 +294,6 @@ const PetDetails = () => {
         formDataToSend.append('name', formData.name);
         formDataToSend.append(fieldName, '');
 
-        // Log the FormData contents for debugging
         console.log('Sending FormData for delete:', Object.fromEntries(formDataToSend));
 
         try {
@@ -255,7 +362,6 @@ const PetDetails = () => {
             formDataToSend.append(key, value);
         });
 
-        // Log the FormData contents for debugging
         console.log('Sending FormData for card delete:', Object.fromEntries(formDataToSend));
 
         try {
@@ -320,54 +426,6 @@ const PetDetails = () => {
             return 'dd/mm/yyyy';
         }
     };
-
-    useEffect(() => {
-        const fetchPet = async () => {
-            setLoading(true);
-            try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${id}`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                });
-                const data = await response.json();
-                if (data.success) {
-                    const fetchedData = {
-                        name: data.pet.name || '',
-                        birthday: data.pet.birthday || '',
-                        insurance_document: data.pet.insurance_document || null,
-                        insurance_provider: data.pet.insurance_provider || '',
-                        policy_number: data.pet.policy_number || '',
-                        policy_holder: data.pet.policy_holder || '',
-                        company_name: data.pet.company_name || '',
-                        agent_contact: data.pet.agent_contact || '',
-                        nominee_name: data.pet.nominee_name || '',
-                        insurance_issued: data.pet.insurance_issued || '',
-                        insurance_expiration: data.pet.insurance_expiration || '',
-                        notes: data.pet.notes || '',
-                        breed: data.pet.breed || '',
-                        photo: data.pet.photo || '',
-                        tag_document: data.pet.tag_document || null,
-                        tag_number: data.pet.tag_number || '',
-                        tag_type: data.pet.tag_type || '',
-                        vet_document: data.pet.vet_document || null,
-                        vet_clinic_name: data.pet.vet_clinic_name || '',
-                        vet_contact_info: data.pet.vet_contact_info || '',
-                        vaccine_date: data.pet.vaccine_date || '',
-                    };
-                    setFormData(fetchedData);
-                    setInitialFormData(fetchedData);
-                } else {
-                    handleApiError(response, data, 'Failed to fetch pet details.');
-                }
-            } catch (err) {
-                handleNetworkError(err, 'Error fetching pet details.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPet();
-    }, [id, navigate]);
 
     const handleFileChange = (e) => {
         const { name, files } = e.target;
@@ -571,6 +629,47 @@ const PetDetails = () => {
         );
     };
 
+    const selectStyles = {
+        control: (provided) => ({
+            ...provided,
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            boxShadow: 'none',
+            fontSize: '14px',
+            lineHeight: '20px',
+            padding: '5px',
+            backgroundColor: '#fff',
+            '&:hover': {
+                border: '1px solid #aaa',
+            },
+        }),
+        menu: (provided) => ({
+            ...provided,
+            zIndex: 9999,
+            backgroundColor: '#fff',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+        }),
+        option: (provided, state) => ({
+            ...provided,
+            backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : '#fff',
+            color: '#333',
+            padding: '10px',
+            fontSize: '14px',
+            '&:hover': {
+                backgroundColor: '#e6e6e6',
+            },
+        }),
+        singleValue: (provided) => ({
+            ...provided,
+            color: '#333',
+        }),
+        placeholder: (provided) => ({
+            ...provided,
+            color: '#999',
+        }),
+    };
+
     const renderBirthdayCard = () => {
         const isFilled = isCardFilled('birthday');
         const showButtons = shouldShowButtons('birthday');
@@ -611,7 +710,9 @@ const PetDetails = () => {
                     </div>
                 ) : (
                     <div className="family-detail-input-group family-detail-single-column">
-                        <label htmlFor="birthday" className="family-detail-label">Birthday:</label>
+                        <label htmlFor="birthday" className="family-detail
+
+-label">Birthday:</label>
                         <input
                             type="date"
                             id="birthday"
@@ -832,25 +933,31 @@ const PetDetails = () => {
                         <div className="family-detail-two-column-group">
                             <div className="family-detail-input-group">
                                 <label htmlFor="agent_contact" className="family-detail-label">Agent Contact:</label>
-                                <input
-                                    type="text"
+                                <Select
                                     id="agent_contact"
                                     name="agent_contact"
-                                    value={tempInputData.agent_contact || formData.agent_contact}
-                                    onChange={handleInputChange}
-                                    className="family-detail-text-input"
+                                    options={contacts}
+                                    value={tempInputData.agent_contact || contacts.find(option => option.value === formData.agent_contact) || null}
+                                    onChange={(selected) => setTempInputData((prev) => ({ ...prev, agent_contact: selected }))}
+                                    classNamePrefix="react-select"
+                                    placeholder="Select Agent Contact"
+                                    styles={selectStyles}
+                                    isSearchable
                                     aria-label="Agent contact"
                                 />
                             </div>
                             <div className="family-detail-input-group">
                                 <label htmlFor="nominee_name" className="family-detail-label">Nominee Name:</label>
-                                <input
-                                    type="text"
+                                <Select
                                     id="nominee_name"
                                     name="nominee_name"
-                                    value={tempInputData.nominee_name || formData.nominee_name}
-                                    onChange={handleInputChange}
-                                    className="family-detail-text-input"
+                                    options={nominees}
+                                    value={tempInputData.nominee_name || nominees.find(option => option.value === formData.nominee_name) || null}
+                                    onChange={(selected) => setTempInputData((prev) => ({ ...prev, nominee_name: selected }))}
+                                    classNamePrefix="react-select"
+                                    placeholder="Select Nominee Name"
+                                    styles={selectStyles}
+                                    isSearchable
                                     aria-label="Nominee name"
                                 />
                             </div>
