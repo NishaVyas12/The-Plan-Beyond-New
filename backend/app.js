@@ -15,6 +15,14 @@ const ambassadorsRoutes = require("./routes/ambassadors");
 const nomineesRoutes = require("./routes/nominees");
 const familyInfoRoutes = require("./routes/familyinfo");
 const petRoutes = require("./routes/pets");
+const documentation = require('./routes/PersonalInfo/documentation');
+const employment = require('./routes/PersonalInfo/employment');
+const religion = require('./routes/PersonalInfo/religion');
+const charity = require('./routes/PersonalInfo/charity');
+const club = require('./routes/PersonalInfo/club');
+const degree = require('./routes/PersonalInfo/degree');
+const military = require('./routes/PersonalInfo/military');
+const miscellaneous = require('./routes/PersonalInfo/miscellaneous');
 
 initializeDatabase().then(() => {
   const app = express();
@@ -41,6 +49,14 @@ initializeDatabase().then(() => {
   app.use("/api", nomineesRoutes);
   app.use("/api/familyinfo", familyInfoRoutes);
   app.use("/api", petRoutes);
+  app.use("/api", documentation);
+  app.use("/api", employment);
+  app.use("/api", religion);
+  app.use("/api", charity);
+  app.use("/api", club);
+  app.use("/api", degree);
+  app.use("/api", military);
+  app.use("/api", miscellaneous);
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

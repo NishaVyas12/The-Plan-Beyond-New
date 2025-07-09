@@ -6,7 +6,7 @@ const CharitiesPopup = ({
   nomineeContacts,
   handleCloseModal,
   handleFileChange,
-  handleSubmit,
+  // handleSubmit,
   categories,
   uploadIcon,
 }) => {
@@ -40,6 +40,46 @@ const CharitiesPopup = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const form = new FormData();
+    form.append("charity_name", formData.charity_name);
+    form.append("charity_website", formData.charity_website || "");
+    form.append("payment_method", formData.payment_method || "");
+    form.append("amount", formData.amount || "0");
+    form.append("frequency", formData.frequency || "");
+    form.append("enrolled", formData.enrolled || "false");
+    form.append("nomineeContact", formData.nomineeContact || "");
+    form.append("notes", formData.notes || "");
+
+    // if (formData.files && formData.files.length > 0) {
+    //   Array.from(formData.files).forEach((file) => {
+    //     form.append("files", file);
+    //   });
+    // }
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/charity`, {
+        method: "POST",
+        credentials: "include", 
+        body: form,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        alert("Charity information saved successfully!");
+        handleCloseModal();
+      } else {
+        alert(data.message || "Something went wrong!");
+      }
+    } catch (error) {
+      console.error("Error submitting charity form:", error);
+      alert("Error submitting form. Try again.");
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="personal-popup-form">

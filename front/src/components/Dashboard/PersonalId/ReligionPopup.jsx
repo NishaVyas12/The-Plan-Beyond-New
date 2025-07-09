@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-
+import axios from "axios";
+import { toast } from "react-toastify";
 const ReligionPopup = ({
   formData,
   handleInputChange,
   nomineeContacts,
-  handleSubmit,
+  // handleSubmit,
   categories,
   handleCloseModal,
 }) => {
@@ -38,6 +39,42 @@ const ReligionPopup = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      religion: formData.religion,
+      religion1: formData.religion === "Others" ? formData.religion1 : "",
+      nomineeContact: formData.nomineeContact || "",
+    };
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/religion`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",        // keeps session cookies
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success("Religion information saved successfully.");
+        handleCloseModal();
+      } else {
+        toast.error(data.message || "Something went wrong. Please try again.");
+      }
+    } catch (err) {
+      console.error("Error submitting religion data:", err);
+      toast.error("Failed to save religion info.");
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="personal-popup-form">
@@ -93,7 +130,7 @@ const ReligionPopup = ({
                   key={contact.id}
                   onClick={(e) => {
                     handleSelect("nomineeContact", contact.email || contact.name, e);
-                    setDropdownStates((prev) => ({ ...prev, nominee: false })); // Force close
+                    setDropdownStates((prev) => ({ ...prev, nominee: false }));
                   }}
                   className="personal-dropdown-option"
                 >

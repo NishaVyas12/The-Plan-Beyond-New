@@ -6,7 +6,6 @@ const MiscellaneousPopup = ({
   nomineeContacts,
   handleCloseModal,
   handleFileChange,
-  handleSubmit,
   categories,
   uploadIcon,
 }) => {
@@ -41,6 +40,42 @@ const MiscellaneousPopup = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+    const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const form = new FormData();
+      Object.keys(formData).forEach((key) => {
+        if (formData[key]) {
+          form.append(key, formData[key]);
+        }
+      });
+
+      if (formData.file) {
+        form.append("document", formData.file);
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/miscellaneous`, {
+        method: "POST",
+        body: form,
+        credentials: "include",
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Miscellaneous details saved successfully.");
+        handleCloseModal(); // close the popup
+      } else {
+        console.error("Error response:", result);
+        alert("Failed to save details.");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("An error occurred while submitting the form.");
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="personal-popup-form">

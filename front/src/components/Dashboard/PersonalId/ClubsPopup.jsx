@@ -7,7 +7,7 @@ const ClubsPopup = ({
   nomineeContacts,
   handleCloseModal,
   handleFileChange,
-  handleSubmit,
+  // handleSubmit,
   categories,
   uploadIcon,
 }) => {
@@ -59,6 +59,47 @@ const ClubsPopup = ({
     value: `${item.name} (${item.phone_number})`,
     label: `${item.name} (${item.phone_number})`
   })) || [];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const data = new FormData();
+
+    data.append("club", formData.club);
+    if (formData.club === "Others") {
+      data.append("club_name", formData.club_name);
+    }
+    data.append("club_contact", formData.club_contact);
+    data.append("membership_type", formData.membership_type);
+    data.append("membership_status", formData.membership_status);
+    data.append("nomineeContact", formData.nomineeContact);
+    data.append("notes", formData.notes);
+
+    // Append each selected file
+    // for (let i = 0; i < formData.files.length; i++) {
+    //   data.append("files", formData.files[i]);
+    // }
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/club`, {
+        method: "POST",
+        credentials: "include",
+        body: data,
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        alert("Club info saved successfully.");
+        handleCloseModal(); // Close popup
+      } else {
+        alert("Error: " + result.message);
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="personal-popup-form">

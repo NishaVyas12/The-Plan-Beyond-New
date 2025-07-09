@@ -4,7 +4,7 @@ const IdsPopup = ({
   formData,
   handleInputChange,
   handleFileChange,
-  handleSubmit,
+  // handleSubmit,
   documentTypes,
   uploadIcon,
   handleCloseModal,
@@ -26,6 +26,42 @@ const IdsPopup = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const form = new FormData();
+    form.append("document_type", formData.type);
+    form.append("document_number", formData.number);
+    form.append("expirationDate", formData.expirationDate || "");
+    form.append("stateIssued", formData.stateIssued || "");
+    form.append("countryIssued", formData.countryIssued || "");
+    form.append("location", formData.location || "");
+    form.append("notes", formData.notes || "");
+    if (formData.file) {
+      form.append("filePath", formData.file);
+    }
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ids`, {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        console.log("Document uploaded:", result.document);
+        handleCloseModal();
+      } else {
+        alert(result.message || "Failed to save document.");
+      }
+    } catch (err) {
+      console.error("Error submitting ID form:", err);
+      alert("An unexpected error occurred.");
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="personal-popup-form">
