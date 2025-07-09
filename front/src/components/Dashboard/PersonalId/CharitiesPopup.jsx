@@ -3,10 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 const CharitiesPopup = ({
   formData,
   handleInputChange,
+  handleFileChange,
+  handleSubmit,
   nomineeContacts,
   handleCloseModal,
-  handleFileChange,
-  // handleSubmit,
   categories,
   uploadIcon,
 }) => {
@@ -24,7 +24,6 @@ const CharitiesPopup = ({
   const handleSelect = (name, value, event) => {
     event.stopPropagation();
     handleInputChange({ target: { name, value } });
-    // Map the input name to the correct dropdown state key
     const dropdownKey = name === "nomineeContact" ? "nominee" : name;
     setDropdownStates((prev) => ({ ...prev, [dropdownKey]: false }));
   };
@@ -41,7 +40,8 @@ const CharitiesPopup = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSubmit = async (e) => {
+  // Static handleSubmit for integration with PersonalInfo
+  CharitiesPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
     const form = new FormData();
@@ -54,35 +54,34 @@ const CharitiesPopup = ({
     form.append("nomineeContact", formData.nomineeContact || "");
     form.append("notes", formData.notes || "");
 
-    // if (formData.files && formData.files.length > 0) {
-    //   Array.from(formData.files).forEach((file) => {
-    //     form.append("files", file);
-    //   });
-    // }
+    if (formData.files && formData.files.length > 0) {
+      Array.from(formData.files).forEach((file) => {
+        form.append("charityFiles", file);
+      });
+    }
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/charity`, {
         method: "POST",
-        credentials: "include", 
+        credentials: "include",
         body: form,
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        alert("Charity information saved successfully!");
-        handleCloseModal();
+        return { success: true, message: "Charity information saved successfully!", charityId: data.charityId };
       } else {
-        alert(data.message || "Something went wrong!");
+        return { success: false, message: data.message || "Something went wrong!" };
       }
     } catch (error) {
-      console.error("Error submitting charity form:", error);
-      alert("Error submitting form. Try again.");
-    }
+        console.error("Error submitting charity form:", error);
+        return { success: false, message: "Error submitting form. Try again." };
+      }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="personal-popup-form">
+    <form onSubmit={(e) => handleSubmit(e, CharitiesPopup.handleSubmit)} className="personal-popup-form">
       <h2>{categories.find((c) => c.id === "charities").label}</h2>
 
       <label>
@@ -182,7 +181,7 @@ const CharitiesPopup = ({
 
       <label>
         Nominee Contact
-        <div className="personal-custom-dropdown" as="div" ref={dropdownRefs.nominee}>
+        <div className="personal-custom-dropdown" ref={dropdownRefs.nominee}>
           <div
             className="personal-dropdown-toggle"
             onClick={() => setDropdownStates((prev) => ({ ...prev, nominee: !prev.nominee, frequency: false, enrolled: false }))}
@@ -218,7 +217,7 @@ const CharitiesPopup = ({
         <div className="personal-file-upload">
           <input
             type="file"
-            name="files"
+            name="charityFiles"
             multiple
             onChange={handleFileChange}
             style={{ display: "none" }}

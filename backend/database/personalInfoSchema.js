@@ -172,16 +172,14 @@ const createUserMilitaryTable = async () => {
     CREATE TABLE IF NOT EXISTS user_military_documents (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
-        university_name VARCHAR(255) NOT NULL,
-        degree VARCHAR(255) NOT NULL,
-        degree_field VARCHAR(255),
-        degree_type VARCHAR(100),
-        degree_start DATE,
-        degree_end DATE,
-        grade VARCHAR(50),
-        completion_status BOOLEAN,
+        military_branch VARCHAR(255) NOT NULL,
+        military_name VARCHAR(255),
+        military_rank VARCHAR(255),
+        service_type VARCHAR(100),
+        military_serve VARCHAR(100),
+        service_status BOOLEAN,
         nominee_contact VARCHAR(255),
-        activities TEXT,
+        military_location VARCHAR(1000),
         file_paths TEXT,
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -197,6 +195,7 @@ const createUserMilitaryTable = async () => {
     console.error("Failed to create user_military_documents table:", err);
   }
 };
+
 const createUserMiscellaneousTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS user_miscellaneous_documents (
@@ -222,8 +221,24 @@ const createUserMiscellaneousTable = async () => {
     console.error("Failed to create user_miscellaneous_documents table:", err);
   }
 };
-
+const initializeDatabase = async () => {
+  try {
+    await createUserIdsDocumentsTable();
+    await createUserEmploymentDocumentsTable();
+    await createUserReligionDocumentsTable();
+    await createUserCharityTable();
+    await createUserClubTable();
+    await createUserDegreeTable();
+    await createUserMilitaryTable();
+    await createUserMiscellaneousTable();
+  
+  } catch (err) {
+    console.error("Error setting up database:", err);
+    throw err;
+  }
+};
 module.exports = {
+  initializeDatabase,
     createUserIdsDocumentsTable,
     createUserEmploymentDocumentsTable,
     createUserReligionDocumentsTable,

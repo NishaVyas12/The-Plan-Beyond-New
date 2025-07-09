@@ -3,11 +3,11 @@ import React, { useState, useRef, useEffect } from "react";
 const ClubsPopup = ({
   formData,
   handleInputChange,
+  handleFileChange,
+  handleSubmit,
   allContacts,
   nomineeContacts,
   handleCloseModal,
-  handleFileChange,
-  // handleSubmit,
   categories,
   uploadIcon,
 }) => {
@@ -27,7 +27,6 @@ const ClubsPopup = ({
   const handleSelect = (name, value, event) => {
     event.stopPropagation();
     handleInputChange({ target: { name, value } });
-    // Map the input name to the correct dropdown state key
     const dropdownKey = name === "nomineeContact" ? "nominee" : name;
     setDropdownStates((prev) => ({ ...prev, [dropdownKey]: false }));
   };
@@ -60,25 +59,26 @@ const ClubsPopup = ({
     label: `${item.name} (${item.phone_number})`
   })) || [];
 
-  const handleSubmit = async (e) => {
+  // Static handleSubmit for integration with PersonalInfo
+  ClubsPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
     const data = new FormData();
-
     data.append("club", formData.club);
     if (formData.club === "Others") {
       data.append("club_name", formData.club_name);
     }
-    data.append("club_contact", formData.club_contact);
-    data.append("membership_type", formData.membership_type);
-    data.append("membership_status", formData.membership_status);
-    data.append("nomineeContact", formData.nomineeContact);
-    data.append("notes", formData.notes);
+    data.append("club_contact", formData.club_contact || "");
+    data.append("membership_type", formData.membership_type || "");
+    data.append("membership_status", formData.membership_status || "false");
+    data.append("nomineeContact", formData.nomineeContact || "");
+    data.append("notes", formData.notes || "");
 
-    // Append each selected file
-    // for (let i = 0; i < formData.files.length; i++) {
-    //   data.append("files", formData.files[i]);
-    // }
+    if (formData.files && formData.files.length > 0) {
+      Array.from(formData.files).forEach((file) => {
+        data.append("clubFiles", file);
+      });
+    }
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/club`, {
@@ -89,20 +89,19 @@ const ClubsPopup = ({
 
       const result = await res.json();
 
-      if (result.success) {
-        alert("Club info saved successfully.");
-        handleCloseModal(); // Close popup
+      if (res.ok && result.success) {
+        return { success: true, message: "Club information saved successfully!", clubId: result.clubId };
       } else {
-        alert("Error: " + result.message);
+        return { success: false, message: result.message || "Something went wrong!" };
       }
     } catch (error) {
-      console.error("Submit error:", error);
-      alert("Something went wrong. Please try again.");
+      console.error("Error submitting club form:", error);
+      return { success: false, message: "Error submitting form. Try again." };
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="personal-popup-form">
+    <form onSubmit={(e) => handleSubmit(e, ClubsPopup.handleSubmit)} className="personal-popup-form">
       <h2>{categories.find((c) => c.id === "clubs").label}</h2>
 
       <label>
@@ -253,7 +252,7 @@ const ClubsPopup = ({
         <div className="personal-file-upload">
           <input
             type="file"
-            name="files"
+            name="clubFiles"
             multiple
             onChange={handleFileChange}
             style={{ display: "none" }}

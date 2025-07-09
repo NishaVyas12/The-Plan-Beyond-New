@@ -3,10 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 const EmploymentPopup = ({
   formData,
   handleInputChange,
-  handleCloseModal,
   handleFileChange,
+  handleCloseModal,
   nomineeContacts,
-  // handleSubmit,
+  handleSubmit,
   categories,
   uploadIcon,
 }) => {
@@ -53,42 +53,6 @@ const EmploymentPopup = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const form = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (formData[key]) {
-          form.append(key, formData[key]);
-        }
-      });
-
-      if (formData.file) {
-        form.append("document", formData.file); 
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/employment`, {
-        method: "POST",
-        body: form,
-        credentials: "include", 
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert("Employment details saved successfully.");
-        handleCloseModal(); // close the popup
-      } else {
-        console.error("Error response:", result);
-        alert("Failed to save details.");
-      }
-    } catch (error) {
-      console.error("Submission error:", error);
-      alert("An error occurred while submitting the form.");
-    }
-  };
-
   return (
     <form onSubmit={handleSubmit} className="personal-popup-form">
       <h2>{categories.find(c => c.id === 'employment').label}</h2>
@@ -119,7 +83,6 @@ const EmploymentPopup = ({
         </div>
       </label>
 
-      {/* Fields for Work for a company or Retired */}
       {(formData.type === "Work for a company" || formData.type === "Retired") && (
         <>
           <label>
@@ -285,7 +248,6 @@ const EmploymentPopup = ({
         </>
       )}
 
-      {/* Fields for Self-employed */}
       {formData.type === "Self-employed" && (
         <>
           <label>
@@ -359,7 +321,6 @@ const EmploymentPopup = ({
         </>
       )}
 
-      {/* Fields for Other */}
       {formData.type === "Other" && (
         <>
           <label>
@@ -423,6 +384,7 @@ const EmploymentPopup = ({
             style={{ display: "none" }}
             id="file-input"
             accept="image/jpeg,image/png,application/pdf,image/gif"
+            multiple
           />
           <label htmlFor="file-input">
             <img src={uploadIcon} alt="Upload" className="personal-upload-icon" />
@@ -430,11 +392,13 @@ const EmploymentPopup = ({
             <span style={{ color: "#6B7483" }}>OR</span>
             <span style={{ color: "var(--secondary-color)" }}>Browse Files</span>
           </label>
-          {formData.file && (
+          {formData.files && (
             <div className="personal-file-list">
-              <div className="personal-file-item">
-                <span>{formData.file.name}</span>
-              </div>
+              {Array.from(formData.files).map((file, index) => (
+                <div key={index} className="personal-file-item">
+                  <span>{file.name}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -455,6 +419,50 @@ const EmploymentPopup = ({
       </div>
     </form>
   );
+};
+
+// Static handleSubmit for integration with PersonalInfo
+EmploymentPopup.handleSubmit = async (e, formData, handleCloseModal) => {
+  e.preventDefault();
+
+  const form = new FormData();
+  form.append("type", formData.type);
+  form.append("organisation", formData.organisation || "");
+  form.append("joiningDate", formData.joiningDate || "");
+  form.append("leavingDate", formData.leavingDate || "");
+  form.append("supervisorContact", formData.supervisorContact || "");
+  form.append("nomineeContact", formData.nomineeContact || "");
+  form.append("employmentType", formData.employmentType || "");
+  form.append("jobTitle", formData.jobTitle || "");
+  form.append("employmentId", formData.employmentId || "");
+  form.append("benefitsType", formData.benefitsType || "");
+  form.append("benefitsDetails", formData.benefitsDetails || "");
+  form.append("otherStatus", formData.otherStatus || "");
+  form.append("notes", formData.notes || "");
+  if (formData.files) {
+    Array.from(formData.files).forEach(file => {
+      form.append("employmentFiles", file);
+    });
+  }
+
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/employment`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      return { success: true, message: "Employment details saved successfully!", documentId: result.documentId };
+    } else {
+      return { success: false, message: result.message || "Failed to save employment details." };
+    }
+  } catch (err) {
+    console.error("Error submitting employment form:", err);
+    return { success: false, message: "An unexpected error occurred." };
+  }
 };
 
 export default EmploymentPopup;

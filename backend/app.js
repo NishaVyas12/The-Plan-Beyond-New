@@ -5,8 +5,8 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const { configureSession } = require("./config/session");
-const { initializeDatabase } = require("./database/schema");
-
+const { initializeDatabase: initializeMainDatabase } = require("./database/schema");
+const { initializeDatabase: initializePersonalInfoDatabase } = require("./database/personalInfoSchema");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const biometricRoutes = require("./routes/biometric");
@@ -24,7 +24,7 @@ const degree = require('./routes/PersonalInfo/degree');
 const military = require('./routes/PersonalInfo/military');
 const miscellaneous = require('./routes/PersonalInfo/miscellaneous');
 
-initializeDatabase().then(() => {
+Promise.all([initializeMainDatabase(), initializePersonalInfoDatabase()]).then(() => {
   const app = express();
 
   app.use(express.json({ limit: '15mb' }));
@@ -63,6 +63,6 @@ initializeDatabase().then(() => {
     console.log(`Server running on port ${PORT}`);
   });
 }).catch((err) => {
-  console.error("Failed to initialize database:", err);
+  console.error("Failed to initialize databases:", err);
   process.exit(1);
 });

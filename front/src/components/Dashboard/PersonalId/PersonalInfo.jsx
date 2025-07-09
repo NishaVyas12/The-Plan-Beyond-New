@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './PersonalInfo.css';
 import plusIcon from '../../../assets/images/Documents/vector.svg';
 import EmploymentPopup from './EmploymentPopup';
@@ -10,21 +11,27 @@ import DegreesPopup from './DegreesPopup';
 import MilitaryPopup from './MilitaryPopup';
 import MiscellaneousPopup from './MiscellaneousPopup';
 import uploadIcon from '../../../assets/images/dash_icon/upload.svg';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const infoItems = [
-  'IDs and Vital Documentation',
-  'Employment',
-  'Religion',
-  'Charities & Causes',
-  'Clubs and Affiliations',
-  'Degrees and Certifications',
-  'Military Service',
-  'Miscellaneous'
+  { name: 'IDs and Vital Documentation', id: 'ids', endpoint: 'ids' },
+  { name: 'Employment', id: 'employment', endpoint: 'employment' },
+  { name: 'Religion', id: 'religion', endpoint: 'religion' },
+  { name: 'Charities & Causes', id: 'charities', endpoint: 'charity' },
+  { name: 'Clubs and Affiliations', id: 'clubs', endpoint: 'club' },
+  { name: 'Degrees and Certifications', id: 'degrees', endpoint: 'degrees' },
+  { name: 'Military Service', id: 'military', endpoint: 'military' },
+  { name: 'Miscellaneous', id: 'miscellaneous', endpoint: 'miscellaneous' },
 ];
 
 const PersonalInfo = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false);
+  const [counts, setCounts] = useState({});
+  const addDropdownRef = useRef(null);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     type: '',
     number: '',
@@ -32,7 +39,7 @@ const PersonalInfo = () => {
     expirationDate: '',
     stateIssued: '',
     countryIssued: '',
-    file: null,
+    files: null,
     notes: '',
     organisation: '',
     joiningDate: '',
@@ -53,7 +60,6 @@ const PersonalInfo = () => {
     amount: '',
     frequency: '',
     enrolled: '',
-    files: null,
     club: '',
     club_name: '',
     club_contact: '',
@@ -81,19 +87,54 @@ const PersonalInfo = () => {
     status: '',
   });
 
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const newCounts = {};
+      for (const item of infoItems) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/${item.endpoint}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+          const result = await response.json();
+          if (item.id === 'religion') {
+            // Religion endpoint returns array directly
+            newCounts[item.id] = Array.isArray(result) ? result.length : 0;
+          } else {
+            // Other endpoints return { success: true, documents: [...] }
+            newCounts[item.id] = result.success && result.documents ? result.documents.length : 0;
+          }
+        } catch (error) {
+          console.error(`Error fetching count for ${item.id}:`, error);
+          newCounts[item.id] = 0;
+        }
+      }
+      setCounts(newCounts);
+    };
+    fetchCounts();
+  }, []);
+
   const handleCardClick = (item) => {
-    if (
-      item === 'IDs and Vital Documentation' ||
-      item === 'Employment' ||
-      item === 'Religion' ||
-      item === 'Charities & Causes' ||
-      item === 'Clubs and Affiliations' ||
-      item === 'Degrees and Certifications' ||
-      item === 'Military Service' ||
-      item === 'Miscellaneous'
-    ) {
-      setSelectedItem(item);
+    if (counts[item.id] > 0) {
+      navigate(`/personal-info/${item.id}`);
+    } else {
+      setSelectedItem(item.name);
       setIsDrawerOpen(true);
+      setIsAddDropdownOpen(false);
+    }
+  };
+
+  const handleAddButtonClick = () => {
+    setIsAddDropdownOpen((prev) => !prev);
+  };
+
+  const handleAddOptionSelect = (item) => {
+    if (counts[item.id] > 0) {
+      navigate(`/personal-info/${item.id}`);
+    } else {
+      setSelectedItem(item.name);
+      setIsDrawerOpen(true);
+      setIsAddDropdownOpen(false);
     }
   };
 
@@ -107,7 +148,7 @@ const PersonalInfo = () => {
       expirationDate: '',
       stateIssued: '',
       countryIssued: '',
-      file: null,
+      files: null,
       notes: '',
       organisation: '',
       joiningDate: '',
@@ -128,7 +169,6 @@ const PersonalInfo = () => {
       amount: '',
       frequency: '',
       enrolled: '',
-      files: null,
       club: '',
       club_name: '',
       club_contact: '',
@@ -157,6 +197,16 @@ const PersonalInfo = () => {
     });
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (addDropdownRef.current && !addDropdownRef.current.contains(event.target)) {
+        setIsAddDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -169,10 +219,49 @@ const PersonalInfo = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e, popupSpecificSubmit) => {
     e.preventDefault();
-    console.log('Form submitted:', formData); // Replace with API call or further logic
-    handleCloseDrawer();
+    if (popupSpecificSubmit) {
+      const result = await popupSpecificSubmit(e, formData, handleCloseDrawer);
+      if (result.success) {
+        toast.success(result.message, {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        handleCloseDrawer();
+        // Refresh counts after submission
+        const item = infoItems.find((i) => i.name === selectedItem);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/${item.endpoint}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const resultData = await response.json();
+        if (item.id === 'religion') {
+          setCounts((prev) => ({
+            ...prev,
+            [item.id]: Array.isArray(resultData) ? resultData.length : 0,
+          }));
+        } else {
+          setCounts((prev) => ({
+            ...prev,
+            [item.id]: resultData.success && resultData.documents ? resultData.documents.length : 0,
+          }));
+        }
+      } else {
+        toast.error(result.message, {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      }
+    }
   };
 
   const documentTypes = [
@@ -213,7 +302,7 @@ const PersonalInfo = () => {
           formData={formData}
           handleInputChange={handleInputChange}
           handleFileChange={handleFileChange}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, IdsPopup.handleSubmit)}
           documentTypes={documentTypes}
           uploadIcon={uploadIcon}
           handleCloseModal={handleCloseDrawer}
@@ -225,7 +314,7 @@ const PersonalInfo = () => {
           formData={formData}
           handleInputChange={handleInputChange}
           handleFileChange={handleFileChange}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, EmploymentPopup.handleSubmit)}
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
           categories={categories}
@@ -251,7 +340,7 @@ const PersonalInfo = () => {
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
           handleFileChange={handleFileChange}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, CharitiesPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -265,7 +354,7 @@ const PersonalInfo = () => {
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
           handleFileChange={handleFileChange}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, ClubsPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -278,7 +367,7 @@ const PersonalInfo = () => {
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
           handleFileChange={handleFileChange}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, DegreesPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -291,7 +380,7 @@ const PersonalInfo = () => {
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
           handleFileChange={handleFileChange}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, MilitaryPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -304,7 +393,7 @@ const PersonalInfo = () => {
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
           handleFileChange={handleFileChange}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, MiscellaneousPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -315,14 +404,37 @@ const PersonalInfo = () => {
 
   return (
     <div className="personal-info-container">
-      <h2 className="personal-info-title">Personal Info and IDs</h2>
+      <ToastContainer />
+      <div className="personal-info-header">
+        <h2 className="personal-info-title">Personal Info and IDs</h2>
+        <div className="personal-add-button-container" ref={addDropdownRef}>
+          <button className="personal-add-button" onClick={handleAddButtonClick}>
+            Add <span className="personal-add-button-arrow">▾</span>
+          </button>
+          {isAddDropdownOpen && (
+            <ul className="personal-add-dropdown-menu">
+              {infoItems.map((item) => (
+                <li
+                  key={item.id}
+                  onClick={() => handleAddOptionSelect(item)}
+                  className="personal-add-dropdown-option"
+                >
+                  {item.name} {counts[item.id] > 0 ? `(${counts[item.id]})` : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
       <div className="personal-info-grid">
-        {infoItems.map((item, index) => (
-          <div key={index} className="personal-info-card" onClick={() => handleCardClick(item)}>
+        {infoItems.map((item) => (
+          <div key={item.id} className="personal-info-card" onClick={() => handleCardClick(item)}>
             <div className="personal-info-icon">
               <img src={plusIcon} alt="Info Icon" className="icon-image" />
             </div>
-            <span className="personal-info-label">{item}</span>
+            <span className="personal-info-label">
+              {item.name} {counts[item.id] > 0 ? `(${counts[item.id]})` : ''}
+            </span>
           </div>
         ))}
       </div>

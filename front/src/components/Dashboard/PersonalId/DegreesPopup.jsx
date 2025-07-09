@@ -3,10 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 const DegreesPopup = ({
   formData,
   handleInputChange,
+  handleFileChange,
+  handleSubmit,
   nomineeContacts,
   handleCloseModal,
-  handleFileChange,
-  // handleSubmit,
   categories,
   uploadIcon,
 }) => {
@@ -22,7 +22,6 @@ const DegreesPopup = ({
   const handleSelect = (name, value, event) => {
     event.stopPropagation();
     handleInputChange({ target: { name, value } });
-    // Map the input name to the correct dropdown state key
     const dropdownKey = name === "nomineeContact" ? "nominee" : name;
     setDropdownStates((prev) => ({ ...prev, [dropdownKey]: false }));
   };
@@ -39,44 +38,51 @@ const DegreesPopup = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSubmit = async (e) => {
+  // Static handleSubmit for integration with PersonalInfo
+  DegreesPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
+    const form = new FormData();
+    form.append("university_name", formData.university_name);
+    form.append("degree", formData.degree);
+    form.append("degree_field", formData.degree_field || "");
+    form.append("degree_type", formData.degree_type || "");
+    form.append("degree_start", formData.degree_start || "");
+    form.append("degree_end", formData.degree_end || "");
+    form.append("grade", formData.grade || "");
+    form.append("completion_status", formData.completion_status || "false");
+    form.append("nomineeContact", formData.nomineeContact || "");
+    form.append("activities", formData.activities || "");
+    form.append("notes", formData.notes || "");
+
+    if (formData.files && formData.files.length > 0) {
+      Array.from(formData.files).forEach((file) => {
+        form.append("degreeFiles", file);
+      });
+    }
+
     try {
-      const form = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (formData[key]) {
-          form.append(key, formData[key]);
-        }
-      });
-
-      if (formData.file) {
-        form.append("document", formData.file);
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/degrees`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/degrees`, {
         method: "POST",
-        body: form,
         credentials: "include",
+        body: form,
       });
 
-      const result = await response.json();
+      const result = await res.json();
 
-      if (result.success) {
-        alert("Employment details saved successfully.");
-        handleCloseModal(); // close the popup
+      if (res.ok && result.success) {
+        return { success: true, message: "Degree information saved successfully!", degreeId: result.degreeId };
       } else {
-        console.error("Error response:", result);
-        alert("Failed to save details.");
+        return { success: false, message: result.message || "Something went wrong!" };
       }
     } catch (error) {
-      console.error("Submission error:", error);
-      alert("An error occurred while submitting the form.");
+      console.error("Error submitting degree form:", error);
+      return { success: false, message: "Error submitting form. Try again." };
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="personal-popup-form">
+    <form onSubmit={(e) => handleSubmit(e, DegreesPopup.handleSubmit)} className="personal-popup-form">
       <h2>{categories.find((c) => c.id === "degrees").label}</h2>
 
       <label>
@@ -232,7 +238,7 @@ const DegreesPopup = ({
         <div className="personal-file-upload">
           <input
             type="file"
-            name="files"
+            name="degreeFiles"
             multiple
             onChange={handleFileChange}
             style={{ display: "none" }}

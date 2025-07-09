@@ -3,10 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 const MilitaryPopup = ({
   formData,
   handleInputChange,
+  handleFileChange,
+  handleSubmit,
   nomineeContacts,
   handleCloseModal,
-  handleFileChange,
-  // handleSubmit,
   categories,
   uploadIcon,
 }) => {
@@ -24,7 +24,6 @@ const MilitaryPopup = ({
   const handleSelect = (name, value, event) => {
     event.stopPropagation();
     handleInputChange({ target: { name, value } });
-    // Map the input name to the correct dropdown state key
     const dropdownKey = name === "nomineeContact" ? "nominee" : name;
     setDropdownStates((prev) => ({ ...prev, [dropdownKey]: false }));
   };
@@ -43,45 +42,51 @@ const MilitaryPopup = ({
 
   const branchOptions = ['Army', 'Navy', 'Air Force', 'Others'];
 
-
-  const handleSubmit = async (e) => {
+  // Static handleSubmit for integration with PersonalInfo
+  MilitaryPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
+    const form = new FormData();
+    form.append("military_branch", formData.military_branch);
+    if (formData.military_branch === "Others") {
+      form.append("military_name", formData.military_name || "");
+    }
+    form.append("military_rank", formData.military_rank || "");
+    form.append("service_type", formData.service_type || "");
+    form.append("military_serve", formData.military_serve || "");
+    form.append("service_status", formData.service_status || "false");
+    form.append("nomineeContact", formData.nomineeContact || "");
+    form.append("military_location", formData.military_location || "");
+    form.append("notes", formData.notes || "");
+
+    if (formData.files && formData.files.length > 0) {
+      Array.from(formData.files).forEach((file) => {
+        form.append("militaryFiles", file);
+      });
+    }
+
     try {
-      const form = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (formData[key]) {
-          form.append(key, formData[key]);
-        }
-      });
-
-      if (formData.file) {
-        form.append("document", formData.file);
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/military`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/military`, {
         method: "POST",
-        body: form,
         credentials: "include",
+        body: form,
       });
 
-      const result = await response.json();
+      const result = await res.json();
 
-      if (result.success) {
-        alert("Military details saved successfully.");
-        handleCloseModal(); // close the popup
+      if (res.ok && result.success) {
+        return { success: true, message: "Military information saved successfully!", militaryId: result.militaryId };
       } else {
-        console.error("Error response:", result);
-        alert("Failed to save details.");
+        return { success: false, message: result.message || "Something went wrong!" };
       }
     } catch (error) {
-      console.error("Submission error:", error);
-      alert("An error occurred while submitting the form.");
+      console.error("Error submitting military form:", error);
+      return { success: false, message: "Error submitting form. Try again." };
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="personal-popup-form">
+    <form onSubmit={(e) => handleSubmit(e, MilitaryPopup.handleSubmit)} className="personal-popup-form">
       <h2>{categories.find((c) => c.id === "military").label}</h2>
 
       <label>
@@ -232,7 +237,7 @@ const MilitaryPopup = ({
         <div className="personal-file-upload">
           <input
             type="file"
-            name="files"
+            name="militaryFiles"
             multiple
             onChange={handleFileChange}
             style={{ display: "none" }}

@@ -36,6 +36,7 @@ import Navbar from "./components/Dashboard/Dash/navbar";
 import Sidebar from "./components/Dashboard/Dash/sidebar";
 import PetDetails from "./components/Dashboard/FamilyId/PetDetails";
 import PersonalInfoPage from "./pages/PersonalInfoPage";
+import PersonalInfoDetails from "./components/Dashboard/PersonalId/PersonalInfoDetails";
 const PrivateRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
@@ -70,6 +71,7 @@ const FeedbackWrapper = () => {
     '/dashboard',
     '/profile',
     '/personal-info',
+    '/personal-info/:categoryId',
     '/digital-info',
     '/financial-info',
     '/home-property-info',
@@ -341,6 +343,16 @@ function App() {
             element={
               <PrivateRoute>
                 <PersonalInfoPage/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/personal-info/:categoryId"
+            element={
+              <PrivateRoute>
+                <Navbar />
+                <Sidebar />
+                <PersonalInfoDetails />
               </PrivateRoute>
             }
           />
