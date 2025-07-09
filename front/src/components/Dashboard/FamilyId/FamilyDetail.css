@@ -616,7 +616,7 @@
 }
 
 /* Card options dropdown */
-.family-detail-card-options-dropdown {
+.family-detail-card-options-dropdown-edit {
   position: absolute;
   top: 15%;
   right: 0;
@@ -629,7 +629,7 @@
   margin-top: 4px;
 }
 
-.family-detail-card-options-dropdown div {
+.family-detail-card-options-dropdown-edit div {
   padding: 8px 12px;
   cursor: pointer;
   color: #1a1a1a;
@@ -637,11 +637,162 @@
   transition: background-color 0.2s ease;
 }
 
-.family-detail-card-options-dropdown div:hover {
+.family-detail-card-options-dropdown-edit div:hover {
   background-color: #f5f5f5;
   color: #007C6A;
 }
 
-.family-detail-card-options-dropdown div:not(:last-child) {
+.family-detail-card-options-dropdown-edit div:not(:last-child) {
   border-bottom: 1px solid #eee;
+}
+
+
+.css-1wy0on6{
+  display: none !important;
+}
+.css-1wy0on6{
+  display: none !important;
+}
+
+.css-ekyalh-control{
+  padding: 0.6rem 0.8rem !important;
+  border: 1px solid #EBEBEB !important;
+  border-radius: 8px !important;
+  font-size: 0.9rem !important;
+  color: #1a1a1a !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+.css-hlgwow{
+  height: 15px !important;
+}
+
+.css-1krlmmq-placeholder{
+  display: none !important;
+}
+
+.css-ekyalh-control:focus {
+  outline: none !important;
+  border-color: #007C6A !important;
+  box-shadow: 0 0 0 2px rgba(0, 124, 106, 0.2) !important;
+}
+
+
+/* Ensure the input group is a positioning context */
+.family-detail-input-group {
+  position: relative; /* Makes this the reference for absolute positioning of the dropdown */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+/* Style the input field */
+.family-detail-text-input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #EBEBEB;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  box-sizing: border-box;
+  width: 100%; /* Ensures the input takes full width of its container */
+}
+
+.family-detail-text-input:focus {
+  outline: none;
+  border-color: #007C6A;
+  box-shadow: 0 0 0 2px rgba(0, 124, 106, 0.2);
+}
+
+/* Style the dropdown */
+.family-detail-card-options-dropdown {
+  position: absolute;
+  top: calc(100% + 4px); /* Positions dropdown just below the input with a small gap */
+  left: 0; /* Aligns with the left edge of the input */
+  width: 100%; /* Matches the input's width */
+  background-color: #fff;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #EBEBEB; /* Matches input border for consistency */
+  border-radius: 8px; /* Matches input border-radius */
+  max-height: 200px; /* Limits dropdown height */
+  overflow-y: auto; /* Enables scrolling for long lists */
+  z-index: 1000; /* Ensures dropdown appears above other elements */
+}
+
+/* Style individual dropdown items */
+.family-detail-card-options-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #1a1a1a;
+  font-size: 0.85rem;
+  transition: background-color 0.2s ease;
+}
+
+.family-detail-card-options-item:hover {
+  background-color: #f5f5f5;
+  color: #007C6A; /* Matches hover color from other dropdowns */
+}
+
+/* Style for when no results are found */
+.family-detail-card-options-item.no-results {
+  color: #6B7483; /* Matches secondary text color */
+  cursor: default;
+}
+
+/* Scrollbar styling for scrollable dropdown */
+.family-detail-scrollable-dropdown {
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: #6B7483 #f5f5f5;
+}
+
+.family-detail-scrollable-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.family-detail-scrollable-dropdown::-webkit-scrollbar-track {
+  background: #f5f5f5; /* Matches hover background */
+  border-radius: 8px;
+}
+
+.family-detail-scrollable-dropdown::-webkit-scrollbar-thumb {
+  background: #6B7483; /* Matches secondary text color */
+  border-radius: 8px;
+}
+
+.family-detail-scrollable-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #005c50; /* Matches button hover color */
+}
+
+/* Update anniversary card styles to match birthday card */
+.family-detail-card.anniversary-card .anniversary-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  flex-grow: 1;
+  justify-content: flex-end;
+  margin-top: 70px;
+}
+
+.family-detail-card.anniversary-card .anniversary-date-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 5px;
+  margin-top: auto;
+}
+
+.family-detail-card.anniversary-card .anniversary-date-display {
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  margin-right: 15px;
+  white-space: nowrap;
+}
+
+.family-detail-card.anniversary-card .remaining-days {
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  white-space: nowrap;
+  text-align: right;
 }

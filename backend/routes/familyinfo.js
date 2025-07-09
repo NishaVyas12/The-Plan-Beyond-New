@@ -21,7 +21,7 @@ const validateFamilyMember = (member) => {
   return null;
 };
 
-// POST /api/familyinfo/save (unchanged)
+// POST /api/familyinfo/save
 router.post("/save", checkAuth, upload, async (req, res) => {
   // Debug: Log req.body and req.files to inspect incoming data
   console.log("req.body:", req.body);
@@ -52,6 +52,7 @@ router.post("/save", checkAuth, upload, async (req, res) => {
     city = "",
     zipcode = "",
     birthday = null,
+    anniversary = null,
     relation = "",
     emergency_contact = false,
   } = req.body;
@@ -74,6 +75,7 @@ router.post("/save", checkAuth, upload, async (req, res) => {
     zipcode: zipcode || "",
     profile_image: "", // Initialize as empty, will be updated below
     birthday: birthday || null,
+    anniversary: anniversary || null,
     relation: relation || "",
     emergency_contact:
       emergency_contact !== undefined ? emergency_contact : false,
@@ -174,8 +176,9 @@ router.post("/save", checkAuth, upload, async (req, res) => {
         `INSERT INTO familyinfo (
           user_id, first_name, middle_name, last_name, nickname, email,
           phone_number, phone_number1, phone_number2, phone_number3,
-          flat_building_no, street, country, state, city, zipcode, profile_image, birthday, relation, emergency_contact
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          flat_building_no, street, country, state, city, zipcode, profile_image, 
+          birthday, anniversary, relation, emergency_contact
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           req.session.userId,
           familyMember.first_name,
@@ -195,6 +198,7 @@ router.post("/save", checkAuth, upload, async (req, res) => {
           familyMember.zipcode,
           familyMember.profile_image,
           familyMember.birthday,
+          familyMember.anniversary,
           familyMember.relation,
           familyMember.emergency_contact,
         ]
@@ -240,7 +244,7 @@ router.post("/save", checkAuth, upload, async (req, res) => {
   }
 });
 
-// GET /api/familyinfo (unchanged)
+// GET /api/familyinfo
 router.get("/", checkAuth, async (req, res) => {
   try {
     const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [
@@ -281,6 +285,7 @@ router.get("/", checkAuth, async (req, res) => {
         zipcode, 
         profile_image,
         DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday,
+        DATE_FORMAT(anniversary, '%Y-%m-%d') AS anniversary,
         relation,
         emergency_contact,
         driver_license_number,
@@ -329,6 +334,7 @@ router.get("/", checkAuth, async (req, res) => {
         zipcode: member.zipcode || "",
         profile_image: member.profile_image || "",
         birthday: member.birthday || "",
+        anniversary: member.anniversary || "",
         relation: member.relation || "",
         emergency_contact: member.emergency_contact || false,
         driver_license_number: member.driver_license_number || "",
@@ -372,7 +378,7 @@ router.get("/", checkAuth, async (req, res) => {
   }
 });
 
-// GET /api/familyinfo/:id (unchanged)
+// GET /api/familyinfo/:id
 router.get("/:id", checkAuth, async (req, res) => {
   const { id } = req.params;
   try {
@@ -396,6 +402,7 @@ router.get("/:id", checkAuth, async (req, res) => {
         zipcode, 
         profile_image,
         DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday,
+        DATE_FORMAT(anniversary, '%Y-%m-%d') AS anniversary,
         relation,
         emergency_contact,
         driver_license_number,
@@ -457,6 +464,7 @@ router.get("/:id", checkAuth, async (req, res) => {
       familyMember: {
         ...member,
         birthday: member.birthday || "",
+        anniversary: member.anniversary || "",
         emergency_contact: member.emergency_contact || false,
         driver_license_number: member.driver_license_number || "",
         driver_license_state_issued: member.driver_license_state_issued || "",
@@ -519,6 +527,7 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
     other_document_expiration,
     other_document_index,
     birthday,
+    anniversary,
   } = req.body;
 
   try {
@@ -553,6 +562,7 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
         passport_number,
         passport_state_issued,
         passport_expiration,
+        passport_document,
         emergency_contact,
         document_type,
         document_name,
@@ -561,7 +571,8 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
         other_document_issued,
         other_document_expiration,
         notes,
-        birthday 
+        birthday,
+        anniversary
       FROM familyinfo WHERE id = ? AND user_id = ?`,
       [id, req.session.userId]
     );
@@ -618,9 +629,9 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
           : current[0].emergency_contact || false,
       notes: notes !== undefined ? notes : current[0].notes || "",
       birthday:
-        birthday !== undefined && birthday !== ""
-          ? birthday
-          : current[0].birthday || null,
+  birthday !== undefined ? (birthday === "" || birthday === null ? null : birthday) : current[0].birthday || null,
+anniversary:
+  anniversary !== undefined ? (anniversary === "" || anniversary === null ? null : anniversary) : current[0].anniversary || null,
     };
 
     // Use existing paths if no new file is uploaded, or set to empty string for deletion
@@ -811,7 +822,8 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
         other_document_issued = ?,
         other_document_expiration = ?,
         notes = ?,
-        birthday = ? 
+        birthday = ?,
+        anniversary = ?
       WHERE id = ? AND user_id = ?`,
       [
         updatedFields.driver_license_number,
@@ -842,6 +854,7 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
           : null,
         updatedFields.notes,
         updatedFields.birthday,
+        updatedFields.anniversary,
         id,
         req.session.userId,
       ]
@@ -879,7 +892,8 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
         DATE_FORMAT(other_document_issued, '%Y-%m-%d') AS other_document_issued,
         DATE_FORMAT(other_document_expiration, '%Y-%m-%d') AS other_document_expiration,
         notes,
-        DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday
+        DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday,
+        DATE_FORMAT(anniversary, '%Y-%m-%d') AS anniversary
       FROM familyinfo WHERE id = ? AND user_id = ?`,
       [id, req.session.userId]
     );
@@ -912,6 +926,7 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
         ...updatedRows[0],
         emergency_contact: updatedRows[0].emergency_contact || false,
         birthday: updatedRows[0].birthday || "",
+        anniversary: updatedRows[0].anniversary || "",
         other_documents: updatedOtherDocuments,
       },
     });
@@ -923,7 +938,7 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
   }
 });
 
-// POST /api/familyinfo/other-document (unchanged)
+// POST /api/familyinfo/other-document
 router.post("/other-document", checkAuth, upload, async (req, res) => {
   const {
     family_id,
@@ -1122,27 +1137,6 @@ router.delete("/:id", checkAuth, async (req, res) => {
       "passport_document",
     ];
 
-    for (const field of fileFields) {
-      if (existingMember[field]) {
-        const filePath = path.join(
-          __dirname,
-          "..",
-          existingMember[field].replace(/^\//, "")
-        );
-        try {
-          await fs.access(filePath);
-          await fs.unlink(filePath);
-          console.log(`Deleted ${field}: ${filePath}`);
-        } catch (err) {
-          if (err.code !== "ENOENT") {
-            console.warn(
-              `Failed to delete ${field} ${filePath}: ${err.message}`
-            );
-          }
-        }
-      }
-    }
-
     const [result] = await connection.query(
       "DELETE FROM familyinfo WHERE id = ? AND user_id = ?",
       [id, req.session.userId]
@@ -1203,6 +1197,7 @@ router.put("/:id/basic", checkAuth, upload, async (req, res) => {
     city = "",
     zipcode = "",
     birthday = null,
+    anniversary = null,
     relation = "",
     emergency_contact = false,
   } = req.body;
@@ -1257,6 +1252,7 @@ router.put("/:id/basic", checkAuth, upload, async (req, res) => {
         zipcode,
         profile_image,
         birthday,
+        anniversary,
         relation,
         emergency_contact
       FROM familyinfo WHERE id = ? AND user_id = ?`,
@@ -1367,9 +1363,9 @@ router.put("/:id/basic", checkAuth, upload, async (req, res) => {
       zipcode: zipcode !== undefined ? zipcode : current[0].zipcode || "",
       profile_image: profile_image,
       birthday:
-        birthday !== undefined && birthday !== ""
-          ? birthday
-          : current[0].birthday || null,
+  birthday !== undefined ? (birthday === "" || birthday === null ? null : birthday) : current[0].birthday || null,
+anniversary:
+  anniversary !== undefined ? (anniversary === "" || anniversary === null ? null : anniversary) : current[0].anniversary || null,
       relation: relation !== undefined ? relation : current[0].relation || "",
       emergency_contact:
         emergency_contact !== undefined
@@ -1396,6 +1392,7 @@ router.put("/:id/basic", checkAuth, upload, async (req, res) => {
         zipcode = ?,
         profile_image = ?,
         birthday = ?,
+        anniversary = ?,
         relation = ?,
         emergency_contact = ?
       WHERE id = ? AND user_id = ?`,
@@ -1417,6 +1414,7 @@ router.put("/:id/basic", checkAuth, upload, async (req, res) => {
         updatedFields.zipcode,
         updatedFields.profile_image,
         updatedFields.birthday,
+        updatedFields.anniversary,
         updatedFields.relation,
         updatedFields.emergency_contact,
         id,
@@ -1452,6 +1450,7 @@ router.put("/:id/basic", checkAuth, upload, async (req, res) => {
         zipcode,
         profile_image,
         DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday,
+        DATE_FORMAT(anniversary, '%Y-%m-%d') AS anniversary,
         relation,
         emergency_contact
       FROM familyinfo WHERE id = ? AND user_id = ?`,
@@ -1474,6 +1473,7 @@ router.put("/:id/basic", checkAuth, upload, async (req, res) => {
         ...updatedRows[0],
         emergency_contact: updatedRows[0].emergency_contact || false,
         birthday: updatedRows[0].birthday || "",
+        anniversary: updatedRows[0].anniversary || "",
       },
     });
   } catch (err) {

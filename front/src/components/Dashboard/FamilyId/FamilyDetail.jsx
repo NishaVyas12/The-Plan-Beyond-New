@@ -34,6 +34,7 @@ const FamilyDetail = () => {
     profile_image: '',
     emergencyContact: false,
     otherDocuments: [],
+    anniversary: '',
   });
   const [initialFormData, setInitialFormData] = useState(null);
   const [tempInputData, setTempInputData] = useState({});
@@ -70,6 +71,9 @@ const FamilyDetail = () => {
         : formData.passportExpiration,
       notes: tempInputData.notes || formData.notes,
       emergency_contact: tempInputData.emergencyContact || formData.emergencyContact,
+      anniversary: tempInputData.anniversary
+          ? tempInputData.anniversary.split("T")[0]
+          : formData.anniversary,
     };
 
     try {
@@ -278,6 +282,45 @@ const FamilyDetail = () => {
         handleNetworkError(err, `Error updating ${fieldName}.`);
       }
     }
+    if (fieldName === 'anniversary') {
+        const payload = {
+          anniversary: tempInputData.anniversary
+            ? tempInputData.anniversary.split("T")[0]
+            : formData.anniversary || '',
+        };
+
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/familyinfo/${id}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json();
+          if (data.success) {
+            toast.success('Anniversary updated successfully.', { position: 'top-right', autoClose: 3000 });
+            setFormData((prev) => ({
+              ...prev,
+              anniversary: payload.anniversary,
+            }));
+            setInitialFormData((prev) => ({
+              ...prev,
+              anniversary: payload.anniversary,
+            }));
+            setTempInputData((prev) => {
+              const newTemp = { ...prev };
+              delete newTemp.anniversary;
+              return newTemp;
+            });
+            setEditMode((prev) => ({ ...prev, anniversary: false }));
+            window.location.reload();
+          } else {
+            handleApiError(response, data, 'Failed to update anniversary.');
+          }
+        } catch (err) {
+          handleNetworkError(err, 'Error updating anniversary.');
+        }
+      }
   };
 
   const handleCancelCard = (fieldName, docIndex = null) => {
@@ -314,6 +357,15 @@ const FamilyDetail = () => {
       }
       setEditMode((prev) => ({ ...prev, [fieldName]: false }));
     }
+     if (fieldName === 'anniversary') {
+        setTempInputData((prev) => {
+          const newTemp = { ...prev };
+          delete newTemp.anniversary;
+          return newTemp;
+        });
+        setFormData((prev) => ({ ...prev, anniversary: initialFormData.anniversary || '' }));
+        setEditMode((prev) => ({ ...prev, anniversary: false }));
+      }
   };
 
   useEffect(() => {
@@ -386,6 +438,7 @@ const FamilyDetail = () => {
             profile_image: data.familyMember.profile_image || '',
             emergencyContact: data.familyMember.emergency_contact || false,
             otherDocuments: fetchedOtherDocs,
+            anniversary: data.familyMember.anniversary || '',
           };
           setFormData(fetchedData);
           setInitialFormData(fetchedData);
@@ -553,23 +606,23 @@ const FamilyDetail = () => {
   };
 
   const handleInputChange = (e, docIndex = null) => {
-    const { name, value } = e.target;
+  const { name, value } = e.target;
 
-    if (docIndex !== null) {
-      setTempInputData((prev) => ({
-        ...prev,
-        [`other_document_${docIndex}`]: {
-          ...prev[`other_document_${docIndex}`],
-          [name]: value,
-        },
-      }));
-    } else {
-      setTempInputData((prev) => ({
-        ...prev,
+  if (docIndex !== null) {
+    setTempInputData((prev) => ({
+      ...prev,
+      [`other_document_${docIndex}`]: {
+        ...prev[`other_document_${docIndex}`] || {},
         [name]: value,
-      }));
-    }
-  };
+      },
+    }));
+  } else {
+    setTempInputData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
 
   const handleApiError = (response, data, defaultMessage) => {
     if (response.status === 401) {
@@ -706,6 +759,7 @@ const FamilyDetail = () => {
         },
         notes: { notes: '' },
         birthday: { birthday: '' },
+        anniversary: { anniversary: '' },
       };
 
       const payload = cardFields[fieldName] || {};
@@ -760,6 +814,7 @@ const FamilyDetail = () => {
       'Passport': 'passport_document',
       'Birth Certificate': 'birth_certificate_document',
       'Birthday': 'birthdayCard',
+      'Anniversary': 'anniversaryCard',
     };
 
     if (option === 'Other') {
@@ -791,6 +846,9 @@ const FamilyDetail = () => {
         });
       }
     }
+    if (option === 'Anniversary') {
+        setScrollToId('anniversaryCard');
+      }
   };
 
   const handlePreview = (file) => {
@@ -813,41 +871,43 @@ const FamilyDetail = () => {
   };
 
   const isCardFilled = (fieldName, doc = null) => {
-    if (doc) {
+  if (doc) {
+    return (
+      doc.other_document_name ||
+      doc.other_document_number ||
+      doc.other_document_issued ||
+      doc.other_document_expiration
+    );
+  }
+  switch (fieldName) {
+    case 'driver_license_document':
       return (
-        doc.other_document_name ||
-        doc.other_document_number ||
-        doc.other_document_issued ||
-        doc.other_document_expiration
+        formData.driver_license_number ||
+        formData.driverLicenseStateIssued ||
+        formData.driver_license_expiration
       );
-    }
-    switch (fieldName) {
-      case 'driver_license_document':
-        return (
-          formData.driver_license_number ||
-          formData.driverLicenseStateIssued ||
-          formData.driver_license_expiration
-        );
-      case 'passport_document':
-        return (
-          formData.passport_number ||
-          formData.passportStateIssued ||
-          formData.passportExpiration
-        );
-      case 'aadhaar_card_document':
-        return formData.aadhaarNumber;
-      case 'pan_card_document':
-        return formData.panNumber;
-      case 'birth_certificate_document':
-        return false;
-      case 'notes':
-        return formData.notes;
-      case 'birthday':
-        return formData.birthday;
-      default:
-        return false;
-    }
-  };
+    case 'passport_document':
+      return (
+        formData.passport_number ||
+        formData.passportStateIssued ||
+        formData.passportExpiration
+      );
+    case 'aadhaar_card_document':
+      return formData.aadhaarNumber;
+    case 'pan_card_document':
+      return formData.panNumber;
+    case 'birth_certificate_document':
+      return formData.birth_certificate_document;
+    case 'notes':
+      return formData.notes;
+    case 'birthday':
+      return formData.birthday;
+    case 'anniversary':
+      return formData.anniversary;
+    default:
+      return false;
+  }
+};
 
   const renderBirthdayCard = () => {
     const isFilled = isCardFilled('birthday');
@@ -873,7 +933,7 @@ const FamilyDetail = () => {
             ...
           </span>
           {openDropdownId === 'birthday' && (
-            <div className="family-detail-card-options-dropdown">
+            <div className="family-detail-card-options-dropdown-edit">
               <div onClick={() => handleEditCard('birthday')}>Edit</div>
               <div onClick={() => handleDeleteCard('birthday')}>Delete</div>
             </div>
@@ -890,7 +950,6 @@ const FamilyDetail = () => {
           </div>
         ) : (
           <div className="family-detail-input-group family-detail-single-column">
-            <label htmlFor="birthday" className="family-detail-label">Birthday:</label>
             <input
               type="date"
               id="birthday"
@@ -929,6 +988,108 @@ const FamilyDetail = () => {
     );
   };
 
+  const renderAnniversaryCard = () => {
+  const isFilled = isCardFilled('anniversary');
+  const showButtons = shouldShowButtons('anniversary') || editMode.anniversary;
+
+  return (
+    <div
+      id="card-anniversary"
+      className="family-detail-card anniversary-card"
+      ref={(el) => {
+        cardRefs.current['anniversaryCard'] = el;
+        console.log('Ref assigned for anniversaryCard:', el);
+      }}
+    >
+      <div className="family-detail-card-header">
+        <label className={`family-detail-card-label ${isFilled ? 'family-detail-label-filled' : ''}`}>
+          Anniversary
+        </label>
+        <span
+          className="family-detail-card-options"
+          onClick={() => toggleOptionsDropdown('anniversary')}
+        >
+          ...
+        </span>
+        {openDropdownId === 'anniversary' && (
+          <div className="family-detail-card-options-dropdown-edit">
+            <div onClick={() => handleEditCard('anniversary')}>Edit</div>
+            <div onClick={() => handleDeleteCard('anniversary')}>Delete</div>
+          </div>
+        )}
+      </div>
+      {(isFilled && !editMode.anniversary) ? (
+        <div className="anniversary-content">
+          <div className="anniversary-date-row">
+            <span className="anniversary-date-display">
+              {formatDisplayDate(formData.anniversary)}
+            </span>
+            <span className="remaining-days">{getDaysUntilAnniversary(formData.anniversary)}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="family-detail-input-group family-detail-single-column">
+         
+          <input
+            type="date"
+            id="anniversary"
+            name="anniversary"
+            value={
+              tempInputData.anniversary
+                ? tempInputData.anniversary.split("T")[0]
+                : formData.anniversary
+                  ? formData.anniversary.split("T")[0]
+                  : ''
+            }
+            onChange={handleInputChange}
+            className="family-detail-text-input"
+          />
+        </div>
+      )}
+      {showButtons && (
+        <div className="family-detail-button-group">
+          <button
+            type="button"
+            className="family-detail-save-button"
+            onClick={() => handleSaveCard('anniversary')}
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            className="family-detail-cancel-button"
+            onClick={() => handleCancelCard('anniversary')}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const getDaysUntilAnniversary = (anniversaryString) => {
+  if (!anniversaryString) return '-';
+  const today = new Date();
+  const anniversaryDate = new Date(anniversaryString);
+
+  if (isNaN(anniversaryDate.getTime())) {
+    return '-';
+  }
+
+  let nextAnniversary = new Date(today.getFullYear(), anniversaryDate.getMonth(), anniversaryDate.getDate());
+
+  if (nextAnniversary < today) {
+    nextAnniversary.setFullYear(today.getFullYear() + 1);
+  }
+
+  const diffTime = Math.abs(nextAnniversary - today);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today!';
+  if (diffDays === 1) return 'Tomorrow!';
+  return `${diffDays} days remaining`;
+};
   const shouldShowButtons = (fieldName, docIndex = null) => {
     if (docIndex !== null) {
       const tempDoc = tempInputData[`other_document_${docIndex}`];
@@ -940,6 +1101,13 @@ const FamilyDetail = () => {
         editMode[`other_document_${docIndex}`]
       );
     }
+    if (fieldName === 'anniversary') {
+        return (
+          !isCardFilled('anniversary') ||
+          tempInputData.anniversary !== undefined ||
+          editMode.anniversary
+        );
+      }
     const cardFields = {
       driver_license_document: ['driver_license_number', 'driverLicenseStateIssued', 'driver_license_expiration'],
       passport_document: ['passport_number', 'passportStateIssued', 'passportExpiration'],
@@ -1024,7 +1192,7 @@ const FamilyDetail = () => {
             ...
           </span>
           {openDropdownId === fieldName && (
-            <div className="family-detail-card-options-dropdown">
+            <div className="family-detail-card-options-dropdown-edit">
               <div onClick={() => handleEditCard(fieldName)}>Edit</div>
               <div onClick={() => handleDeleteCard(fieldName)}>Delete</div>
             </div>
@@ -1102,13 +1270,13 @@ const FamilyDetail = () => {
                 <div className="family-detail-input-group">
                   <label htmlFor="driver_license_number" className="family-detail-label">Number:</label>
                   <input
-                    type="text"
-                    id="driver_license_number"
-                    name="driver_license_number"
-                    value={tempInputData.driver_license_number || formData.driver_license_number}
-                    onChange={handleInputChange}
-                    className="family-detail-text-input"
-                  />
+  type="text"
+  id="driver_license_number"
+  name="driver_license_number"
+  value={tempInputData.driver_license_number ?? formData.driver_license_number}
+  onChange={handleInputChange}
+  className="family-detail-text-input"
+/>
                 </div>
                 <div className="family-detail-input-group">
                   <label htmlFor="driverLicenseStateIssued" className="family-detail-label">State Issued:</label>
@@ -1206,13 +1374,13 @@ const FamilyDetail = () => {
                 <div className="family-detail-input-group">
                   <label htmlFor="passport_number" className="family-detail-label">Number:</label>
                   <input
-                    type="text"
-                    id="passport_number"
-                    name="passport_number"
-                    value={tempInputData.passport_number || formData.passport_number}
-                    onChange={handleInputChange}
-                    className="family-detail-text-input"
-                  />
+  type="text"
+  id="passport_number"
+  name="passport_number"
+  value={tempInputData.passport_number ?? formData.passport_number}
+  onChange={handleInputChange}
+  className="family-detail-text-input"
+/>
                 </div>
                 <div className="family-detail-input-group">
                   <label htmlFor="passportStateIssued" className="family-detail-label">Country Issued:</label>
@@ -1287,14 +1455,14 @@ const FamilyDetail = () => {
           ) : (
             <div className="family-detail-input-group">
               <label htmlFor="aadhaarNumber" className="family-detail-label">Number:</label>
-              <input
-                type="text"
-                id="aadhaarNumber"
-                name="aadhaarNumber"
-                value={tempInputData.aadhaarNumber || formData.aadhaarNumber}
-                onChange={handleInputChange}
-                className="family-detail-text-input"
-              />
+             <input
+  type="text"
+  id="aadhaarNumber"
+  name="aadhaarNumber"
+  value={tempInputData.aadhaarNumber ?? formData.aadhaarNumber}
+  onChange={handleInputChange}
+  className="family-detail-text-input"
+/>
             </div>
           )
         )}
@@ -1312,13 +1480,13 @@ const FamilyDetail = () => {
             <div className="family-detail-input-group">
               <label htmlFor="panNumber" className="family-detail-label">Number:</label>
               <input
-                type="text"
-                id="panNumber"
-                name="panNumber"
-                value={tempInputData.panNumber || formData.panNumber}
-                onChange={handleInputChange}
-                className="family-detail-text-input"
-              />
+  type="text"
+  id="panNumber"
+  name="panNumber"
+  value={tempInputData.panNumber ?? formData.panNumber}
+  onChange={handleInputChange}
+  className="family-detail-text-input"
+/>
             </div>
           )
         )}
@@ -1574,7 +1742,7 @@ const FamilyDetail = () => {
             ...
           </span>
           {openDropdownId === 'notes' && (
-            <div className="family-detail-card-options-dropdown">
+            <div className="family-detail-card-options-dropdown-edit">
               <div onClick={() => handleEditCard('notes')}>Edit</div>
               <div onClick={() => handleDeleteCard('notes')}>Delete</div>
             </div>
@@ -1704,6 +1872,7 @@ const FamilyDetail = () => {
                 <div onClick={() => handleAddOptionClick('Passport')}>Passport</div>
                 <div onClick={() => handleAddOptionClick('Birth Certificate')}>Birth Certificate</div>
                 <div onClick={() => handleAddOptionClick('Birthday')}>Birthday</div>
+                <div onClick={() => handleAddOptionClick('Anniversary')}>Anniversary</div>
                 <div onClick={() => handleAddOptionClick('Other')}>Other</div>
               </div>
             )}
@@ -1752,6 +1921,7 @@ const FamilyDetail = () => {
             {renderDocumentCard('birth_certificate_document', 'Birth Certificate')}
             {renderNotesCard()}
             {renderBirthdayCard()}
+            {renderAnniversaryCard()}
             {formData.otherDocuments.map((doc, index) => renderOtherDocumentCard(doc, index))}
           </div>
         </form>

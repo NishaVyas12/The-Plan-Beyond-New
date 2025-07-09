@@ -1,0 +1,293 @@
+.personal-info-container {
+  margin-left: 250px;
+  padding: 2rem 80px;
+  background-color: #fff;
+  margin-top: 4rem;
+  height: 100%;
+}
+
+.personal-info-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: var(--secondary-color);
+  font-family: "New Spirit";
+}
+
+.personal-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.personal-info-card {
+  display: flex;
+  align-items: center;
+  border: 1px solid #EBEBEB;
+  background-color: #fff;
+  padding: 1.7rem 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0px 3px 15.7px 0px #00000014;
+  cursor: pointer;
+}
+
+.personal-info-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #007C6A;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+}
+
+.icon-image {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.personal-info-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--secondary-color);
+}
+
+/* Drawer Styles */
+.personal-info-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1001;
+}
+
+.personal-info-drawer {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100vh;
+  background-color: #fff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 1008;
+  transition: right 0.3s ease-in-out;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.personal-info-drawer.open {
+  right: 0;
+}
+
+.personal-info-drawer-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 34.5px;
+  position: relative;
+}
+
+.personal-info-drawer-close {
+  color: #6B7483;
+  background: none;
+  border: none;
+  font-size: 1.7rem;
+  cursor: pointer;
+  margin-bottom: 20px;
+  padding: 0;
+  z-index: 2;
+}
+
+.personal-info-drawer-divider {
+  width: calc(100% + 3rem);
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 0 -1.5rem 40px -1.5rem;
+}
+
+/* Styles for IdsPopup form */
+.personal-popup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.personal-popup-form h2 {
+  font-size: 1.1rem;
+  color: var(--secondary-color);
+  margin-bottom: 0;
+}
+
+.personal-popup-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #4B5563;
+}
+
+.personal-person-dropdown {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  color: #4B5563;
+  background-color: #fff;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.personal-person-dropdown:focus {
+  outline: none;
+  border-color: #10B981;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+}
+
+.personal-person-dropdown:hover {
+  border-color: #9CA3AF;
+}
+
+.personal-person-dropdown::-ms-expand {
+  display: none;
+}
+
+.personal-popup-form input[type="text"],
+.personal-popup-form input[type="date"],
+.personal-popup-form input[type="number"],
+.personal-popup-form textarea {
+  padding: 0.75rem;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  color: #4B5563;
+}
+
+.personal-file-upload {
+  border: 2px dashed #D1D5DB;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  color: #6B7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.personal-upload-icon {
+  width: 24px;
+  height: 24px;
+  margin: 0 auto 0.5rem;
+  display: block;
+}
+
+.personal-file-upload label span:nth-child(2) {
+  color: var(--secondary-color);
+}
+
+.personal-file-upload label span:nth-child(3) {
+  color: #6B7483;
+}
+
+.personal-file-upload label span:nth-child(4) {
+  color: var(--secondary-color);
+}
+
+.personal-file-upload p {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: #6B7280;
+}
+
+.personal-file-list {
+  margin-top: 0.5rem;
+}
+
+.personal-file-item {
+  padding: 0.5rem;
+  background-color: #F9FAFB;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.personal-button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.personal-popup-form button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.personal-popup-form button[type="submit"] {
+  background-color: #10B981;
+  color: white;
+}
+
+.personal-popup-form .personal-btn-cancel {
+  background-color: #E5E7EB;
+  color: #4B5563;
+}
+
+.personal-custom-dropdown {
+  position: relative;
+  user-select: none;
+  font-size: 0.9rem;
+  color: #4B5563;
+}
+
+.personal-dropdown-toggle {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  cursor: pointer;
+  position: relative;
+  color: var(--secondary-color);
+}
+
+.personal-dropdown-toggle:hover {
+  border-color: #9CA3AF;
+}
+
+.personal-dropdown-arrow {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9CA3AF;
+  font-size: 0.8rem;
+}
+
+.personal-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  z-index: 5;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.personal-dropdown-option {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  color: black;
+}
+
+.personal-dropdown-option:hover {
+  background-color: #F3F4F6;
+}

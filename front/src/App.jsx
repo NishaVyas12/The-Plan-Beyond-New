@@ -35,6 +35,7 @@ import FamilyDetail from "./components/Dashboard/FamilyId/FamilyDetail";
 import Navbar from "./components/Dashboard/Dash/navbar";
 import Sidebar from "./components/Dashboard/Dash/sidebar";
 import PetDetails from "./components/Dashboard/FamilyId/PetDetails";
+import PersonalInfoPage from "./pages/PersonalInfoPage";
 const PrivateRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
@@ -332,6 +333,14 @@ function App() {
             element={
               <PrivateRoute>
                 <FamilyIDPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/personal-info"
+            element={
+              <PrivateRoute>
+                <PersonalInfoPage/>
               </PrivateRoute>
             }
           />

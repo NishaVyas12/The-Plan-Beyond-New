@@ -330,6 +330,7 @@ const createFamilyInfoTable = async () => {
       zipcode VARCHAR(20) DEFAULT '',
       profile_image VARCHAR(1000) DEFAULT '',
       birthday DATE DEFAULT NULL,
+      anniversary DATE DEFAULT NULL,
       relation VARCHAR(255) DEFAULT '',
       driver_license_number VARCHAR(100) DEFAULT '',
       driver_license_state_issued VARCHAR(100) DEFAULT '',
@@ -361,6 +362,25 @@ const createFamilyInfoTable = async () => {
     console.log("FamilyInfo table created or already exists.");
   } catch (err) {
     console.error("Error creating familyinfo table:", err);
+    throw err;
+  }
+};
+
+const alterFamilyInfoTable = async () => {
+  const checkColumnQuery = `
+    SELECT COLUMN_NAME 
+    FROM information_schema.columns 
+    WHERE table_schema = ? AND table_name = ? AND column_name = ?
+  `;
+  const dbName = process.env.DB_NAME || "plan_beyond";
+  try {
+    const [anniversaryRows] = await pool.query(checkColumnQuery, [dbName, 'familyinfo', 'anniversary']);
+    if (anniversaryRows.length === 0) {
+      await pool.query(`ALTER TABLE familyinfo ADD COLUMN anniversary DATE DEFAULT NULL`);
+      console.log("Added anniversary column to familyinfo table.");
+    }
+  } catch (err) {
+    console.error("Error altering familyinfo table:", err);
     throw err;
   }
 };
@@ -436,6 +456,7 @@ const initializeDatabase = async () => {
     await createNomineesTable();
     await createAmbassadorsTable();
     await createFamilyInfoTable();
+    await alterFamilyInfoTable();
     await createPetsTable();
 
     // Alter existing user contacts tables
@@ -463,5 +484,6 @@ module.exports = {
   createNomineesTable,
   createAmbassadorsTable,
   createFamilyInfoTable,
+  alterFamilyInfoTable,
   createPetsTable,
 };

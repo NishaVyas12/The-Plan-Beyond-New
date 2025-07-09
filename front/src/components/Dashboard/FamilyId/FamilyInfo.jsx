@@ -19,6 +19,7 @@ const FamilyInfo = () => {
   const [showPhone2, setShowPhone2] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingMemberId, setEditingMemberId] = useState(null);
+  const [editingPetId, setEditingPetId] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
     middleName: '',
@@ -73,7 +74,7 @@ const FamilyInfo = () => {
     setFilteredCountries(countries);
   }, []);
 
-  // Update states when country changes
+  // Update states when country changes or when editing
   useEffect(() => {
     if (formData.country) {
       const country = Country.getAllCountries().find(c => c.name === formData.country);
@@ -83,15 +84,24 @@ const FamilyInfo = () => {
           isoCode: state.isoCode,
         }));
         setFilteredStates(states);
+        // Only reset state if it doesn't match a valid state for the selected country
+        if (!states.some(state => state.name === formData.state)) {
+          setFormData(prev => ({ ...prev, state: '', city: '' }));
+          setFilteredCities([]);
+        }
       } else {
         setFilteredStates([]);
+        setFormData(prev => ({ ...prev, state: '', city: '' }));
+        setFilteredCities([]);
       }
-      setFormData(prev => ({ ...prev, state: '', city: '' }));
+    } else {
+      setFilteredStates([]);
       setFilteredCities([]);
+      setFormData(prev => ({ ...prev, state: '', city: '' }));
     }
   }, [formData.country]);
 
-  // Update cities when state changes
+  // Update cities when state changes or when editing
   useEffect(() => {
     if (formData.country && formData.state) {
       const country = Country.getAllCountries().find(c => c.name === formData.country);
@@ -101,9 +111,16 @@ const FamilyInfo = () => {
           name: city.name,
         }));
         setFilteredCities(cities);
+        // Only reset city if it doesn't match a valid city for the selected state
+        if (!cities.some(city => city.name === formData.city)) {
+          setFormData(prev => ({ ...prev, city: '' }));
+        }
       } else {
         setFilteredCities([]);
+        setFormData(prev => ({ ...prev, city: '' }));
       }
+    } else {
+      setFilteredCities([]);
       setFormData(prev => ({ ...prev, city: '' }));
     }
   }, [formData.country, formData.state]);
@@ -245,7 +262,6 @@ const FamilyInfo = () => {
 
       const data = await response.json();
       if (data.success) {
-        console.log('Fetched pets:', data.pets);
         setPets(data.pets || []);
       } else {
         if (response.status === 401) {
@@ -405,19 +421,24 @@ const FamilyInfo = () => {
       birthday: '',
       relation: '',
     });
+    // Reset filtered states and cities
+    setFilteredStates([]);
+    setFilteredCities([]);
   };
 
   const handleClosePetDrawer = () => {
-    setIsPetDrawerOpen(false);
-    setImagePreview(null);
-    setPetFormData({
-      name: '',
-      type: '',
-      breed: '',
-      birthday: '',
-      profileImage: null,
-    });
-  };
+  setIsPetDrawerOpen(false);
+  setIsEditing(false);
+  setEditingPetId(null);
+  setImagePreview(null);
+  setPetFormData({
+    name: '',
+    type: '',
+    breed: '',
+    birthday: '',
+    profileImage: null,
+  });
+};
 
   const handleAddPhoneNumber = () => {
     if (!showPhone1) {
@@ -427,6 +448,8 @@ const FamilyInfo = () => {
     }
   };
 
+
+  
   const handleSave = async () => {
     try {
       const formDataToSend = new FormData();
@@ -498,6 +521,9 @@ const FamilyInfo = () => {
   const handleEditFamilyMember = (member) => {
     setIsEditing(true);
     setEditingMemberId(member.id);
+    const formattedDate = member.birthday
+      ? new Date(member.birthday).toISOString().split('T')[0]
+      : '';
     setFormData({
       firstName: member.first_name || '',
       middleName: member.middle_name || '',
@@ -515,12 +541,34 @@ const FamilyInfo = () => {
       city: member.city || '',
       zipcode: member.zipcode || '',
       profileImage: member.profile_image || '',
-      birthday: member.birthday || '',
+      birthday: formattedDate,
       relation: member.relation || '',
     });
     setShowPhone1(!!member.phone_number1);
     setShowPhone2(!!member.phone_number2);
     setImagePreview(member.profile_image ? `${import.meta.env.VITE_API_URL}/${member.profile_image.replace(/^\/+/, '')}` : null);
+    
+    // Initialize dropdowns for country, state, and city
+    if (member.country) {
+      const country = Country.getAllCountries().find(c => c.name === member.country);
+      if (country) {
+        const states = State.getStatesOfCountry(country.isoCode).map(state => ({
+          name: state.name,
+          isoCode: state.isoCode,
+        }));
+        setFilteredStates(states);
+        if (member.state && states.some(s => s.name === member.state)) {
+          const state = State.getStatesOfCountry(country.isoCode).find(s => s.name === member.state);
+          if (state) {
+            const cities = City.getCitiesOfState(country.isoCode, state.isoCode).map(city => ({
+              name: city.name,
+            }));
+            setFilteredCities(cities);
+          }
+        }
+      }
+    }
+    
     setIsDrawerOpen(true);
     setOptionsMenu(null);
   };
@@ -564,53 +612,115 @@ const FamilyInfo = () => {
     setOptionsMenu(null);
   };
 
-  const handleSavePet = async () => {
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', petFormData.name);
-      formDataToSend.append('type', petFormData.type);
-      formDataToSend.append('breed', petFormData.breed);
-      formDataToSend.append('birthday', petFormData.birthday);
-      if (petFormData.profileImage) {
-        formDataToSend.append('profileImage', petFormData.profileImage);
-      }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formDataToSend,
-      });
+  const handleEditPet = (pet) => {
+  setIsEditing(true);
+  setEditingPetId(pet.id);
+  setPetFormData({
+    name: pet.name || '',
+    type: pet.type || '',
+    breed: pet.breed || '',
+    birthday: pet.birthday ? new Date(pet.birthday).toISOString().split('T')[0] : '',
+    profileImage: pet.photo || null,
+  });
+  setImagePreview(pet.photo ? `${import.meta.env.VITE_API_URL}/${pet.photo.replace(/^\/+/, '')}` : null);
+  setIsPetDrawerOpen(true);
+  setOptionsMenu(null);
+};
 
-      const data = await response.json();
-      if (data.success) {
-        toast.success('Pet saved successfully.', {
-          position: 'top-right',
-          autoClose: 3000,
-        });
-        handleClosePetDrawer();
-        await fetchPetInfo();
-      } else {
-        if (response.status === 401) {
-          toast.error('Session expired. Please log in again.', {
-            position: 'top-right',
-            autoClose: 3000,
-            onClose: () => navigate('/login'),
-          });
-        } else {
-          toast.error(data.message || 'Failed to save pet.', {
-            position: 'top-right',
-            autoClose: 3000,
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Error saving pet:', err);
-      toast.error('Error saving pet. Please try again.', {
+const handleDeletePet = async (id) => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pets/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      toast.success('Pet deleted successfully.', {
         position: 'top-right',
         autoClose: 3000,
       });
+      await fetchPetInfo();
+    } else {
+      if (response.status === 401) {
+        toast.error('Session expired. Please log in again.', {
+          position: 'top-right',
+          autoClose: 3000,
+          onClose: () => navigate('/login'),
+        });
+      } else {
+        toast.error(data.message || 'Failed to delete pet.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
     }
-  };
+  } catch (err) {
+    console.error('Error deleting pet:', err);
+    toast.error('Error deleting pet. Please try again.', {
+      position: 'top-right',
+      autoClose: 3000,
+    });
+  }
+  setOptionsMenu(null);
+};
+
+ const handleSavePet = async () => {
+  try {
+    const formDataToSend = new FormData();
+    formDataToSend.append('name', petFormData.name);
+    formDataToSend.append('type', petFormData.type);
+    formDataToSend.append('breed', petFormData.breed);
+    formDataToSend.append('birthday', petFormData.birthday);
+    if (petFormData.profileImage instanceof File) {
+      formDataToSend.append('profileImage', petFormData.profileImage);
+    } else if (petFormData.profileImage === '') {
+      formDataToSend.append('profileImage', '');
+    }
+
+    const url = editingPetId
+      ? `${import.meta.env.VITE_API_URL}/api/pets/${editingPetId}`
+      : `${import.meta.env.VITE_API_URL}/api/pets`;
+    const method = editingPetId ? 'PUT' : 'POST';
+
+    const response = await fetch(url, {
+      method,
+      credentials: 'include',
+      body: formDataToSend,
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      toast.success(editingPetId ? 'Pet updated successfully.' : 'Pet saved successfully.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+      handleClosePetDrawer();
+      await fetchPetInfo();
+    } else {
+      if (response.status === 401) {
+        toast.error('Session expired. Please log in again.', {
+          position: 'top-right',
+          autoClose: 3000,
+          onClose: () => navigate('/login'),
+        });
+      } else {
+        toast.error(data.message || `Failed to ${editingPetId ? 'update' : 'save'} pet.`, {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    }
+  } catch (err) {
+    console.error(`Error ${editingPetId ? 'updating' : 'saving'} pet:`, err);
+    toast.error(`Error ${editingPetId ? 'updating' : 'saving'} pet. Please try again.`, {
+      position: 'top-right',
+      autoClose: 3000,
+    });
+  }
+};
 
   const handleSelectContact = (contact) => {
     const formattedDate = contact.date_of_birth
@@ -642,6 +752,26 @@ const FamilyInfo = () => {
     setSearchQuery(contact.name);
     setIsSearchFocused(false);
     setFilteredContacts([]);
+    // Initialize dropdowns for country, state, and city
+    if (contact.country) {
+      const country = Country.getAllCountries().find(c => c.name === contact.country);
+      if (country) {
+        const states = State.getStatesOfCountry(country.isoCode).map(state => ({
+          name: state.name,
+          isoCode: state.isoCode,
+        }));
+        setFilteredStates(states);
+        if (contact.state && states.some(s => s.name === contact.state)) {
+          const state = State.getStatesOfCountry(country.isoCode).find(s => s.name === contact.state);
+          if (state) {
+            const cities = City.getCitiesOfState(country.isoCode, state.isoCode).map(city => ({
+              name: city.name,
+            }));
+            setFilteredCities(cities);
+          }
+        }
+      }
+    }
   };
 
   const getInitials = (firstName, lastName) => {
@@ -677,7 +807,6 @@ const FamilyInfo = () => {
     const baseUrl = import.meta.env.VITE_API_URL.replace(/\/+$/, '');
     const encodedPhoto = encodeURI(normalizedPhoto);
     const url = `${baseUrl}/${encodedPhoto}`;
-    console.log('Image URL:', url);
     return url;
   };
 
@@ -798,62 +927,86 @@ const FamilyInfo = () => {
       </div>
 
       <h2 className="family-id-section-heading">Pets</h2>
-      <div className="family-id-card-container">
-        {pets.map((pet) => (
-          <div key={pet.id} className="family-id-card" onClick={() => handlePetCardClick(pet.id)}>
-            <div className="family-id-card-content">
-              <div className="family-id-avatar-wrapper">
-                <div
-                  className="family-id-avatar"
-                  style={
-                    pet.photo && getImageUrl(pet.photo)
-                      ? { backgroundImage: `url(${getImageUrl(pet.photo)})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                      : { backgroundColor: '#DAE8E8' }
-                  }
-                  onError={() => handleImageError(pet.id, getImageUrl(pet.photo))}
-                >
-                  {!pet.photo && <span>{getPetInitials(pet.name)}</span>}
-                </div>
-              </div>
-              <div className="family-id-details">
-                <div className="family-id-name-options">
-                  <h3 className="family-id-card-name">{pet.name || 'Not Assigned'}</h3>
-                  <span className="family-id-card-options">...</span>
-                </div>
-                <p className="family-id-card-value-relation">{pet.breed || '-'}</p>
-              </div>
-            </div>
-            <div className="family-id-card-info">
-              <p className="family-id-card-label">Birthday</p>
-              <p className="family-id-card-value">{formatDate(pet.birthday)}</p>
-            </div>
-          </div>
-        ))}
-        <div className="family-id-card" onClick={() => handlePetCardClick(null)}>
-          <div className="family-id-card-content">
-            <div className="family-id-avatar-wrapper">
-              <div
-                className="family-id-avatar"
-                style={{
-                  backgroundImage: `url(${addPersonImage})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              ></div>
-            </div>
-            <div className="family-id-details">
-              <div className="family-id-name-options">
-                <h3 className="family-id-card-name">New Pet</h3>
-                <span className="family-id-card-options">...</span>
-              </div>
-              <p className="family-id-card-value-relation">-</p>
-            </div>
-          </div>
-          <div className="family-id-card-info-add">
-            <p className="family-id-card-label-add">+Add Pet</p>
+<div className="family-id-card-container">
+  {pets.map((pet) => (
+    <div key={pet.id} className="family-id-card" onClick={() => handlePetCardClick(pet.id)}>
+      <div className="family-id-card-content">
+        <div className="family-id-avatar-wrapper">
+          <div
+            className="family-id-avatar"
+            style={
+              pet.photo && getImageUrl(pet.photo)
+                ? { backgroundImage: `url(${getImageUrl(pet.photo)})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                : { backgroundColor: '#DAE8E8' }
+            }
+            onError={() => handleImageError(pet.id, getImageUrl(pet.photo))}
+          >
+            {!pet.photo && <span>{getPetInitials(pet.name)}</span>}
           </div>
         </div>
+        <div className="family-id-details">
+          <div className="family-id-name-options">
+            <h3 className="family-id-card-name">{pet.name || 'Not Assigned'}</h3>
+            <span className="family-id-card-options" onClick={(e) => toggleOptionsMenu(pet.id, e)}>
+              ...
+            </span>
+            {optionsMenu === pet.id && (
+              <div className="family-id-options-menu">
+                <div
+                  className="family-id-options-menu-item"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditPet(pet);
+                  }}
+                >
+                  Edit
+                </div>
+                <div
+                  className="family-id-options-menu-item"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeletePet(pet.id);
+                  }}
+                >
+                  Delete
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="family-id-card-value-relation">{pet.breed || '-'}</p>
+        </div>
       </div>
+      <div className="family-id-card-info">
+        <p className="family-id-card-label">Birthday</p>
+        <p className="family-id-card-value">{formatDate(pet.birthday)}</p>
+      </div>
+    </div>
+  ))}
+  <div className="family-id-card" onClick={() => handlePetCardClick(null)}>
+    <div className="family-id-card-content">
+      <div className="family-id-avatar-wrapper">
+        <div
+          className="family-id-avatar"
+          style={{
+            backgroundImage: `url(${addPersonImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        ></div>
+      </div>
+      <div className="family-id-details">
+        <div className="family-id-name-options">
+          <h3 className="family-id-card-name">New Pet</h3>
+          <span className="family-id-card-options">...</span>
+        </div>
+        <p className="family-id-card-value-relation">-</p>
+      </div>
+    </div>
+    <div className="family-id-card-info-add">
+      <p className="family-id-card-label-add">+Add Pet</p>
+    </div>
+  </div>
+</div>
 
       <div
         className="family-id-add-contact-drawer-backdrop"
@@ -878,10 +1031,10 @@ const FamilyInfo = () => {
                     style={
                       imagePreview
                         ? {
-                          backgroundImage: `url(${imagePreview})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }
+                            backgroundImage: `url(${imagePreview})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }
                         : { backgroundColor: '#DAE8E8' }
                     }
                   >
@@ -1237,7 +1390,7 @@ const FamilyInfo = () => {
             </button>
           </div>
           <div className="family-id-add-contact-drawer-divider"></div>
-          <h2 className="family-id-add-contact-drawer-heading">Add Pet</h2>
+         <h2 className="family-id-add-contact-drawer-heading">{isEditing ? 'Edit Pet' : 'Add Pet'}</h2>
           <div className="family-id-add-contact-form-content">
             <div className="nominee-add-form-row">
               <div className="nominee-add-field-group full-width">
@@ -1248,10 +1401,10 @@ const FamilyInfo = () => {
                       style={
                         imagePreview
                           ? {
-                            backgroundImage: `url(${imagePreview})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }
+                              backgroundImage: `url(${imagePreview})`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                            }
                           : { backgroundColor: "#DAE8E8" }
                       }
                     >

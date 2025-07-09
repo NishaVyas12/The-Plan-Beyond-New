@@ -23,6 +23,7 @@ import health from "../../../assets/images/sidebar/icon7.svg";
 import Family from "../../../assets/images/sidebar/icon9.svg";
 import Gone from "../../../assets/images/sidebar/icon10.svg";
 import Popups from "../../Popups";
+import sampleVideo from "../../../assets/videos/TPB.mp4";
 
 const Dash = () => {
   const [profile, setProfile] = useState({
@@ -637,22 +638,20 @@ const Dash = () => {
           </div>
 
           {showVideoPopup && (
-            <div className="video-popup-overlay">
-              <div className="video-popup">
-                <button className="video-popup-close" onClick={closeVideoPopup}>
-                  ×
-                </button>
-                {/* Replace 'sampleVideo' with a valid video URL or import */}
-                <video
-                  className="video-player"
-                  src=""
-                  controls
-                  autoPlay
-                ></video>
-              </div>
-            </div>
-          )}
-
+  <div className="video-popup-overlay">
+    <div className="video-popup">
+      <button className="video-popup-close" onClick={closeVideoPopup}>
+        ×
+      </button>
+      <video
+        className="video-player"
+        src={sampleVideo}
+        controls
+        autoPlay
+      ></video>
+    </div>
+  </div>
+)}
           {showSetupPopup && (
             <Popups onComplete={handlePopupComplete} />
           )}

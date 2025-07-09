@@ -359,13 +359,14 @@
 
 .family-id-options-menu {
   position: absolute;
-  top: 40px;
+  top: 50px;
   right: 10px;
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 100;
+  min-width: 100px;
 }
 
 .family-id-options-menu-item {
@@ -378,3 +379,7 @@
 .family-id-options-menu-item:hover {
   background-color: #f0f0f0;
 }
+
+
+
+

@@ -9,7 +9,7 @@ const FamilyIDPage = () => {
     <>
       <Sidebar />
       <Navbar />
-     <FamilyInfo />
+      <FamilyInfo />
       </>
   );
 };
