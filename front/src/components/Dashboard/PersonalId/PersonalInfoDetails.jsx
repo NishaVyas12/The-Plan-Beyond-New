@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './PersonalInfoDetails.css';
 import EmploymentPopup from './EmploymentPopup';
@@ -36,7 +36,6 @@ const PersonalInfoDetails = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [records, setRecords] = useState([]);
   const [dropdownOpenId, setDropdownOpenId] = useState(null);
-  const dropdownRef = useRef(null);
   const [formData, setFormData] = useState({
     type: '',
     number: '',
@@ -45,7 +44,7 @@ const PersonalInfoDetails = () => {
     stateIssued: '',
     countryIssued: '',
     files: null,
-    existingFiles: [], // Added to store existing file info
+    existingFiles: [],
     notes: '',
     organisation: '',
     joiningDate: '',
@@ -141,7 +140,7 @@ const PersonalInfoDetails = () => {
       stateIssued: '',
       countryIssued: '',
       files: null,
-      existingFiles: [], // Reset existingFiles
+      existingFiles: [],
       notes: '',
       organisation: '',
       joiningDate: '',
@@ -265,7 +264,7 @@ const PersonalInfoDetails = () => {
           location: record.location || '',
           notes: record.notes || '',
           files: null,
-          existingFiles: record.file_path ? [{ name: record.file_name, path: record.file_path }] : [], // Add existing file info
+          existingFiles: record.file_path ? [{ name: record.file_name, path: record.file_path }] : [],
         });
         setIsDrawerOpen(true);
       }
@@ -300,9 +299,11 @@ const PersonalInfoDetails = () => {
     setDropdownOpenId(null);
   };
 
+  // Handle clicks outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      // Check if the click is outside any dropdown menu
+      if (!event.target.closest('.personal-document-actions')) {
         setDropdownOpenId(null);
       }
     };
@@ -499,7 +500,7 @@ const PersonalInfoDetails = () => {
                   <span className="personal-document-time">{formatDate(record.created_at)}</span>
                 </div>
               </div>
-              <div className="personal-document-actions" ref={dropdownRef}>
+              <div className="personal-document-actions">
                 <button
                   className="personal-document-menu-button"
                   onClick={() => handleDropdownToggle(record.id)}
@@ -549,7 +550,7 @@ const PersonalInfoDetails = () => {
       { label: 'Country Issued', value: selectedRecord.country_issued },
       { label: 'Location', value: selectedRecord.location },
       { label: 'Notes', value: selectedRecord.notes },
-    ].filter(field => field.value);
+    ].filter((field) => field.value);
 
     return (
       <>
