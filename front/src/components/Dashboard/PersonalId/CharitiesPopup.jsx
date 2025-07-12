@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import imageIcon from '../../../assets/images/dash_icon/image.svg';
+import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
 const CharitiesPopup = ({
   formData,
@@ -19,6 +21,31 @@ const CharitiesPopup = ({
     frequency: useRef(null),
     enrolled: useRef(null),
     nominee: useRef(null),
+  };
+
+  const isImageFile = (fileName) => {
+    if (!fileName) return false;
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(extension);
+  };
+
+  const handleFileChangeWrapper = (e) => {
+    const newFiles = e.target.files;
+    if (newFiles && newFiles.length > 0) {
+      const existingFilesArray = Array.from(formData.files || []);
+      const combinedFiles = [...existingFilesArray, ...Array.from(newFiles)];
+      handleFileChange({ target: { files: combinedFiles } });
+    }
+  };
+
+  const handleRemoveFile = (index, isExisting = false) => {
+    if (isExisting) {
+      const updatedExistingFiles = formData.existingFiles.filter((_, i) => i !== index);
+      handleInputChange({ target: { name: "existingFiles", value: updatedExistingFiles } });
+    } else {
+      const updatedFiles = Array.from(formData.files || []).filter((_, i) => i !== index);
+      handleInputChange({ target: { name: "files", value: updatedFiles.length ? updatedFiles : null } });
+    }
   };
 
   const handleSelect = (name, value, event) => {
@@ -44,25 +71,37 @@ const CharitiesPopup = ({
   CharitiesPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
-    const form = new FormData();
-    form.append("charity_name", formData.charity_name);
-    form.append("charity_website", formData.charity_website || "");
-    form.append("payment_method", formData.payment_method || "");
-    form.append("amount", formData.amount || "0");
-    form.append("frequency", formData.frequency || "");
-    form.append("enrolled", formData.enrolled || "false");
-    form.append("nomineeContact", formData.nomineeContact || "");
-    form.append("notes", formData.notes || "");
+    const { id, charity_name, charity_website, payment_method, amount, frequency, enrolled, nomineeContact, notes, files, existingFiles = [] } = formData;
 
-    if (formData.files && formData.files.length > 0) {
-      Array.from(formData.files).forEach((file) => {
+    if (!charity_name) {
+      return { success: false, message: "Charity name is required." };
+    }
+
+    const form = new FormData();
+    form.append("charity_name", charity_name);
+    form.append("charity_website", charity_website || "");
+    form.append("payment_method", payment_method || "");
+    form.append("amount", amount || "0");
+    form.append("frequency", frequency || "");
+    form.append("enrolled", enrolled || "false");
+    form.append("nomineeContact", nomineeContact || "");
+    form.append("notes", notes || "");
+    if (files) {
+      Array.from(files).forEach((file) => {
         form.append("charityFiles", file);
       });
+    } else if (existingFiles.length === 0) {
+      form.append("removeFile", "true");
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/charity`, {
-        method: "POST",
+      const method = id ? "PUT" : "POST";
+      const url = id
+        ? `${import.meta.env.VITE_API_URL}/api/charity/${id}`
+        : `${import.meta.env.VITE_API_URL}/api/charity`;
+
+      const res = await fetch(url, {
+        method,
         credentials: "include",
         body: form,
       });
@@ -70,14 +109,19 @@ const CharitiesPopup = ({
       const data = await res.json();
 
       if (res.ok && data.success) {
-        return { success: true, message: "Charity information saved successfully!", charityId: data.charityId };
+        handleCloseModal();
+        return {
+          success: true,
+          message: id ? "Charity details updated successfully." : "Charity information saved successfully!",
+          charityId: data.charityId || id,
+        };
       } else {
         return { success: false, message: data.message || "Something went wrong!" };
       }
     } catch (error) {
-        console.error("Error submitting charity form:", error);
-        return { success: false, message: "Error submitting form. Try again." };
-      }
+      console.error("Error submitting charity form:", error);
+      return { success: false, message: "Error submitting form. Try again." };
+    }
   };
 
   return (
@@ -219,21 +263,77 @@ const CharitiesPopup = ({
             type="file"
             name="charityFiles"
             multiple
-            onChange={handleFileChange}
+            onChange={handleFileChangeWrapper}
             style={{ display: "none" }}
             accept="image/jpeg,image/png,application/pdf,image/gif"
             id="file-input"
           />
           <label htmlFor="file-input">
             <img src={uploadIcon} alt="Upload" className="personal-upload-icon" />
-            <span>Select or drag your files here</span>
+            <span style={{ color: "var(--secondary-color)" }}>Drag and drop Files</span>
+            <span style={{ color: "#6B7483" }}>OR</span>
+            <span style={{ color: "var(--secondary-color)" }}>Browse Files</span>
           </label>
-          <p>Please upload clear scans/photos of your documents.</p>
-          {formData.files && formData.files.length > 0 && (
+          {(formData.existingFiles?.length > 0 || formData.files?.length > 0) && (
             <div className="personal-file-list">
-              {Array.from(formData.files).map((file, index) => (
-                <div key={index} className="personal-file-item">
-                  <span>{file.name}</span>
+              {formData.existingFiles?.length > 0 && formData.existingFiles.map((file, index) => (
+                <div key={`existing-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}${file.path}`}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index, true)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {formData.files && Array.from(formData.files).map((file, index) => (
+                <div key={`new-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

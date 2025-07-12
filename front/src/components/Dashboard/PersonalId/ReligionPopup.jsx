@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+
 const ReligionPopup = ({
   formData,
   handleInputChange,
   nomineeContacts,
-  // handleSubmit,
+  handleSubmit,
   categories,
   handleCloseModal,
 }) => {
@@ -19,13 +20,12 @@ const ReligionPopup = ({
   };
 
   const handleSelect = (name, value, event) => {
-    event.preventDefault(); // Prevent default behavior
-    event.stopPropagation(); // Prevent event from bubbling up
+    event.preventDefault();
+    event.stopPropagation();
     handleInputChange({ target: { name, value } });
-    setDropdownStates((prev) => {
-      const newState = { ...prev, [name]: false };
-      return newState; // Explicitly return new state
-    });
+    // Map the input name to the corresponding dropdown state key
+    const dropdownKey = name === "nomineeContact" ? "nominee" : name;
+    setDropdownStates((prev) => ({ ...prev, [dropdownKey]: false }));
   };
 
   useEffect(() => {
@@ -40,45 +40,9 @@ const ReligionPopup = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const payload = {
-      religion: formData.religion,
-      religion1: formData.religion === "Others" ? formData.religion1 : "",
-      nomineeContact: formData.nomineeContact || "",
-    };
-
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/religion`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",        // keeps session cookies
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        toast.success("Religion information saved successfully.");
-        handleCloseModal();
-      } else {
-        toast.error(data.message || "Something went wrong. Please try again.");
-      }
-    } catch (err) {
-      console.error("Error submitting religion data:", err);
-      toast.error("Failed to save religion info.");
-    }
-  };
-
   return (
     <form onSubmit={handleSubmit} className="personal-popup-form">
-      <h2>{categories.find(c => c.id === 'religion').label}</h2>
+      <h2>{formData.id ? 'Edit Religion' : 'Add Religion'}</h2>
 
       <label>
         Select your religion
@@ -128,10 +92,7 @@ const ReligionPopup = ({
               {nomineeContacts.map((contact) => (
                 <li
                   key={contact.id}
-                  onClick={(e) => {
-                    handleSelect("nomineeContact", contact.email || contact.name, e);
-                    setDropdownStates((prev) => ({ ...prev, nominee: false }));
-                  }}
+                  onClick={(e) => handleSelect("nomineeContact", contact.email || contact.name, e)}
                   className="personal-dropdown-option"
                 >
                   {contact.name}
@@ -161,6 +122,90 @@ const ReligionPopup = ({
       </div>
     </form>
   );
+};
+
+// Static handleSubmit for integration with PersonalInfoDetails
+ReligionPopup.handleSubmit = async (e, formData, handleCloseModal) => {
+  e.preventDefault();
+
+  const { id, religion, religion1, nomineeContact } = formData;
+
+  if (!religion) {
+    toast.error("Religion is required.", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+    return { success: false, message: "Religion is required." };
+  }
+
+  if (religion === "Others" && !religion1) {
+    toast.error("Please specify the other religion.", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+    return { success: false, message: "Please specify the other religion." };
+  }
+
+  const payload = {
+    religion,
+    religion1: religion === "Others" ? religion1 : "",
+    nomineeContact: nomineeContact || "",
+  };
+
+  try {
+    const method = id ? "PUT" : "POST";
+    const url = id
+      ? `${import.meta.env.VITE_API_URL}/api/religion/${id}`
+      : `${import.meta.env.VITE_API_URL}/api/religion`;
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      return { success: true, message: "Religion information saved successfully.", religionId: data.religionId };
+    } else {
+      toast.error(data.message || "Something went wrong. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+      return { success: false, message: data.message || "Something went wrong." };
+    }
+  } catch (err) {
+    console.error("Error submitting religion data:", err);
+    toast.error("Failed to save religion info.", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+    return { success: false, message: "An unexpected error occurred." };
+  }
 };
 
 export default ReligionPopup;

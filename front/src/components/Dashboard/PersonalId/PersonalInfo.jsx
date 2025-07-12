@@ -98,10 +98,8 @@ const PersonalInfo = () => {
           });
           const result = await response.json();
           if (item.id === 'religion') {
-            // Religion endpoint returns array directly
             newCounts[item.id] = Array.isArray(result) ? result.length : 0;
           } else {
-            // Other endpoints return { success: true, documents: [...] }
             newCounts[item.id] = result.success && result.documents ? result.documents.length : 0;
           }
         } catch (error) {
@@ -115,27 +113,27 @@ const PersonalInfo = () => {
   }, []);
 
   const handleCardClick = (item) => {
-    if (counts[item.id] > 0) {
-      navigate(`/personal-info/${item.id}`);
-    } else {
+    if (item.id === 'religion' && counts[item.id] === 0) {
       setSelectedItem(item.name);
       setIsDrawerOpen(true);
       setIsAddDropdownOpen(false);
+    } else {
+      navigate(`/personal-info/${item.id}`);
+    }
+  };
+
+  const handleAddOptionSelect = (item) => {
+    if (item.id === 'religion' && counts[item.id] === 0) {
+      setSelectedItem(item.name);
+      setIsDrawerOpen(true);
+      setIsAddDropdownOpen(false);
+    } else {
+      navigate(`/personal-info/${item.id}`);
     }
   };
 
   const handleAddButtonClick = () => {
     setIsAddDropdownOpen((prev) => !prev);
-  };
-
-  const handleAddOptionSelect = (item) => {
-    if (counts[item.id] > 0) {
-      navigate(`/personal-info/${item.id}`);
-    } else {
-      setSelectedItem(item.name);
-      setIsDrawerOpen(true);
-      setIsAddDropdownOpen(false);
-    }
   };
 
   const handleCloseDrawer = () => {
@@ -195,6 +193,29 @@ const PersonalInfo = () => {
       category: '',
       status: '',
     });
+    // Refresh counts after closing drawer to reflect any new records
+    const fetchCounts = async () => {
+      const newCounts = {};
+      for (const item of infoItems) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/${item.endpoint}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+          const result = await response.json();
+          if (item.id === 'religion') {
+            newCounts[item.id] = Array.isArray(result) ? result.length : 0;
+          } else {
+            newCounts[item.id] = result.success && result.documents ? result.documents.length : 0;
+          }
+        } catch (error) {
+          console.error(`Error fetching count for ${item.id}:`, error);
+          newCounts[item.id] = 0;
+        }
+      }
+      setCounts(newCounts);
+    };
+    fetchCounts();
   };
 
   useEffect(() => {
@@ -233,24 +254,6 @@ const PersonalInfo = () => {
           draggable: true,
         });
         handleCloseDrawer();
-        // Refresh counts after submission
-        const item = infoItems.find((i) => i.name === selectedItem);
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/${item.endpoint}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        const resultData = await response.json();
-        if (item.id === 'religion') {
-          setCounts((prev) => ({
-            ...prev,
-            [item.id]: Array.isArray(resultData) ? resultData.length : 0,
-          }));
-        } else {
-          setCounts((prev) => ({
-            ...prev,
-            [item.id]: resultData.success && resultData.documents ? resultData.documents.length : 0,
-          }));
-        }
       } else {
         toast.error(result.message, {
           position: 'top-right',
@@ -327,7 +330,7 @@ const PersonalInfo = () => {
           formData={formData}
           handleInputChange={handleInputChange}
           nomineeContacts={nomineeContacts}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, ReligionPopup.handleSubmit)}
           categories={categories}
           handleCloseModal={handleCloseDrawer}
         />
@@ -417,7 +420,7 @@ const PersonalInfo = () => {
                 <li
                   key={item.id}
                   onClick={() => handleAddOptionSelect(item)}
-                  className="personal-add-dropdown-option"
+                  className={`personal-add-dropdown-option ${item.id === 'religion' && counts[item.id] > 0 ? 'disabled' : ''}`}
                 >
                   {item.name} {counts[item.id] > 0 ? `(${counts[item.id]})` : ''}
                 </li>
@@ -428,7 +431,11 @@ const PersonalInfo = () => {
       </div>
       <div className="personal-info-grid">
         {infoItems.map((item) => (
-          <div key={item.id} className="personal-info-card" onClick={() => handleCardClick(item)}>
+          <div
+            key={item.id}
+            className={`personal-info-card ${item.id === 'religion' && counts[item.id] > 0 ? 'disabled' : ''}`}
+            onClick={() => handleCardClick(item)}
+          >
             <div className="personal-info-icon">
               <img src={plusIcon} alt="Info Icon" className="icon-image" />
             </div>

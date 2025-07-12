@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
+import imageIcon from '../../../assets/images/dash_icon/image.svg';
+import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
 const MilitaryPopup = ({
   formData,
   handleInputChange,
   handleFileChange,
+  handleRemoveFile,
   handleSubmit,
   nomineeContacts,
   handleCloseModal,
@@ -19,6 +22,14 @@ const MilitaryPopup = ({
     military_branch: useRef(null),
     service_status: useRef(null),
     nominee: useRef(null),
+  };
+
+  const branchOptions = ['Army', 'Navy', 'Air Force', 'Others'];
+
+  const isImageFile = (fileName) => {
+    if (!fileName) return false;
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(extension);
   };
 
   const handleSelect = (name, value, event) => {
@@ -40,42 +51,55 @@ const MilitaryPopup = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const branchOptions = ['Army', 'Navy', 'Air Force', 'Others'];
-
   // Static handleSubmit for integration with PersonalInfo
   MilitaryPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
-    const form = new FormData();
-    form.append("military_branch", formData.military_branch);
-    if (formData.military_branch === "Others") {
-      form.append("military_name", formData.military_name || "");
-    }
-    form.append("military_rank", formData.military_rank || "");
-    form.append("service_type", formData.service_type || "");
-    form.append("military_serve", formData.military_serve || "");
-    form.append("service_status", formData.service_status || "false");
-    form.append("nomineeContact", formData.nomineeContact || "");
-    form.append("military_location", formData.military_location || "");
-    form.append("notes", formData.notes || "");
+    const { id, military_branch, military_name, military_rank, service_type, military_serve, service_status, nomineeContact, military_location, notes, files, existingFiles = [] } = formData;
 
-    if (formData.files && formData.files.length > 0) {
-      Array.from(formData.files).forEach((file) => {
-        form.append("militaryFiles", file);
+    if (!military_branch) {
+      return { success: false, message: "Military branch is required." };
+    }
+
+    const data = new FormData();
+    data.append("military_branch", military_branch);
+    data.append("military_name", military_branch === "Others" ? military_name || "" : "");
+    data.append("military_rank", military_rank || "");
+    data.append("service_type", service_type || "");
+    data.append("military_serve", military_serve || "");
+    data.append("service_status", service_status || "false");
+    data.append("nomineeContact", nomineeContact || "");
+    data.append("military_location", military_location || "");
+    data.append("notes", notes || "");
+    if (files) {
+      Array.from(files).forEach((file) => {
+        data.append("militaryFiles", file);
       });
+    } else if (existingFiles.length === 0) {
+      data.append("removeFile", "true");
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/military`, {
-        method: "POST",
+      const method = id ? "PUT" : "POST";
+      const url = id
+        ? `${import.meta.env.VITE_API_URL}/api/military/${id}`
+        : `${import.meta.env.VITE_API_URL}/api/military`;
+
+      const res = await fetch(url, {
+        method,
         credentials: "include",
-        body: form,
+        body: data,
       });
 
       const result = await res.json();
 
       if (res.ok && result.success) {
-        return { success: true, message: "Military information saved successfully!", militaryId: result.militaryId };
+        handleCloseModal();
+        return {
+          success: true,
+          message: id ? "Military details updated successfully." : "Military information saved successfully!",
+          militaryId: result.militaryId || id,
+        };
       } else {
         return { success: false, message: result.message || "Something went wrong!" };
       }
@@ -162,32 +186,7 @@ const MilitaryPopup = ({
         />
       </label>
 
-      <label>
-        Service Status
-        <div className="personal-custom-dropdown" ref={dropdownRefs.service_status}>
-          <div
-            className="personal-dropdown-toggle"
-            onClick={() => setDropdownStates((prev) => ({ ...prev, service_status: !prev.service_status, military_branch: false, nominee: false }))}
-          >
-            {formData.service_status === "true" ? "Retired" : formData.service_status === "false" ? "Active" : "Select status"}
-            <span className="personal-dropdown-arrow">▾</span>
-          </div>
-          {dropdownStates.service_status && (
-            <ul className="personal-dropdown-menu">
-              {["false", "true"].map((status) => (
-                <li
-                  key={status}
-                  onClick={(e) => handleSelect("service_status", status, e)}
-                  className="personal-dropdown-option"
-                >
-                  {status === "true" ? "Retired" : "Active"}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </label>
-
+     
       <label>
         Nominee Contact
         <div className="personal-custom-dropdown" ref={dropdownRefs.nominee}>
@@ -246,14 +245,70 @@ const MilitaryPopup = ({
           />
           <label htmlFor="file-input">
             <img src={uploadIcon} alt="Upload" className="personal-upload-icon" />
-            <span>Select or drag your files here</span>
+            <span style={{ color: "var(--secondary-color)" }}>Drag and drop Files</span>
+            <span style={{ color: "#6B7483" }}>OR</span>
+            <span style={{ color: "var(--secondary-color)" }}>Browse Files</span>
           </label>
-          <p>Please upload clear scans/photos of your documents.</p>
-          {formData.files && formData.files.length > 0 && (
+          {(formData.existingFiles?.length > 0 || formData.files?.length > 0) && (
             <div className="personal-file-list">
-              {Array.from(formData.files).map((file, index) => (
-                <div key={index} className="personal-file-item">
-                  <span>{file.name}</span>
+              {formData.existingFiles?.length > 0 && formData.existingFiles.map((file, index) => (
+                <div key={`existing-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}${file.path}`}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index, true)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {formData.files && Array.from(formData.files).map((file, index) => (
+                <div key={`new-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

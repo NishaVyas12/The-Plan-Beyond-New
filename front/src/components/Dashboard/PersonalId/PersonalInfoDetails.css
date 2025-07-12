@@ -21,11 +21,11 @@
 }
 
 .personal-add-button {
-  background-color: #10B981;
+  background-color: var(--primary-color);
   color: white;
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 20px;
   font-size: 0.9rem;
   cursor: pointer;
   display: flex;
@@ -33,9 +33,6 @@
   gap: 0.5rem;
 }
 
-.personal-add-button:hover {
-  background-color: #059669;
-}
 
 .personal-add-button-arrow {
   font-size: 0.8rem;
@@ -79,6 +76,7 @@
   font-size: 1rem;
   font-weight: 500;
   color: var(--secondary-color);
+  margin-bottom: 5px;
 }
 
 .personal-document-time {
@@ -281,26 +279,28 @@
 }
 
 .personal-button-group {
+  margin-top: 30px;
   display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
+  gap: 0.5rem;
+  justify-content: flex-start;
 }
 
 .personal-popup-form button {
   padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
+  border-radius: 20rem;
   border: none;
   cursor: pointer;
   font-size: 0.9rem;
 }
 
 .personal-popup-form button[type="submit"] {
-  background-color: #10B981;
+  background-color: var(--primary-color);
   color: white;
 }
 
 .personal-popup-form .personal-btn-cancel {
-  background-color: #E5E7EB;
+  background-color: transparent;
+  border: 1px solid #EBEBEB;
   color: #4B5563;
 }
 
@@ -384,13 +384,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 2rem 0;
+  margin: 3.5rem 0 2rem 0;
 }
 
 .personal-info-drawer-file {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 25px;
 }
 
 .personal-info-drawer-file-link {

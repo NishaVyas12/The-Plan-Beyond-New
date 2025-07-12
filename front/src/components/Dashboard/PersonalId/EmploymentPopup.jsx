@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import imageIcon from '../../../assets/images/dash_icon/image.svg';
+import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
 const EmploymentPopup = ({
   formData,
@@ -22,6 +24,31 @@ const EmploymentPopup = ({
     nominee: useRef(null),
     employmentType: useRef(null),
     benefits: useRef(null),
+  };
+
+  const isImageFile = (fileName) => {
+    if (!fileName) return false;
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(extension);
+  };
+
+  const handleRemoveFile = (index, isExisting = false) => {
+    if (isExisting) {
+      const updatedExistingFiles = formData.existingFiles.filter((_, i) => i !== index);
+      handleInputChange({ target: { name: "existingFiles", value: updatedExistingFiles } });
+    } else {
+      const updatedFiles = Array.from(formData.files || []).filter((_, i) => i !== index);
+      handleInputChange({ target: { name: "files", value: updatedFiles.length ? updatedFiles : null } });
+    }
+  };
+
+  const handleFileChangeWrapper = (e) => {
+    const newFiles = e.target.files;
+    if (newFiles && newFiles.length > 0) {
+      const existingFilesArray = Array.from(formData.files || []);
+      const combinedFiles = [...existingFilesArray, ...Array.from(newFiles)];
+      handleFileChange({ target: { files: combinedFiles } });
+    }
   };
 
   const handleContactChange = (e) => {
@@ -248,7 +275,7 @@ const EmploymentPopup = ({
         </>
       )}
 
-      {formData.type === "Self-employed" && (
+      {(formData.type === "Self-employed") && (
         <>
           <label>
             Name of organisation
@@ -380,7 +407,7 @@ const EmploymentPopup = ({
         <div className="personal-file-upload">
           <input
             type="file"
-            onChange={handleFileChange}
+            onChange={handleFileChangeWrapper}
             style={{ display: "none" }}
             id="file-input"
             accept="image/jpeg,image/png,application/pdf,image/gif"
@@ -392,11 +419,66 @@ const EmploymentPopup = ({
             <span style={{ color: "#6B7483" }}>OR</span>
             <span style={{ color: "var(--secondary-color)" }}>Browse Files</span>
           </label>
-          {formData.files && (
+          {(formData.existingFiles?.length > 0 || formData.files?.length > 0) && (
             <div className="personal-file-list">
-              {Array.from(formData.files).map((file, index) => (
-                <div key={index} className="personal-file-item">
-                  <span>{file.name}</span>
+              {formData.existingFiles?.length > 0 && formData.existingFiles.map((file, index) => (
+                <div key={`existing-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}${file.path}`}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index, true)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {formData.files && Array.from(formData.files).map((file, index) => (
+                <div key={`new-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -425,29 +507,42 @@ const EmploymentPopup = ({
 EmploymentPopup.handleSubmit = async (e, formData, handleCloseModal) => {
   e.preventDefault();
 
+  const { id, type, organisation, joiningDate, leavingDate, supervisorContact, nomineeContact, employmentType, jobTitle, employmentId, benefitsType, benefitsDetails, otherStatus, notes, files, existingFiles = [] } = formData;
+
+  if (!type) {
+    return { success: false, message: "Employment status is required." };
+  }
+
   const form = new FormData();
-  form.append("type", formData.type);
-  form.append("organisation", formData.organisation || "");
-  form.append("joiningDate", formData.joiningDate || "");
-  form.append("leavingDate", formData.leavingDate || "");
-  form.append("supervisorContact", formData.supervisorContact || "");
-  form.append("nomineeContact", formData.nomineeContact || "");
-  form.append("employmentType", formData.employmentType || "");
-  form.append("jobTitle", formData.jobTitle || "");
-  form.append("employmentId", formData.employmentId || "");
-  form.append("benefitsType", formData.benefitsType || "");
-  form.append("benefitsDetails", formData.benefitsDetails || "");
-  form.append("otherStatus", formData.otherStatus || "");
-  form.append("notes", formData.notes || "");
-  if (formData.files) {
-    Array.from(formData.files).forEach(file => {
+  form.append("type", type);
+  form.append("organisation", organisation || "");
+  form.append("joiningDate", joiningDate || "");
+  form.append("leavingDate", leavingDate || "");
+  form.append("supervisorContact", supervisorContact || "");
+  form.append("nomineeContact", nomineeContact || "");
+  form.append("employmentType", employmentType || "");
+  form.append("jobTitle", jobTitle || "");
+  form.append("employmentId", employmentId || "");
+  form.append("benefitsType", benefitsType || "");
+  form.append("benefitsDetails", benefitsDetails || "");
+  form.append("otherStatus", otherStatus || "");
+  form.append("notes", notes || "");
+  if (files) {
+    Array.from(files).forEach(file => {
       form.append("employmentFiles", file);
     });
+  } else if (existingFiles.length === 0) {
+    form.append("removeFile", "true");
   }
 
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/employment`, {
-      method: "POST",
+    const method = id ? "PUT" : "POST";
+    const url = id
+      ? `${import.meta.env.VITE_API_URL}/api/employment/${id}`
+      : `${import.meta.env.VITE_API_URL}/api/employment`;
+
+    const res = await fetch(url, {
+      method,
       credentials: "include",
       body: form,
     });

@@ -127,6 +127,10 @@ const PersonalInfoDetails = () => {
   };
 
   const handleAddButtonClick = () => {
+    if (categoryId === 'religion' && records.length > 0) {
+      toast.info('You can only add one religion record.');
+      return;
+    }
     setIsDrawerOpen(true);
   };
 
@@ -201,9 +205,21 @@ const PersonalInfoDetails = () => {
   };
 
   const handleFileChange = (e) => {
-    const files = e.target.files;
-    if (files) {
-      setFormData((prev) => ({ ...prev, files }));
+    const newFiles = e.target.files;
+    if (newFiles && newFiles.length > 0) {
+      const existingFilesArray = Array.from(formData.files || []);
+      const combinedFiles = [...existingFilesArray, ...Array.from(newFiles)];
+      setFormData((prev) => ({ ...prev, files: combinedFiles }));
+    }
+  };
+
+  const handleRemoveFile = (index, isExisting = false) => {
+    if (isExisting) {
+      const updatedExistingFiles = formData.existingFiles.filter((_, i) => i !== index);
+      setFormData((prev) => ({ ...prev, existingFiles: updatedExistingFiles }));
+    } else {
+      const updatedFiles = Array.from(formData.files || []).filter((_, i) => i !== index);
+      setFormData((prev) => ({ ...prev, files: updatedFiles.length ? updatedFiles : null }));
     }
   };
 
@@ -212,7 +228,7 @@ const PersonalInfoDetails = () => {
     if (popupSpecificSubmit) {
       const result = await popupSpecificSubmit(e, formData, handleCloseDrawer);
       if (result.success) {
-        toast.success(result.message, {
+        toast.success(result.message || 'Record saved successfully.', {
           position: 'top-right',
           autoClose: 3000,
           hideProgressBar: false,
@@ -222,7 +238,7 @@ const PersonalInfoDetails = () => {
         });
         handleCloseDrawer();
       } else {
-        toast.error(result.message, {
+        toast.error(result.message || 'Failed to save record.', {
           position: 'top-right',
           autoClose: 3000,
           hideProgressBar: false,
@@ -239,20 +255,16 @@ const PersonalInfoDetails = () => {
   };
 
   const handleView = (recordId) => {
-    if (categoryId === 'ids') {
-      const record = records.find((r) => r.id === recordId);
-      if (record) {
-        setSelectedRecord(record);
-        setIsViewDrawerOpen(true);
-      }
-    }
+    const record = records.find((r) => r.id === recordId);
+    setSelectedRecord(record);
+    setIsViewDrawerOpen(true);
     setDropdownOpenId(null);
   };
 
   const handleEdit = (recordId) => {
-    if (categoryId === 'ids') {
-      const record = records.find((r) => r.id === recordId);
-      if (record) {
+    const record = records.find((r) => r.id === recordId);
+    if (record) {
+      if (categoryId === 'ids') {
         setFormData({
           ...formData,
           id: record.id,
@@ -264,10 +276,128 @@ const PersonalInfoDetails = () => {
           location: record.location || '',
           notes: record.notes || '',
           files: null,
-          existingFiles: record.file_path ? [{ name: record.file_name, path: record.file_path }] : [],
+          existingFiles: Array.isArray(record.file_path)
+            ? record.file_path.map((path) => ({ name: path.split('/').pop(), path }))
+            : [],
         });
-        setIsDrawerOpen(true);
+      } else if (categoryId === 'employment') {
+        setFormData({
+          ...formData,
+          id: record.id,
+          type: record.type || '',
+          organisation: record.organisation || '',
+          joiningDate: record.joining_date || '',
+          leavingDate: record.leaving_date || '',
+          supervisorContact: record.supervisor_contact || '',
+          nomineeContact: record.nominee_contact || '',
+          employmentType: record.employment_type || '',
+          jobTitle: record.job_title || '',
+          employmentId: record.employment_id || '',
+          benefitsType: record.benefits_type || '',
+          benefitsDetails: record.benefits_details || '',
+          otherStatus: record.other_status || '',
+          notes: record.notes || '',
+          files: null,
+          existingFiles: Array.isArray(record.file_path)
+            ? record.file_path.map((path) => ({ name: path.split('/').pop(), path }))
+            : [],
+        });
+      } else if (categoryId === 'religion') {
+        setFormData({
+          ...formData,
+          id: record.id,
+          religion: record.religion || '',
+          religion1: record.religion_other || '',
+          nomineeContact: record.nominee_contact || '',
+        });
+      } else if (categoryId === 'charities') {
+        setFormData({
+          ...formData,
+          id: record.id,
+          charity_name: record.charity_name || '',
+          charity_website: record.charity_website || '',
+          payment_method: record.payment_method || '',
+          amount: record.amount || '',
+          frequency: record.frequency || '',
+          enrolled: record.enrolled ? 'true' : 'false',
+          nomineeContact: record.nominee_contact || '',
+          notes: record.notes || '',
+          files: null,
+          existingFiles: Array.isArray(record.file_paths)
+            ? record.file_paths.map((path) => ({ name: path.split('/').pop(), path }))
+            : [],
+        });
+      } else if (categoryId === 'clubs') {
+        setFormData({
+          ...formData,
+          id: record.id,
+          club: record.club || '',
+          club_name: record.club_name || '',
+          club_contact: record.club_contact || '',
+          membership_type: record.membership_type || '',
+          membership_status: record.membership_status ? 'true' : 'false',
+          nomineeContact: record.nominee_contact || '',
+          notes: record.notes || '',
+          files: null,
+          existingFiles: Array.isArray(record.file_paths)
+            ? record.file_paths.map((path) => ({ name: path.split('/').pop(), path }))
+            : [],
+        });
+      } else if (categoryId === 'degrees') {
+        setFormData({
+          ...formData,
+          id: record.id,
+          university_name: record.university_name || '',
+          degree: record.degree || '',
+          degree_field: record.degree_field || '',
+          degree_start: record.degree_start || '',
+          degree_end: record.degree_end || '',
+          grade: record.grade || '',
+          activities: record.activities || '',
+          degree_type: record.degree_type || '',
+          completion_status: record.completion_status ? 'true' : 'false',
+          nomineeContact: record.nominee_contact || '',
+          notes: record.notes || '',
+          files: null,
+          existingFiles: Array.isArray(record.file_paths)
+            ? record.file_paths.map((path) => ({ name: path.split('/').pop(), path }))
+            : [],
+        });
+      } else if (categoryId === 'military') {
+        setFormData({
+          ...formData,
+          id: record.id,
+          military_branch: record.military_branch || '',
+          military_name: record.military_name || '',
+          military_rank: record.military_rank || '',
+          military_serve: record.military_serve || '',
+          military_location: record.military_location || '',
+          service_type: record.service_type || '',
+          service_status: record.service_status ? 'true' : 'false',
+          nomineeContact: record.nominee_contact || '',
+          notes: record.notes || '',
+          files: null,
+          existingFiles: Array.isArray(record.file_paths)
+            ? record.file_paths.map((path) => ({ name: path.split('/').pop(), path }))
+            : [],
+        });
+      } else if (categoryId === 'miscellaneous') {
+        setFormData({
+          ...formData,
+          id: record.id,
+          item: record.item || '',
+          description: record.description || '',
+          category: record.category || '',
+          status: record.status ? 'true' : 'false',
+          nomineeContact: record.nominee_contact || '',
+          notes: record.notes || '',
+          files: null,
+          existingFiles: Array.isArray(record.file_paths)
+            ? record.file_paths.map((path) => ({ name: path.split('/').pop(), path }))
+            : [],
+        });
       }
+      setIsDrawerOpen(true);
     }
     setDropdownOpenId(null);
   };
@@ -299,10 +429,8 @@ const PersonalInfoDetails = () => {
     setDropdownOpenId(null);
   };
 
-  // Handle clicks outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Check if the click is outside any dropdown menu
       if (!event.target.closest('.personal-document-actions')) {
         setDropdownOpenId(null);
       }
@@ -338,6 +466,7 @@ const PersonalInfoDetails = () => {
           formData={formData}
           handleInputChange={handleInputChange}
           handleFileChange={handleFileChange}
+          handleRemoveFile={handleRemoveFile}
           handleSubmit={(e) => handleSubmit(e, IdsPopup.handleSubmit)}
           documentTypes={documentTypes}
           uploadIcon={uploadIcon}
@@ -350,6 +479,7 @@ const PersonalInfoDetails = () => {
           formData={formData}
           handleInputChange={handleInputChange}
           handleFileChange={handleFileChange}
+          handleRemoveFile={handleRemoveFile}
           handleSubmit={(e) => handleSubmit(e, EmploymentPopup.handleSubmit)}
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
@@ -363,7 +493,7 @@ const PersonalInfoDetails = () => {
           formData={formData}
           handleInputChange={handleInputChange}
           nomineeContacts={nomineeContacts}
-          handleSubmit={handleSubmit}
+          handleSubmit={(e) => handleSubmit(e, ReligionPopup.handleSubmit)}
           categories={categories}
           handleCloseModal={handleCloseDrawer}
         />
@@ -373,10 +503,11 @@ const PersonalInfoDetails = () => {
         <CharitiesPopup
           formData={formData}
           handleInputChange={handleInputChange}
+          handleFileChange={handleFileChange}
+          handleRemoveFile={handleRemoveFile}
+          handleSubmit={(e) => handleSubmit(e, CharitiesPopup.handleSubmit)}
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
-          handleFileChange={handleFileChange}
-          handleSubmit={(e) => handleSubmit(e, CharitiesPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -386,11 +517,12 @@ const PersonalInfoDetails = () => {
         <ClubsPopup
           formData={formData}
           handleInputChange={handleInputChange}
+          handleFileChange={handleFileChange}
+          handleRemoveFile={handleRemoveFile}
+          handleSubmit={(e) => handleSubmit(e, ClubsPopup.handleSubmit)}
           allContacts={allContacts}
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
-          handleFileChange={handleFileChange}
-          handleSubmit={(e) => handleSubmit(e, ClubsPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -400,10 +532,11 @@ const PersonalInfoDetails = () => {
         <DegreesPopup
           formData={formData}
           handleInputChange={handleInputChange}
+          handleFileChange={handleFileChange}
+          handleRemoveFile={handleRemoveFile}
+          handleSubmit={(e) => handleSubmit(e, DegreesPopup.handleSubmit)}
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
-          handleFileChange={handleFileChange}
-          handleSubmit={(e) => handleSubmit(e, DegreesPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -413,10 +546,11 @@ const PersonalInfoDetails = () => {
         <MilitaryPopup
           formData={formData}
           handleInputChange={handleInputChange}
+          handleFileChange={handleFileChange}
+          handleRemoveFile={handleRemoveFile}
+          handleSubmit={(e) => handleSubmit(e, MilitaryPopup.handleSubmit)}
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
-          handleFileChange={handleFileChange}
-          handleSubmit={(e) => handleSubmit(e, MilitaryPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -426,10 +560,11 @@ const PersonalInfoDetails = () => {
         <MiscellaneousPopup
           formData={formData}
           handleInputChange={handleInputChange}
+          handleFileChange={handleFileChange}
+          handleRemoveFile={handleRemoveFile}
+          handleSubmit={(e) => handleSubmit(e, MiscellaneousPopup.handleSubmit)}
           nomineeContacts={nomineeContacts}
           handleCloseModal={handleCloseDrawer}
-          handleFileChange={handleFileChange}
-          handleSubmit={(e) => handleSubmit(e, MiscellaneousPopup.handleSubmit)}
           categories={categories}
           uploadIcon={uploadIcon}
         />
@@ -445,12 +580,9 @@ const PersonalInfoDetails = () => {
   };
 
   const getFilePath = (record) => {
-    if (categoryId === 'ids') {
-      return record.file_path;
-    } else if (['employment', 'charity', 'club', 'degrees', 'military', 'miscellaneous'].includes(categoryId)) {
-      return record.file_paths?.length > 0 ? record.file_paths[0] : null;
-    }
-    return null;
+    if (Array.isArray(record.file_path)) return record.file_path;
+    if (Array.isArray(record.file_paths)) return record.file_paths;
+    return [];
   };
 
   const getDocumentName = (record) => {
@@ -458,13 +590,23 @@ const PersonalInfoDetails = () => {
       return record[nameField] || record.religion_other || 'Unnamed Record';
     }
     if (categoryId === 'ids') {
-      return record[nameField] || record.file_name || 'Unnamed Document';
+      return record[nameField] || 'Unnamed Document';
     }
-    const filePath = getFilePath(record);
-    return record[nameField] || (filePath ? filePath.split('/').pop() : 'Unnamed Document');
+    if (categoryId === 'clubs') {
+      return record.club_name || record.club || 'Unnamed Document';
+    }
+    if (categoryId === 'military') {
+      return record.military_branch || record[nameField] || 'Unnamed Document';
+    }
+    if (categoryId === 'miscellaneous') {
+      return record.item || 'Unnamed Document';
+    }
+    const filePaths = getFilePath(record);
+    return record[nameField] || (filePaths.length > 0 ? `${filePaths.length} File(s)` : 'Unnamed Document');
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
       month: 'short',
@@ -476,6 +618,16 @@ const PersonalInfoDetails = () => {
     });
   };
 
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+    });
+  };
+
   const renderDocumentList = () => {
     if (!records.length) {
       return <p>No records found for {category?.label}.</p>;
@@ -484,14 +636,19 @@ const PersonalInfoDetails = () => {
     return (
       <div className="personal-document-list">
         {records.map((record) => {
-          const filePath = getFilePath(record);
+          const filePaths = getFilePath(record);
           return (
-            <div key={record.id} className="personal-document-item">
+            <div
+              key={record.id}
+              className="personal-document-item"
+              onClick={() => handleView(record.id)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="personal-document-info">
-                {categoryId !== 'religion' && (
+                {categoryId !== 'religion' && filePaths.length > 0 && (
                   <img
-                    src={isImageFile(filePath) ? imageIcon : pdfIcon}
-                    alt={isImageFile(filePath) ? 'Image Icon' : 'PDF Icon'}
+                    src={isImageFile(filePaths[0]) ? imageIcon : pdfIcon}
+                    alt={isImageFile(filePaths[0]) ? 'Image Icon' : 'PDF Icon'}
                     className="personal-document-icon"
                   />
                 )}
@@ -503,7 +660,10 @@ const PersonalInfoDetails = () => {
               <div className="personal-document-actions">
                 <button
                   className="personal-document-menu-button"
-                  onClick={() => handleDropdownToggle(record.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDropdownToggle(record.id);
+                  }}
                 >
                   ⋮
                 </button>
@@ -511,19 +671,28 @@ const PersonalInfoDetails = () => {
                   <ul className="personal-document-dropdown-menu">
                     <li
                       className="personal-document-dropdown-option"
-                      onClick={() => handleView(record.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleView(record.id);
+                      }}
                     >
                       View
                     </li>
                     <li
                       className="personal-document-dropdown-option"
-                      onClick={() => handleEdit(record.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(record.id);
+                      }}
                     >
                       Edit
                     </li>
                     <li
                       className="personal-document-dropdown-option"
-                      onClick={() => handleDelete(record.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(record.id);
+                      }}
                     >
                       Delete
                     </li>
@@ -538,19 +707,83 @@ const PersonalInfoDetails = () => {
   };
 
   const renderViewDrawer = () => {
-    if (!isViewDrawerOpen || !selectedRecord || categoryId !== 'ids') return null;
+    if (!isViewDrawerOpen || !selectedRecord) return null;
 
-    const filePath = getFilePath(selectedRecord);
+    const filePaths = getFilePath(selectedRecord);
 
-    const fields = [
+    const fields = categoryId === 'ids' ? [
       { label: 'Document Type', value: selectedRecord.document_type },
       { label: 'Document Number', value: selectedRecord.document_number },
-      { label: 'Expiration Date', value: selectedRecord.expiration_date },
+      { label: 'Expiration Date', value: formatDisplayDate(selectedRecord.expiration_date) },
       { label: 'State Issued', value: selectedRecord.state_issued },
       { label: 'Country Issued', value: selectedRecord.country_issued },
       { label: 'Location', value: selectedRecord.location },
       { label: 'Notes', value: selectedRecord.notes },
-    ].filter((field) => field.value);
+    ].filter((field) => field.value) : categoryId === 'employment' ? [
+      { label: 'Employment Status', value: selectedRecord.type },
+      { label: 'Organisation', value: selectedRecord.organisation },
+      { label: 'Joining Date', value: formatDisplayDate(selectedRecord.joining_date) },
+      { label: 'Leaving Date', value: formatDisplayDate(selectedRecord.leaving_date) },
+      { label: 'Supervisor Contact', value: selectedRecord.supervisor_contact },
+      { label: 'Nominee Contact', value: selectedRecord.nominee_contact },
+      { label: 'Employment Type', value: selectedRecord.employment_type },
+      { label: 'Job Title', value: selectedRecord.job_title },
+      { label: 'Employment ID', value: selectedRecord.employment_id },
+      { label: 'Benefits Type', value: selectedRecord.benefits_type },
+      { label: 'Benefits Details', value: selectedRecord.benefits_details },
+      { label: 'Other Status', value: selectedRecord.other_status },
+      { label: 'Notes', value: selectedRecord.notes },
+    ].filter((field) => field.value) : categoryId === 'religion' ? [
+      { label: 'Religion', value: selectedRecord.religion },
+      { label: 'Other Religion', value: selectedRecord.religion_other },
+      { label: 'Nominee Contact', value: selectedRecord.nominee_contact },
+    ].filter((field) => field.value) : categoryId === 'charities' ? [
+      { label: 'Charity Name', value: selectedRecord.charity_name },
+      { label: 'Website or Phone Number', value: selectedRecord.charity_website },
+      { label: 'Payment Method', value: selectedRecord.payment_method },
+      { label: 'Amount', value: selectedRecord.amount },
+      { label: 'Payment Frequency', value: selectedRecord.frequency },
+      { label: 'Enrolled in Auto-pay', value: selectedRecord.enrolled ? 'Yes' : 'No' },
+      { label: 'Nominee Contact', value: selectedRecord.nominee_contact },
+      { label: 'Notes', value: selectedRecord.notes },
+    ].filter((field) => field.value) : categoryId === 'clubs' ? [
+      { label: 'Organization', value: selectedRecord.club },
+      { label: 'Club Name', value: selectedRecord.club_name },
+      { label: 'Club Contact', value: selectedRecord.club_contact },
+      { label: 'Membership Type', value: selectedRecord.membership_type },
+      { label: 'Membership Status', value: selectedRecord.membership_status ? 'Active' : 'Inactive' },
+      { label: 'Nominee Contact', value: selectedRecord.nominee_contact },
+      { label: 'Notes', value: selectedRecord.notes },
+    ].filter((field) => field.value) : categoryId === 'degrees' ? [
+      { label: 'University Name', value: selectedRecord.university_name },
+      { label: 'Degree', value: selectedRecord.degree },
+      { label: 'Degree Field', value: selectedRecord.degree_field },
+      { label: 'Degree Type', value: selectedRecord.degree_type },
+      { label: 'Start Date', value: formatDisplayDate(selectedRecord.degree_start) },
+      { label: 'End Date', value: formatDisplayDate(selectedRecord.degree_end) },
+      { label: 'Grade', value: selectedRecord.grade },
+      { label: 'Activities', value: selectedRecord.activities },
+      { label: 'Completion Status', value: selectedRecord.completion_status ? 'Completed' : 'In Progress' },
+      { label: 'Nominee Contact', value: selectedRecord.nominee_contact },
+      { label: 'Notes', value: selectedRecord.notes },
+    ].filter((field) => field.value) : categoryId === 'military' ? [
+      { label: 'Military Branch', value: selectedRecord.military_branch },
+      { label: 'Branch Name', value: selectedRecord.military_name },
+      { label: 'Rank', value: selectedRecord.military_rank },
+      { label: 'Service Type', value: selectedRecord.service_type },
+      { label: 'Service Period', value: selectedRecord.military_serve },
+      { label: 'Service Status', value: selectedRecord.service_status ? 'Retired' : 'Active' },
+      { label: 'Nominee Contact', value: selectedRecord.nominee_contact },
+      { label: 'Location', value: selectedRecord.military_location },
+      { label: 'Notes', value: selectedRecord.notes },
+    ].filter((field) => field.value) : categoryId === 'miscellaneous' ? [
+      { label: 'Item', value: selectedRecord.item },
+      { label: 'Description', value: selectedRecord.description },
+      { label: 'Category', value: selectedRecord.category },
+      { label: 'Status', value: selectedRecord.status ? 'Active' : 'Inactive' },
+      { label: 'Nominee Contact', value: selectedRecord.nominee_contact },
+      { label: 'Notes', value: selectedRecord.notes },
+    ].filter((field) => field.value) : [];
 
     return (
       <>
@@ -567,7 +800,17 @@ const PersonalInfoDetails = () => {
           </div>
           <div className="personal-info-drawer-divider"></div>
           <div className="personal-info-drawer-header">
-            <h3 className="personal-info-drawer-heading">{selectedRecord.document_type || 'Document Details'}</h3>
+            <h3 className="personal-info-drawer-heading">
+              {categoryId === 'ids' ? selectedRecord.document_type :
+               categoryId === 'employment' ? selectedRecord.organisation || 'Document Details' :
+               categoryId === 'religion' ? selectedRecord.religion || selectedRecord.religion_other || 'Religion Details' :
+               categoryId === 'charities' ? selectedRecord.charity_name || 'Charity Details' :
+               categoryId === 'clubs' ? (selectedRecord.club_name || selectedRecord.club || 'Club Details') :
+               categoryId === 'degrees' ? selectedRecord.degree || 'Degree Details' :
+               categoryId === 'military' ? (selectedRecord.military_name || selectedRecord.military_branch || 'Military Details') :
+               categoryId === 'miscellaneous' ? selectedRecord.item || 'Miscellaneous Details' :
+               'Document Details'}
+            </h3>
             <div className="personal-info-drawer-actions">
               <button
                 className="personal-info-drawer-action-button"
@@ -592,22 +835,27 @@ const PersonalInfoDetails = () => {
                 <span className="personal-info-drawer-value">{field.value}</span>
               </div>
             ))}
-            {filePath && (
+            {filePaths.length > 0 && (
               <div className="personal-info-drawer-field personal-info-drawer-file-field">
-                <div className="personal-info-drawer-file">
-                  <img
-                    src={isImageFile(filePath) ? imageIcon : pdfIcon}
-                    alt={isImageFile(filePath) ? 'Image Icon' : 'PDF Icon'}
-                    className="personal-document-icon"
-                  />
-                  <a
-                    href={`${import.meta.env.VITE_API_URL}${filePath}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="personal-info-drawer-file-link"
-                  >
-                    {selectedRecord.file_name || filePath.split('/').pop()}
-                  </a>
+               
+                <div className="personal-info-drawer-file-list">
+                  {filePaths.map((filePath, index) => (
+                    <div key={index} className="personal-info-drawer-file">
+                      <img
+                        src={isImageFile(filePath) ? imageIcon : pdfIcon}
+                        alt={isImageFile(filePath) ? 'Image Icon' : 'PDF Icon'}
+                        className="personal-document-icon"
+                      />
+                      <a
+                        href={`${import.meta.env.VITE_API_URL}${filePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="personal-info-drawer-file-link"
+                      >
+                        {filePath.split('/').pop()}
+                      </a>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -622,7 +870,11 @@ const PersonalInfoDetails = () => {
       <ToastContainer />
       <div className="personal-info-header">
         <h2 className="personal-info-title">{category?.label || 'Details'}</h2>
-        <button className="personal-add-button" onClick={handleAddButtonClick}>
+        <button
+          className="personal-add-button"
+          onClick={handleAddButtonClick}
+          disabled={categoryId === 'religion' && records.length > 0}
+        >
           Add <span className="personal-add-button-arrow">▾</span>
         </button>
       </div>

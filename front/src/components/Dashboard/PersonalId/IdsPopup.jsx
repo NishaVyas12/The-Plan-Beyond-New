@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PropTypes from 'prop-types';
+import { Country, State } from 'country-state-city';
 
 const IdsPopup = ({
   formData,
@@ -13,7 +14,12 @@ const IdsPopup = ({
   handleCloseModal,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [removeFile, setRemoveFile] = useState(false); // Track file removal
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [isStateDropdownOpen, setIsStateDropdownOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [stateSearch, setStateSearch] = useState('');
+  const [filteredCountries, setFilteredCountries] = useState([]);
+  const [filteredStates, setFilteredStates] = useState([]);
   const dropdownRef = useRef(null);
 
   const handleSelect = (type) => {
@@ -21,15 +27,82 @@ const IdsPopup = ({
     setIsDropdownOpen(false);
   };
 
-  const handleRemoveFile = () => {
-    setRemoveFile(true);
-    setFormData((prev) => ({ ...prev, files: null, existingFiles: [] }));
+  const handleRemoveFile = (index, isExisting = false) => {
+    if (isExisting) {
+      const updatedExistingFiles = formData.existingFiles.filter((_, i) => i !== index);
+      handleInputChange({ target: { name: "existingFiles", value: updatedExistingFiles } });
+    } else {
+      const updatedFiles = Array.from(formData.files || []).filter((_, i) => i !== index);
+      handleInputChange({ target: { name: "files", value: updatedFiles.length ? updatedFiles : null } });
+    }
   };
+
+  const handleFileChangeWrapper = (e) => {
+    const newFiles = e.target.files;
+    if (newFiles && newFiles.length > 0) {
+      const existingFilesArray = Array.from(formData.files || []);
+      const combinedFiles = [...existingFilesArray, ...Array.from(newFiles)];
+      handleFileChange({ target: { files: combinedFiles } });
+    }
+  };
+
+  // Initialize countries and states
+  useEffect(() => {
+    const countries = Country.getAllCountries().map(country => ({
+      name: country.name,
+      isoCode: country.isoCode,
+    }));
+    setFilteredCountries(countries);
+
+    const states = State.getAllStates().map(state => ({
+      name: state.name,
+      isoCode: state.isoCode,
+      countryCode: state.countryCode,
+    }));
+    setFilteredStates(states);
+  }, []);
+
+  // Filter countries based on search
+  useEffect(() => {
+    const countries = Country.getAllCountries().map(country => ({
+      name: country.name,
+      isoCode: country.isoCode,
+    }));
+    if (countrySearch) {
+      setFilteredCountries(
+        countries.filter(country =>
+          country.name.toLowerCase().includes(countrySearch.toLowerCase())
+        )
+      );
+    } else {
+      setFilteredCountries(countries);
+    }
+  }, [countrySearch]);
+
+  // Filter states based on search
+  useEffect(() => {
+    const states = State.getAllStates().map(state => ({
+      name: state.name,
+      isoCode: state.isoCode,
+      countryCode: state.countryCode,
+    }));
+    if (stateSearch) {
+      setFilteredStates(
+        states.filter(state =>
+          state.name.toLowerCase().includes(stateSearch.toLowerCase())
+        )
+      );
+    } else {
+      setFilteredStates(states);
+    }
+  }, [stateSearch]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+        setIsCountryDropdownOpen(false);
+        setIsStateDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -69,7 +142,7 @@ const IdsPopup = ({
               <span className="personal-dropdown-arrow">▾</span>
             </div>
             {isDropdownOpen && (
-              <ul className="personal-dropdown-menu">
+              <ul className="personal-dropdown-menu personal-scrollable-dropdown">
                 {documentTypes.map((type) => (
                   <li
                     key={type}
@@ -96,6 +169,7 @@ const IdsPopup = ({
                 value={formData.number || ""}
                 onChange={handleInputChange}
                 placeholder={`Enter the ${formData.type} number`}
+                className="personal-text-input"
                 required
               />
             </label>
@@ -108,31 +182,92 @@ const IdsPopup = ({
                   value={formData.expirationDate || ""}
                   onChange={handleInputChange}
                   placeholder="Select expiration date"
+                  className="personal-text-input"
                 />
               </label>
             )}
             {formData.type === "Driver’s License" && (
               <label>
                 State Issued
-                <input
-                  type="text"
-                  name="stateIssued"
-                  value={formData.stateIssued || ""}
-                  onChange={handleInputChange}
-                  placeholder="Enter state issued"
-                />
+                <div className="personal-custom-dropdown">
+                  <input
+                    type="text"
+                    name="stateIssued"
+                    value={formData.stateIssued || ""}
+                    onChange={(e) => {
+                      setStateSearch(e.target.value);
+                      handleInputChange(e);
+                    }}
+                    onFocus={() => setIsStateDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setIsStateDropdownOpen(false), 200)}
+                    placeholder="Select or type state"
+                    className="personal-text-input"
+                  />
+                  {isStateDropdownOpen && (
+                    <ul className="personal-dropdown-menu personal-scrollable-dropdown">
+                      {filteredStates.map((state) => (
+                        <li
+                          key={`${state.isoCode}-${state.countryCode}`}
+                          className="personal-dropdown-option"
+                          onClick={() => {
+                            handleInputChange({ target: { name: 'stateIssued', value: state.name } });
+                            setStateSearch('');
+                            setIsStateDropdownOpen(false);
+                          }}
+                        >
+                          {state.name}
+                        </li>
+                      ))}
+                      {filteredStates.length === 0 && (
+                        <li className="personal-dropdown-option">
+                          No states found
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
               </label>
             )}
             {formData.type === "Passport" && (
               <label>
                 Country Issued
-                <input
-                  type="text"
-                  name="countryIssued"
-                  value={formData.countryIssued || ""}
-                  onChange={handleInputChange}
-                  placeholder="Enter country issued"
-                />
+                <div className="personal-custom-dropdown">
+                  <input
+                    type="text"
+                    name="countryIssued"
+                    value={formData.countryIssued || ""}
+                    onChange={(e) => {
+                      setCountrySearch(e.target.value);
+                      handleInputChange(e);
+                    }}
+                    onFocus={() => setIsCountryDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setIsCountryDropdownOpen(false), 200)}
+                    placeholder="Select or type country"
+                    className="personal-text-input"
+                  />
+                  {isCountryDropdownOpen && (
+                    <ul className="personal-dropdown-menu personal-scrollable-dropdown">
+                      {filteredCountries.map((country) => (
+                        <li
+                          key={country.isoCode}
+                          className="personal-dropdown-option"
+                          onClick={() => {
+                            handleInputChange({ target: { name: 'countryIssued', value: country.name } });
+                            setCountrySearch('');
+                            setIsCountryDropdownOpen(false);
+                          }}
+                        >
+                          {country.name}
+                        </li>
+                      ))}
+                      {filteredCountries.length === 0 && (
+                        <li className="personal-dropdown-option">
+                          No countries found
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
               </label>
             )}
             <label>
@@ -143,6 +278,7 @@ const IdsPopup = ({
                 value={formData.location || ""}
                 onChange={handleInputChange}
                 placeholder="Enter the physical location or specify a file name for digital access."
+                className="personal-text-input"
               />
             </label>
           </>
@@ -153,10 +289,7 @@ const IdsPopup = ({
           <div className="personal-file-upload">
             <input
               type="file"
-              onChange={(e) => {
-                handleFileChange(e);
-                setRemoveFile(false); // Reset removeFile when new files are selected
-              }}
+              onChange={handleFileChangeWrapper}
               style={{ display: "none" }}
               id="file-input"
               accept="image/jpeg,image/png,application/pdf,image/gif"
@@ -172,37 +305,50 @@ const IdsPopup = ({
                 Drag and drop Files
               </span>
               <span style={{ color: "#6B7483" }}>OR</span>
-              <span style={{ color: "var(--secondary-color)" }}>
+              <span style={ {color: "var(--secondary-color)" }}>
                 Browse Files
               </span>
             </label>
-            {(formData.existingFiles?.length > 0 || formData.files) && (
+            {(formData.existingFiles?.length > 0 || formData.files?.length > 0) && (
               <div className="personal-file-list">
-                {formData.existingFiles?.length > 0 && !removeFile && (
+                {formData.existingFiles?.length > 0 && (
                   formData.existingFiles.map((file, index) => (
                     <div key={`existing-${index}`} className="personal-file-item">
-                      <span>{file.name}</span>
-                      <button
-                        type="button"
-                        onClick={handleRemoveFile}
-                        style={{
-                          marginLeft: '10px',
-                          padding: '2px 8px',
-                          backgroundColor: '#E5E7EB',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          color: '#4B5563',
-                        }}
-                      >
-                        Remove
-                      </button>
+                      {file.path && (
+                        <div className="personal-file-image-container">
+                          <img
+                            src={`${import.meta.env.VITE_API_URL}${file.path}`}
+                            alt="Uploaded file"
+                            className="personal-file-image"
+                          />
+                          <button
+                            type="button"
+                            className="personal-file-remove"
+                            onClick={() => handleRemoveFile(index, true)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
                 {formData.files && Array.from(formData.files).map((file, index) => (
                   <div key={`new-${index}`} className="personal-file-item">
-                    <span>{file.name}</span>
+                    <div className="personal-file-image-container">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="Uploaded file"
+                        className="personal-file-image"
+                      />
+                      <button
+                        type="button"
+                        className="personal-file-remove"
+                        onClick={() => handleRemoveFile(index)}
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -237,7 +383,7 @@ const IdsPopup = ({
 
 IdsPopup.handleSubmit = async (e, formData, handleCloseDrawer) => {
   e.preventDefault();
-  const { id, type, number, expirationDate, stateIssued, countryIssued, location, notes, files, existingFiles } = formData;
+  const { id, type, number, expirationDate, stateIssued, countryIssued, location, notes, files, existingFiles = [] } = formData;
 
   if (!type || !number) {
     toast.error("Document Type and Number are required.", {
@@ -265,7 +411,7 @@ IdsPopup.handleSubmit = async (e, formData, handleCloseDrawer) => {
       form.append("personalIdFiles", file);
     });
   } else if (existingFiles.length === 0) {
-    form.append("removeFile", "true"); // Signal to remove the file
+    form.append("removeFile", "true");
   }
 
   try {
@@ -280,15 +426,6 @@ IdsPopup.handleSubmit = async (e, formData, handleCloseDrawer) => {
     });
     const result = await response.json();
     if (result.success) {
-      toast.success(id ? "Document updated successfully!" : `${type} added successfully!`, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-      });
       handleCloseDrawer();
     } else {
       toast.error(result.message || "Failed to save document.", {

@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
+import imageIcon from '../../../assets/images/dash_icon/image.svg';
+import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
 const MiscellaneousPopup = ({
   formData,
   handleInputChange,
   handleFileChange,
+  handleRemoveFile,
   handleSubmit,
   nomineeContacts,
   handleCloseModal,
@@ -19,6 +22,12 @@ const MiscellaneousPopup = ({
     nominee: useRef(null),
   };
 
+  const isImageFile = (fileName) => {
+    if (!fileName) return false;
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(extension);
+  };
+
   const handleSelect = (name, value, event) => {
     event.stopPropagation();
     handleInputChange({ target: { name, value } });
@@ -29,10 +38,7 @@ const MiscellaneousPopup = ({
   useEffect(() => {
     const handleClickOutside = (event) => {
       Object.keys(dropdownRefs).forEach((key) => {
-        if (
-          dropdownRefs[key].current &&
-          !dropdownRefs[key].current.contains(event.target)
-        ) {
+        if (dropdownRefs[key].current && !dropdownRefs[key].current.contains(event.target)) {
           setDropdownStates((prev) => ({ ...prev, [key]: false }));
         }
       });
@@ -45,31 +51,48 @@ const MiscellaneousPopup = ({
   MiscellaneousPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
-    const form = new FormData();
-    form.append("item", formData.item);
-    form.append("description", formData.description || "");
-    form.append("category", formData.category || "");
-    form.append("status", formData.status || "false");
-    form.append("nomineeContact", formData.nomineeContact || "");
-    form.append("notes", formData.notes || "");
+    const { id, item, description, category, status, nomineeContact, notes, files, existingFiles = [] } = formData;
 
-    if (formData.files && formData.files.length > 0) {
-      Array.from(formData.files).forEach((file) => {
-        form.append("miscellaneousFiles", file);
+    if (!item) {
+      return { success: false, message: "Item name is required." };
+    }
+
+    const data = new FormData();
+    data.append("item", item);
+    data.append("description", description || "");
+    data.append("category", category || "");
+    data.append("status", status || "false");
+    data.append("nomineeContact", nomineeContact || "");
+    data.append("notes", notes || "");
+    if (files) {
+      Array.from(files).forEach((file) => {
+        data.append("miscellaneousFiles", file);
       });
+    } else if (existingFiles.length === 0) {
+      data.append("removeFile", "true");
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/miscellaneous`, {
-        method: "POST",
+      const method = id ? "PUT" : "POST";
+      const url = id
+        ? `${import.meta.env.VITE_API_URL}/api/miscellaneous/${id}`
+        : `${import.meta.env.VITE_API_URL}/api/miscellaneous`;
+
+      const res = await fetch(url, {
+        method,
         credentials: "include",
-        body: form,
+        body: data,
       });
 
       const result = await res.json();
 
       if (res.ok && result.success) {
-        return { success: true, message: "Miscellaneous information saved successfully!", miscellaneousId: result.miscellaneousId };
+        handleCloseModal();
+        return {
+          success: true,
+          message: id ? "Miscellaneous details updated successfully." : "Miscellaneous information saved successfully!",
+          miscellaneousId: result.miscellaneousId || id,
+        };
       } else {
         return { success: false, message: result.message || "Something went wrong!" };
       }
@@ -211,19 +234,71 @@ const MiscellaneousPopup = ({
             id="file-input"
           />
           <label htmlFor="file-input">
-            <img
-              src={uploadIcon}
-              alt="Upload"
-              className="personal-upload-icon"
-            />
-            <span>Select or drag your files here</span>
+            <img src={uploadIcon} alt="Upload" className="personal-upload-icon" />
+            <span style={{ color: "var(--secondary-color)" }}>Drag and drop Files</span>
+            <span style={{ color: "#6B7483" }}>OR</span>
+            <span style={{ color: "var(--secondary-color)" }}>Browse Files</span>
           </label>
-          <p>Please upload clear scans/photos of your documents.</p>
-          {formData.files && formData.files.length > 0 && (
+          {(formData.existingFiles?.length > 0 || formData.files?.length > 0) && (
             <div className="personal-file-list">
-              {Array.from(formData.files).map((file, index) => (
-                <div key={index} className="personal-file-item">
-                  <span>{file.name}</span>
+              {formData.existingFiles?.length > 0 && formData.existingFiles.map((file, index) => (
+                <div key={`existing-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}${file.path}`}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index, true)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {formData.files && Array.from(formData.files).map((file, index) => (
+                <div key={`new-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -243,9 +318,7 @@ const MiscellaneousPopup = ({
 
       <div className="personal-button-group">
         <button type="submit">Save</button>
-        <button className="personal-btn-cancel" onClick={handleCloseModal}>
-          Cancel
-        </button>
+        <button className="personal-btn-cancel" onClick={handleCloseModal}>Cancel</button>
       </div>
     </form>
   );

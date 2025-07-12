@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
+import imageIcon from '../../../assets/images/dash_icon/image.svg';
+import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
 const DegreesPopup = ({
   formData,
   handleInputChange,
   handleFileChange,
+  handleRemoveFile,
   handleSubmit,
   nomineeContacts,
   handleCloseModal,
@@ -17,6 +20,12 @@ const DegreesPopup = ({
   const dropdownRefs = {
     nominee: useRef(null),
     completion_status: useRef(null),
+  };
+
+  const isImageFile = (fileName) => {
+    if (!fileName) return false;
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(extension);
   };
 
   const handleSelect = (name, value, event) => {
@@ -42,36 +51,53 @@ const DegreesPopup = ({
   DegreesPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
-    const form = new FormData();
-    form.append("university_name", formData.university_name);
-    form.append("degree", formData.degree);
-    form.append("degree_field", formData.degree_field || "");
-    form.append("degree_type", formData.degree_type || "");
-    form.append("degree_start", formData.degree_start || "");
-    form.append("degree_end", formData.degree_end || "");
-    form.append("grade", formData.grade || "");
-    form.append("completion_status", formData.completion_status || "false");
-    form.append("nomineeContact", formData.nomineeContact || "");
-    form.append("activities", formData.activities || "");
-    form.append("notes", formData.notes || "");
+    const { id, university_name, degree, degree_field, degree_type, degree_start, degree_end, grade, completion_status, nomineeContact, activities, notes, files, existingFiles = [] } = formData;
 
-    if (formData.files && formData.files.length > 0) {
-      Array.from(formData.files).forEach((file) => {
-        form.append("degreeFiles", file);
+    if (!university_name || !degree) {
+      return { success: false, message: "University name and degree are required." };
+    }
+
+    const data = new FormData();
+    data.append("university_name", university_name);
+    data.append("degree", degree);
+    data.append("degree_field", degree_field || "");
+    data.append("degree_type", degree_type || "");
+    data.append("degree_start", degree_start || "");
+    data.append("degree_end", degree_end || "");
+    data.append("grade", grade || "");
+    data.append("completion_status", completion_status || "false");
+    data.append("nomineeContact", nomineeContact || "");
+    data.append("activities", activities || "");
+    data.append("notes", notes || "");
+    if (files) {
+      Array.from(files).forEach((file) => {
+        data.append("degreeFiles", file);
       });
+    } else if (existingFiles.length === 0) {
+      data.append("removeFile", "true");
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/degrees`, {
-        method: "POST",
+      const method = id ? "PUT" : "POST";
+      const url = id
+        ? `${import.meta.env.VITE_API_URL}/api/degrees/${id}`
+        : `${import.meta.env.VITE_API_URL}/api/degrees`;
+
+      const res = await fetch(url, {
+        method,
         credentials: "include",
-        body: form,
+        body: data,
       });
 
       const result = await res.json();
 
       if (res.ok && result.success) {
-        return { success: true, message: "Degree information saved successfully!", degreeId: result.degreeId };
+        handleCloseModal();
+        return {
+          success: true,
+          message: id ? "Degree details updated successfully." : "Degree information saved successfully!",
+          degreeId: result.degreeId || id,
+        };
       } else {
         return { success: false, message: result.message || "Something went wrong!" };
       }
@@ -247,14 +273,70 @@ const DegreesPopup = ({
           />
           <label htmlFor="file-input">
             <img src={uploadIcon} alt="Upload" className="personal-upload-icon" />
-            <span>Select or drag your files here</span>
+            <span style={{ color: "var(--secondary-color)" }}>Drag and drop Files</span>
+            <span style={{ color: "#6B7483" }}>OR</span>
+            <span style={{ color: "var(--secondary-color)" }}>Browse Files</span>
           </label>
-          <p>Please upload clear scans/photos of your documents.</p>
-          {formData.files && formData.files.length > 0 && (
+          {(formData.existingFiles?.length > 0 || formData.files?.length > 0) && (
             <div className="personal-file-list">
-              {Array.from(formData.files).map((file, index) => (
-                <div key={index} className="personal-file-item">
-                  <span>{file.name}</span>
+              {formData.existingFiles?.length > 0 && formData.existingFiles.map((file, index) => (
+                <div key={`existing-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}${file.path}`}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index, true)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {formData.files && Array.from(formData.files).map((file, index) => (
+                <div key={`new-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

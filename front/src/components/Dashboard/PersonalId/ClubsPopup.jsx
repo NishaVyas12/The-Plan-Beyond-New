@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
+import imageIcon from '../../../assets/images/dash_icon/image.svg';
+import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
 const ClubsPopup = ({
   formData,
   handleInputChange,
   handleFileChange,
+  handleRemoveFile,
   handleSubmit,
   allContacts,
   nomineeContacts,
@@ -22,6 +25,12 @@ const ClubsPopup = ({
     club_contact: useRef(null),
     membership_status: useRef(null),
     nominee: useRef(null),
+  };
+
+  const isImageFile = (fileName) => {
+    if (!fileName) return false;
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(extension);
   };
 
   const handleSelect = (name, value, event) => {
@@ -63,26 +72,39 @@ const ClubsPopup = ({
   ClubsPopup.handleSubmit = async (e, formData, handleCloseModal) => {
     e.preventDefault();
 
-    const data = new FormData();
-    data.append("club", formData.club);
-    if (formData.club === "Others") {
-      data.append("club_name", formData.club_name);
-    }
-    data.append("club_contact", formData.club_contact || "");
-    data.append("membership_type", formData.membership_type || "");
-    data.append("membership_status", formData.membership_status || "false");
-    data.append("nomineeContact", formData.nomineeContact || "");
-    data.append("notes", formData.notes || "");
+    const { id, club, club_name, club_contact, membership_type, membership_status, nomineeContact, notes, files, existingFiles = [] } = formData;
 
-    if (formData.files && formData.files.length > 0) {
-      Array.from(formData.files).forEach((file) => {
+    if (!club) {
+      return { success: false, message: "Club name is required." };
+    }
+    if (club === "Others" && !club_name) {
+      return { success: false, message: "Specify organization name is required when 'Others' is selected." };
+    }
+
+    const data = new FormData();
+    data.append("club", club);
+    data.append("club_name", club === "Others" ? club_name : "");
+    data.append("club_contact", club_contact || "");
+    data.append("membership_type", membership_type || "");
+    data.append("membership_status", membership_status || "false");
+    data.append("nomineeContact", nomineeContact || "");
+    data.append("notes", notes || "");
+    if (files) {
+      Array.from(files).forEach((file) => {
         data.append("clubFiles", file);
       });
+    } else if (existingFiles.length === 0) {
+      data.append("removeFile", "true");
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/club`, {
-        method: "POST",
+      const method = id ? "PUT" : "POST";
+      const url = id
+        ? `${import.meta.env.VITE_API_URL}/api/club/${id}`
+        : `${import.meta.env.VITE_API_URL}/api/club`;
+
+      const res = await fetch(url, {
+        method,
         credentials: "include",
         body: data,
       });
@@ -90,7 +112,12 @@ const ClubsPopup = ({
       const result = await res.json();
 
       if (res.ok && result.success) {
-        return { success: true, message: "Club information saved successfully!", clubId: result.clubId };
+        handleCloseModal();
+        return {
+          success: true,
+          message: id ? "Club details updated successfully." : "Club information saved successfully!",
+          clubId: result.clubId || id,
+        };
       } else {
         return { success: false, message: result.message || "Something went wrong!" };
       }
@@ -261,14 +288,70 @@ const ClubsPopup = ({
           />
           <label htmlFor="file-input">
             <img src={uploadIcon} alt="Upload" className="personal-upload-icon" />
-            <span>Select or drag your files here</span>
+            <span style={{ color: "var(--secondary-color)" }}>Drag and drop Files</span>
+            <span style={{ color: "#6B7483" }}>OR</span>
+            <span style={{ color: "var(--secondary-color)" }}>Browse Files</span>
           </label>
-          <p>Please upload clear scans/photos of your documents.</p>
-          {formData.files && formData.files.length > 0 && (
+          {(formData.existingFiles?.length > 0 || formData.files?.length > 0) && (
             <div className="personal-file-list">
-              {Array.from(formData.files).map((file, index) => (
-                <div key={index} className="personal-file-item">
-                  <span>{file.name}</span>
+              {formData.existingFiles?.length > 0 && formData.existingFiles.map((file, index) => (
+                <div key={`existing-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}${file.path}`}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index, true)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {formData.files && Array.from(formData.files).map((file, index) => (
+                <div key={`new-${index}`} className="personal-file-item">
+                  <div className="personal-file-image-container">
+                    {isImageFile(file.name) ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="personal-file-image"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={pdfIcon}
+                          alt="PDF Icon"
+                          className="personal-document-icon"
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span>{file.name}</span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="personal-file-remove"
+                      onClick={() => handleRemoveFile(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
