@@ -62,14 +62,14 @@ router.post("/", checkAuth, upload, async (req, res) => {
   }
 
   try {
-    const [existingAmbassador] = await pool.query(
+    const [existingAmbassadors] = await pool.query(
       `SELECT id FROM ambassadors WHERE user_id = ? AND ambassador_type = ?`,
       [req.session.userId, ambassadorType]
     );
-    if (existingAmbassador.length > 0 && ambassadorType !== "") {
+    if (existingAmbassadors.length >= 4 && ambassadorType !== "") {
       return res.status(400).json({
         success: false,
-        message: `A ${ambassadorType} ambassador already exists. Only one ${ambassadorType} ambassador is allowed.`,
+        message: `Maximum of four ${ambassadorType} ambassadors allowed.`,
       });
     }
 
@@ -96,7 +96,6 @@ router.post("/", checkAuth, upload, async (req, res) => {
           throw new Error("Profile image path exceeds 255 characters");
         }
       } else {
-        // Check if there's a contact with matching email or phone numbers and use its contact_image
         const tableName = `contacts_user_${req.session.userId}`;
         await createUserContactsTable(req.session.userId);
         const [existingContact] = await connection.query(
@@ -257,7 +256,7 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
   if (category === "Family" && !relation) {
     return res.status(400).json({
       success: false,
-      message: "Relation is required for Family category.",
+      message: "Relation is required for Familyinu category.",
     });
   }
 
@@ -271,14 +270,14 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
     }
 
     if (ambassadorType !== existing[0].ambassador_type && ambassadorType !== "") {
-      const [existingAmbassador] = await pool.query(
+      const [existingAmbassadors] = await pool.query(
         `SELECT id FROM ambassadors WHERE user_id = ? AND ambassador_type = ?`,
         [req.session.userId, ambassadorType]
       );
-      if (existingAmbassador.length > 0) {
+      if (existingAmbassadors.length >= 4) {
         return res.status(400).json({
           success: false,
-          message: `A ${ambassadorType} ambassador already exists. Only one ${ambassadorType} ambassador is allowed.`,
+          message: `Maximum of four ${ambassadorType} ambassadors allowed.`,
         });
       }
     }
@@ -302,7 +301,6 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
     try {
       let imagePath = existing[0].profile_image;
       if (profileImage) {
-        // Delete existing profile image if it exists
         if (existing[0].profile_image) {
           const oldImagePath = path.join(__dirname, "..", existing[0].profile_image);
           try {
@@ -317,11 +315,11 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
           throw new Error("Profile image path exceeds 255 characters");
         }
       } else if (!imagePath) {
-        // Check if there's a contact with matching email or phone numbers and use its contact_image
         const tableName = `contacts_user_${req.session.userId}`;
         await createUserContactsTable(req.session.userId);
         const [existingContact] = await connection.query(
-          `SELECT contact_image FROM ${tableName} 
+          
+         `SELECT contact_image FROM ${tableName} 
            WHERE user_id = ? AND (email = ? OR phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,
           [req.session.userId, email, phoneNumbers, phoneNumbers, phoneNumbers]
         );
@@ -442,7 +440,6 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
         };
       }
 
-      // Update nominee profile_image if a nominee exists with matching phone number
       const [existingNominee] = await connection.query(
         `SELECT id FROM nominees 
          WHERE user_id = ? AND (phone_number IN (?) OR phone_number1 IN (?) OR phone_number2 IN (?))`,

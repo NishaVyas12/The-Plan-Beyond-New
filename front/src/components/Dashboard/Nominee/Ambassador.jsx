@@ -38,6 +38,9 @@ const AmbassadorCard = ({
     if (lastName) return lastName[0].toUpperCase();
     return "NA";
   };
+
+  // Map ambassador_type to display labels
+  const displayType = type === "Primary" ? "Initiator" : type === "Secondary" ? "Sender" : type || "No Type Assigned";
   
   const handleInvite = async () => {
     if (isEmpty) return;
@@ -155,7 +158,7 @@ const AmbassadorCard = ({
           <div className="ambassador-add-name-relation-add-ambassador">
             <div>
               <h3 className="ambassador-add-name-add-ambassador">{fullName}</h3>
-              <p className="ambassador-add-type-add-ambassador">{type || "No Type Assigned"}</p>
+              <p className="ambassador-add-type-add-ambassador">{displayType}</p>
             </div>
             <div
               className="ambassador-add-options-add-ambassador"
@@ -872,7 +875,7 @@ const AddAmbassadorForm = ({
                     checked={formData.ambassadorType === "Primary"}
                     onChange={(e) => handleInputChange("ambassadorType", e.target.value)}
                     disabled={
-                      ambassadors.some((a) => a.ambassador_type === "Primary") &&
+                      ambassadors.filter((a) => a.ambassador_type === "Primary").length >= 4 &&
                       (!editAmbassador || editAmbassador.type !== "Primary")
                     }
                   />
@@ -886,11 +889,11 @@ const AddAmbassadorForm = ({
                     checked={formData.ambassadorType === "Secondary"}
                     onChange={(e) => handleInputChange("ambassadorType", e.target.value)}
                     disabled={
-                      ambassadors.some((a) => a.ambassador_type === "Secondary") &&
+                      ambassadors.filter((a) => a.ambassador_type === "Secondary").length >= 4 &&
                       (!editAmbassador || editAmbassador.type !== "Secondary")
                     }
                   />
-                  Approver
+                  Sender
                 </label>
               </div>
             </div>
@@ -948,6 +951,8 @@ const Ambassador = () => {
       const data = await response.json();
       if (data.success) {
         const updatedAmbassadors = ensureAmbassadorTypes(data.ambassadors || []);
+        // Sort ambassadors by created_at in ascending order
+        updatedAmbassadors.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         setAmbassadors(updatedAmbassadors);
       } else {
         if (response.status === 401) {
@@ -1038,8 +1043,8 @@ const Ambassador = () => {
   };
 
   const handleAddAmbassadorClick = () => {
-    if (ambassadors.length >= 2) {
-      toast.warn("Maximum of two ambassadors already added!", {
+    if (ambassadors.length >= 8) {
+      toast.warn("Maximum of eight ambassadors already added!", {
         position: "top-right",
         autoClose: 3000,
       });
@@ -1048,23 +1053,12 @@ const Ambassador = () => {
     setShowForm(true);
   };
 
-  const ambassadorSlots = Array(2).fill({});
+  const ambassadorSlots = Array(8).fill({});
   let availableAmbassadors = [...ambassadors];
 
-  const primaryIndex = availableAmbassadors.findIndex((a) => a.ambassador_type === "Primary");
-  if (primaryIndex !== -1) {
-    ambassadorSlots[0] = availableAmbassadors.splice(primaryIndex, 1)[0];
-  }
-
-  const secondaryIndex = availableAmbassadors.findIndex((a) => a.ambassador_type === "Secondary");
-  if (secondaryIndex !== -1) {
-    ambassadorSlots[1] = availableAmbassadors.splice(secondaryIndex, 1)[0];
-  }
-
-  for (let i = 0; i < ambassadorSlots.length; i++) {
-    if (!ambassadorSlots[i].id && availableAmbassadors.length > 0) {
-      ambassadorSlots[i] = availableAmbassadors.shift();
-    }
+  // Fill slots with ambassadors in the order they were added
+  for (let i = 0; i < ambassadorSlots.length && availableAmbassadors.length > 0; i++) {
+    ambassadorSlots[i] = availableAmbassadors.shift();
   }
 
   return (
@@ -1085,7 +1079,11 @@ const Ambassador = () => {
       <div className="ambassador-add-layout-add-ambassador">
         <div
           className="ambassador-add-ambassador-list-add-ambassador"
-          style={{ display: "grid", gridTemplateColumns: "repeat(2, 2fr)", gap: "20px" }}
+          style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(2, 2fr)", 
+            gap: "20px" 
+          }}
         >
           {ambassadorSlots.map((ambassador, index) => (
             <AmbassadorCard
