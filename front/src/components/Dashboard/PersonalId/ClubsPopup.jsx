@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import Select from 'react-select';
 import imageIcon from '../../../assets/images/dash_icon/image.svg';
 import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
@@ -16,15 +17,52 @@ const ClubsPopup = ({
 }) => {
   const [dropdownStates, setDropdownStates] = useState({
     club: false,
-    club_contact: false,
     membership_status: false,
-    nominee: false,
   });
   const dropdownRefs = {
     club: useRef(null),
-    club_contact: useRef(null),
-    membership_status: useRef(null),
-    nominee: useRef(null),
+    membership_status: useRef(null), // Fixed: Added missing closing parenthesis
+  };
+
+  const selectStyles = {
+    control: (provided) => ({
+      ...provided,
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+      boxShadow: 'none',
+      fontSize: '14px',
+      lineHeight: '20px',
+      padding: '5px',
+      backgroundColor: '#fff',
+      '&:hover': {
+        border: '1px solid #aaa',
+      },
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      backgroundColor: '#fff',
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : '#fff',
+      color: '#333',
+      padding: '10px',
+      fontSize: '14px',
+      '&:hover': {
+        backgroundColor: '#e6e6e6',
+      },
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: '#333',
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#999',
+    }),
   };
 
   const isImageFile = (fileName) => {
@@ -36,8 +74,11 @@ const ClubsPopup = ({
   const handleSelect = (name, value, event) => {
     event.stopPropagation();
     handleInputChange({ target: { name, value } });
-    const dropdownKey = name === "nomineeContact" ? "nominee" : name;
-    setDropdownStates((prev) => ({ ...prev, [dropdownKey]: false }));
+    setDropdownStates((prev) => ({ ...prev, [name]: false }));
+  };
+
+  const handleContactChange = (name, selected) => {
+    handleInputChange({ target: { name, value: selected ? selected.value : "" } });
   };
 
   useEffect(() => {
@@ -63,70 +104,6 @@ const ClubsPopup = ({
     'Others'
   ];
 
-  const contactOptions = allContacts?.map(item => ({
-    value: `${item.name} (${item.phone_number})`,
-    label: `${item.name} (${item.phone_number})`
-  })) || [];
-
-  // Static handleSubmit for integration with PersonalInfo
-  ClubsPopup.handleSubmit = async (e, formData, handleCloseModal) => {
-    e.preventDefault();
-
-    const { id, club, club_name, club_contact, membership_type, membership_status, nomineeContact, notes, files, existingFiles = [] } = formData;
-
-    if (!club) {
-      return { success: false, message: "Club name is required." };
-    }
-    if (club === "Others" && !club_name) {
-      return { success: false, message: "Specify organization name is required when 'Others' is selected." };
-    }
-
-    const data = new FormData();
-    data.append("club", club);
-    data.append("club_name", club === "Others" ? club_name : "");
-    data.append("club_contact", club_contact || "");
-    data.append("membership_type", membership_type || "");
-    data.append("membership_status", membership_status || "false");
-    data.append("nomineeContact", nomineeContact || "");
-    data.append("notes", notes || "");
-    if (files) {
-      Array.from(files).forEach((file) => {
-        data.append("clubFiles", file);
-      });
-    } else if (existingFiles.length === 0) {
-      data.append("removeFile", "true");
-    }
-
-    try {
-      const method = id ? "PUT" : "POST";
-      const url = id
-        ? `${import.meta.env.VITE_API_URL}/api/club/${id}`
-        : `${import.meta.env.VITE_API_URL}/api/club`;
-
-      const res = await fetch(url, {
-        method,
-        credentials: "include",
-        body: data,
-      });
-
-      const result = await res.json();
-
-      if (res.ok && result.success) {
-        handleCloseModal();
-        return {
-          success: true,
-          message: id ? "Club details updated successfully." : "Club information saved successfully!",
-          clubId: result.clubId || id,
-        };
-      } else {
-        return { success: false, message: result.message || "Something went wrong!" };
-      }
-    } catch (error) {
-      console.error("Error submitting club form:", error);
-      return { success: false, message: "Error submitting form. Try again." };
-    }
-  };
-
   return (
     <form onSubmit={(e) => handleSubmit(e, ClubsPopup.handleSubmit)} className="personal-popup-form">
       <h2>{categories.find((c) => c.id === "clubs").label}</h2>
@@ -136,7 +113,7 @@ const ClubsPopup = ({
         <div className="personal-custom-dropdown" ref={dropdownRefs.club}>
           <div
             className="personal-dropdown-toggle"
-            onClick={() => setDropdownStates((prev) => ({ ...prev, club: !prev.club, club_contact: false, membership_status: false, nominee: false }))}
+            onClick={() => setDropdownStates((prev) => ({ ...prev, club: !prev.club, membership_status: false }))}
           >
             {formData.club || "Select organization"}
             <span className="personal-dropdown-arrow">▾</span>
@@ -173,35 +150,16 @@ const ClubsPopup = ({
 
       <label>
         Organization Contact Info
-        <div className="personal-custom-dropdown" ref={dropdownRefs.club_contact}>
-          <div
-            className="personal-dropdown-toggle"
-            onClick={() => setDropdownStates((prev) => ({ ...prev, club_contact: !prev.club_contact, club: false, membership_status: false, nominee: false }))}
-          >
-            {formData.club_contact || "Select contact info"}
-            <span className="personal-dropdown-arrow">▾</span>
-          </div>
-          {dropdownStates.club_contact && (
-            <ul className="personal-dropdown-menu">
-              <li
-                key="default"
-                onClick={(e) => handleSelect("club_contact", "", e)}
-                className="personal-dropdown-option"
-              >
-                Select contact info
-              </li>
-              {contactOptions.map((contact) => (
-                <li
-                  key={contact.value}
-                  onClick={(e) => handleSelect("club_contact", contact.value, e)}
-                  className="personal-dropdown-option"
-                >
-                  {contact.label}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <Select
+          name="club_contact"
+          options={allContacts}
+          value={allContacts.find(option => option.value === formData.club_contact) || null}
+          onChange={(selected) => handleContactChange("club_contact", selected)}
+          placeholder="Select contact info"
+          styles={selectStyles}
+          isSearchable
+          aria-label="Organization contact"
+        />
       </label>
 
       <label>
@@ -220,7 +178,7 @@ const ClubsPopup = ({
         <div className="personal-custom-dropdown" ref={dropdownRefs.membership_status}>
           <div
             className="personal-dropdown-toggle"
-            onClick={() => setDropdownStates((prev) => ({ ...prev, membership_status: !prev.membership_status, club: false, club_contact: false, nominee: false }))}
+            onClick={() => setDropdownStates((prev) => ({ ...prev, membership_status: !prev.membership_status, club: false }))}
           >
             {formData.membership_status === "true" ? "Active" : formData.membership_status === "false" ? "Inactive" : "Select status"}
             <span className="personal-dropdown-arrow">▾</span>
@@ -243,35 +201,16 @@ const ClubsPopup = ({
 
       <label>
         Nominee Contact
-        <div className="personal-custom-dropdown" ref={dropdownRefs.nominee}>
-          <div
-            className="personal-dropdown-toggle"
-            onClick={() => setDropdownStates((prev) => ({ ...prev, nominee: !prev.nominee, club: false, club_contact: false, membership_status: false }))}
-          >
-            {formData.nomineeContact || "Select a nominee"}
-            <span className="personal-dropdown-arrow">▾</span>
-          </div>
-          {dropdownStates.nominee && (
-            <ul className="personal-dropdown-menu">
-              <li
-                key="default"
-                onClick={(e) => handleSelect("nomineeContact", "", e)}
-                className="personal-dropdown-option"
-              >
-                Select a nominee
-              </li>
-              {nomineeContacts.map((contact) => (
-                <li
-                  key={contact.id}
-                  onClick={(e) => handleSelect("nomineeContact", contact.email || contact.name, e)}
-                  className="personal-dropdown-option"
-                >
-                  {contact.name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <Select
+          name="nomineeContact"
+          options={nomineeContacts}
+          value={nomineeContacts.find(option => option.value === formData.nomineeContact) || null}
+          onChange={(selected) => handleContactChange("nomineeContact", selected)}
+          placeholder="Select a nominee"
+          styles={selectStyles}
+          isSearchable
+          aria-label="Nominee contact"
+        />
       </label>
 
       <label>
@@ -375,6 +314,65 @@ const ClubsPopup = ({
       </div>
     </form>
   );
+};
+
+// Static handleSubmit for integration with PersonalInfo (unchanged)
+ClubsPopup.handleSubmit = async (e, formData, handleCloseModal) => {
+  e.preventDefault();
+
+  const { id, club, club_name, club_contact, membership_type, membership_status, nomineeContact, notes, files, existingFiles = [] } = formData;
+
+  if (!club) {
+    return { success: false, message: "Club name is required." };
+  }
+  if (club === "Others" && !club_name) {
+    return { success: false, message: "Specify organization name is required when 'Others' is selected." };
+  }
+
+  const data = new FormData();
+  data.append("club", club);
+  data.append("club_name", club === "Others" ? club_name : "");
+  data.append("club_contact", club_contact || "");
+  data.append("membership_type", membership_type || "");
+  data.append("membership_status", membership_status || "false");
+  data.append("nomineeContact", nomineeContact || "");
+  data.append("notes", notes || "");
+  if (files) {
+    Array.from(files).forEach((file) => {
+      data.append("clubFiles", file);
+    });
+  } else if (existingFiles.length === 0) {
+    data.append("removeFile", "true");
+  }
+
+  try {
+    const method = id ? "PUT" : "POST";
+    const url = id
+      ? `${import.meta.env.VITE_API_URL}/api/club/${id}`
+      : `${import.meta.env.VITE_API_URL}/api/club`;
+
+    const res = await fetch(url, {
+      method,
+      credentials: "include",
+      body: data,
+    });
+
+    const result = await res.json();
+
+    if (res.ok && result.success) {
+      handleCloseModal();
+      return {
+        success: true,
+        message: id ? "Club details updated successfully." : "Club information saved successfully!",
+        clubId: result.clubId || id,
+      };
+    } else {
+      return { success: false, message: result.message || "Something went wrong!" };
+    }
+  } catch (error) {
+    console.error("Error submitting club form:", error);
+    return { success: false, message: "Error submitting form. Try again." };
+  }
 };
 
 export default ClubsPopup;

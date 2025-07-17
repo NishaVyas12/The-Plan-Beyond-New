@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import Select from 'react-select'; 
 import imageIcon from '../../../assets/images/dash_icon/image.svg';
 import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
@@ -15,11 +16,51 @@ const MiscellaneousPopup = ({
 }) => {
   const [dropdownStates, setDropdownStates] = useState({
     status: false,
-    nominee: false,
+   
   });
   const dropdownRefs = {
     status: useRef(null),
-    nominee: useRef(null),
+  };
+
+  const selectStyles = {
+    control: (provided) => ({
+      ...provided,
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+      boxShadow: 'none',
+      fontSize: '14px',
+      lineHeight: '20px',
+      padding: '5px',
+      backgroundColor: '#fff',
+      '&:hover': {
+        border: '1px solid #aaa',
+      },
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      backgroundColor: '#fff',
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : '#fff',
+      color: '#333',
+      padding: '10px',
+      fontSize: '14px',
+      '&:hover': {
+        backgroundColor: '#e6e6e6',
+      },
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: '#333',
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#999',
+    }),
   };
 
   const isImageFile = (fileName) => {
@@ -31,8 +72,11 @@ const MiscellaneousPopup = ({
   const handleSelect = (name, value, event) => {
     event.stopPropagation();
     handleInputChange({ target: { name, value } });
-    const dropdownKey = name === "nomineeContact" ? "nominee" : name;
-    setDropdownStates((prev) => ({ ...prev, [dropdownKey]: false }));
+    setDropdownStates((prev) => ({ ...prev, [name]: false }));
+  };
+
+  const handleContactChange = (selected) => {
+    handleInputChange({ target: { name: "nomineeContact", value: selected ? selected.value : "" } });
   };
 
   useEffect(() => {
@@ -46,61 +90,6 @@ const MiscellaneousPopup = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Static handleSubmit for integration with PersonalInfo
-  MiscellaneousPopup.handleSubmit = async (e, formData, handleCloseModal) => {
-    e.preventDefault();
-
-    const { id, item, description, category, status, nomineeContact, notes, files, existingFiles = [] } = formData;
-
-    if (!item) {
-      return { success: false, message: "Item name is required." };
-    }
-
-    const data = new FormData();
-    data.append("item", item);
-    data.append("description", description || "");
-    data.append("category", category || "");
-    data.append("status", status || "false");
-    data.append("nomineeContact", nomineeContact || "");
-    data.append("notes", notes || "");
-    if (files) {
-      Array.from(files).forEach((file) => {
-        data.append("miscellaneousFiles", file);
-      });
-    } else if (existingFiles.length === 0) {
-      data.append("removeFile", "true");
-    }
-
-    try {
-      const method = id ? "PUT" : "POST";
-      const url = id
-        ? `${import.meta.env.VITE_API_URL}/api/miscellaneous/${id}`
-        : `${import.meta.env.VITE_API_URL}/api/miscellaneous`;
-
-      const res = await fetch(url, {
-        method,
-        credentials: "include",
-        body: data,
-      });
-
-      const result = await res.json();
-
-      if (res.ok && result.success) {
-        handleCloseModal();
-        return {
-          success: true,
-          message: id ? "Miscellaneous details updated successfully." : "Miscellaneous information saved successfully!",
-          miscellaneousId: result.miscellaneousId || id,
-        };
-      } else {
-        return { success: false, message: result.message || "Something went wrong!" };
-      }
-    } catch (error) {
-      console.error("Error submitting miscellaneous form:", error);
-      return { success: false, message: "Error submitting form. Try again." };
-    }
-  };
 
   return (
     <form onSubmit={(e) => handleSubmit(e, MiscellaneousPopup.handleSubmit)} className="personal-popup-form">
@@ -149,7 +138,6 @@ const MiscellaneousPopup = ({
               setDropdownStates((prev) => ({
                 ...prev,
                 status: !prev.status,
-                nominee: false,
               }))
             }
           >
@@ -178,47 +166,16 @@ const MiscellaneousPopup = ({
 
       <label>
         Nominee Contact
-        <div className="personal-custom-dropdown" ref={dropdownRefs.nominee}>
-          <div
-            className="personal-dropdown-toggle"
-            onClick={() =>
-              setDropdownStates((prev) => ({
-                ...prev,
-                nominee: !prev.nominee,
-                status: false,
-              }))
-            }
-          >
-            {formData.nomineeContact || "Select a nominee"}
-            <span className="personal-dropdown-arrow">▾</span>
-          </div>
-          {dropdownStates.nominee && (
-            <ul className="personal-dropdown-menu">
-              <li
-                key="default"
-                onClick={(e) => handleSelect("nomineeContact", "", e)}
-                className="personal-dropdown-option"
-              >
-                Select a nominee
-              </li>
-              {nomineeContacts.map((contact) => (
-                <li
-                  key={contact.id}
-                  onClick={(e) =>
-                    handleSelect(
-                      "nomineeContact",
-                      contact.email || contact.name,
-                      e
-                    )
-                  }
-                  className="personal-dropdown-option"
-                >
-                  {contact.name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <Select
+          name="nomineeContact"
+          options={nomineeContacts}
+          value={nomineeContacts.find(option => option.value === formData.nomineeContact) || null}
+          onChange={handleContactChange}
+          placeholder="Select a nominee"
+          styles={selectStyles}
+          isSearchable
+          aria-label="Nominee contact"
+        />
       </label>
 
       <label>
@@ -322,6 +279,61 @@ const MiscellaneousPopup = ({
       </div>
     </form>
   );
+};
+
+// Static handleSubmit for integration with PersonalInfo (unchanged)
+MiscellaneousPopup.handleSubmit = async (e, formData, handleCloseModal) => {
+  e.preventDefault();
+
+  const { id, item, description, category, status, nomineeContact, notes, files, existingFiles = [] } = formData;
+
+  if (!item) {
+    return { success: false, message: "Item name is required." };
+  }
+
+  const data = new FormData();
+  data.append("item", item);
+  data.append("description", description || "");
+  data.append("category", category || "");
+  data.append("status", status || "false");
+  data.append("nomineeContact", nomineeContact || "");
+  data.append("notes", notes || "");
+  if (files) {
+    Array.from(files).forEach((file) => {
+      data.append("miscellaneousFiles", file);
+    });
+  } else if (existingFiles.length === 0) {
+    data.append("removeFile", "true");
+  }
+
+  try {
+    const method = id ? "PUT" : "POST";
+    const url = id
+      ? `${import.meta.env.VITE_API_URL}/api/miscellaneous/${id}`
+      : `${import.meta.env.VITE_API_URL}/api/miscellaneous`;
+
+    const res = await fetch(url, {
+      method,
+      credentials: "include",
+      body: data,
+    });
+
+    const result = await res.json();
+
+    if (res.ok && result.success) {
+      handleCloseModal();
+      return {
+        success: true,
+        message: id ? "Miscellaneous details updated successfully." : "Miscellaneous information saved successfully!",
+        miscellaneousId: result.miscellaneousId || id,
+      };
+    } else {
+      return { success: false, message: result.message || "Something went wrong!" };
+    }
+  } catch (error) {
+    console.error("Error submitting miscellaneous form:", error);
+    return { success: false, message: "Error submitting form. Try again." };
+  }
 };
 
 export default MiscellaneousPopup;

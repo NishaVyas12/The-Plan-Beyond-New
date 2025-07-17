@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
+import Select from 'react-select'; // Add react-select import
 import 'react-toastify/dist/ReactToastify.css';
 
 const ReligionPopup = ({
@@ -19,9 +20,53 @@ const ReligionPopup = ({
     nominee: useRef(null),
   };
 
+  // Add selectStyles to match EmploymentPopup
+  const selectStyles = {
+    control: (provided) => ({
+      ...provided,
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+      boxShadow: 'none',
+      fontSize: '14px',
+      lineHeight: '20px',
+      padding: '5px',
+      backgroundColor: '#fff',
+      '&:hover': {
+        border: '1px solid #aaa',
+      },
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      backgroundColor: '#fff',
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : '#fff',
+      color: '#333',
+      padding: '10px',
+      fontSize: '14px',
+      '&:hover': {
+        backgroundColor: '#e6e6e6',
+      },
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: '#333',
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#999',
+    }),
+  };
+
   const handleSelect = (name, value, event) => {
-    event.preventDefault();
-    event.stopPropagation();
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     handleInputChange({ target: { name, value } });
     // Map the input name to the corresponding dropdown state key
     const dropdownKey = name === "nomineeContact" ? "nominee" : name;
@@ -73,33 +118,16 @@ const ReligionPopup = ({
       <label>
         Nominee Contact
         <div className="personal-custom-dropdown" ref={dropdownRefs.nominee}>
-          <div
-            className="personal-dropdown-toggle"
-            onClick={() => setDropdownStates((prev) => ({ ...prev, nominee: !prev.nominee, religion: false }))}
-          >
-            {formData.nomineeContact || "Select a nominee"}
-            <span className="personal-dropdown-arrow">▾</span>
-          </div>
-          {dropdownStates.nominee && (
-            <ul className="personal-dropdown-menu">
-              <li
-                key="default"
-                onClick={(e) => handleSelect("nomineeContact", "", e)}
-                className="personal-dropdown-option"
-              >
-                Select a nominee
-              </li>
-              {nomineeContacts.map((contact) => (
-                <li
-                  key={contact.id}
-                  onClick={(e) => handleSelect("nomineeContact", contact.email || contact.name, e)}
-                  className="personal-dropdown-option"
-                >
-                  {contact.name}
-                </li>
-              ))}
-            </ul>
-          )}
+          <Select
+            name="nomineeContact"
+            options={nomineeContacts}
+            value={nomineeContacts.find(option => option.value === formData.nomineeContact) || null}
+            onChange={(selected) => handleSelect("nomineeContact", selected ? selected.value : "")}
+            placeholder="Select a nominee"
+            styles={selectStyles}
+            isSearchable
+            aria-label="Nominee contact"
+          />
         </div>
       </label>
 
@@ -124,7 +152,7 @@ const ReligionPopup = ({
   );
 };
 
-// Static handleSubmit for integration with PersonalInfoDetails
+// Static handleSubmit for integration with PersonalInfoDetails (unchanged)
 ReligionPopup.handleSubmit = async (e, formData, handleCloseModal) => {
   e.preventDefault();
 

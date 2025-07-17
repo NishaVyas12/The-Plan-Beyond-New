@@ -30,6 +30,8 @@ const PersonalInfo = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false);
   const [counts, setCounts] = useState({});
+  const [nomineeContacts, setNomineeContacts] = useState([]); // Add state for nomineeContacts
+  const [allContacts, setAllContacts] = useState([]); // Add state for allContacts
   const addDropdownRef = useRef(null);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -109,7 +111,64 @@ const PersonalInfo = () => {
       }
       setCounts(newCounts);
     };
+
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await response.json();
+        if (data.success) {
+          setAllContacts(data.contacts.map(contact => ({
+            value: contact.name,
+            label: contact.name,
+          })));
+        } else {
+          toast.error('Failed to fetch contacts.', {
+            position: 'top-right',
+            autoClose: 3000,
+          });
+        }
+      } catch (err) {
+        toast.error('Error fetching contacts.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    };
+
+    const fetchNominees = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await response.json();
+        if (data.success) {
+          setNomineeContacts(data.nominees.map(nominee => ({
+            value: nominee.first_name,
+            label: nominee.first_name,
+          })));
+        } else {
+          toast.error('Failed to fetch nominees.', {
+            position: 'top-right',
+            autoClose: 3000,
+          });
+        }
+      } catch (err) {
+        toast.error('Error fetching nominees.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    };
+
     fetchCounts();
+    fetchContacts();
+    fetchNominees();
   }, []);
 
   const handleCardClick = (item) => {
@@ -277,16 +336,6 @@ const PersonalInfo = () => {
     'Other ID',
   ];
 
-  const nomineeContacts = [
-    { id: '1', name: 'John Doe', email: 'john.doe@example.com' },
-    { id: '2', name: 'Jane Smith', email: 'jane.smith@example.com' },
-  ];
-
-  const allContacts = [
-    { id: '1', name: 'Club Admin', phone_number: '+1234567890' },
-    { id: '2', name: 'Event Coordinator', phone_number: '+0987654321' },
-  ];
-
   const categories = [
     { id: 'ids', label: 'IDs and Vital Documentation' },
     { id: 'employment', label: 'Employment' },
@@ -309,6 +358,7 @@ const PersonalInfo = () => {
           documentTypes={documentTypes}
           uploadIcon={uploadIcon}
           handleCloseModal={handleCloseDrawer}
+          nomineeContacts={nomineeContacts} // Add nomineeContacts
         />
       );
     } else if (selectedItem === 'Employment') {
@@ -319,6 +369,7 @@ const PersonalInfo = () => {
           handleFileChange={handleFileChange}
           handleSubmit={(e) => handleSubmit(e, EmploymentPopup.handleSubmit)}
           nomineeContacts={nomineeContacts}
+          allContacts={allContacts} // Add allContacts
           handleCloseModal={handleCloseDrawer}
           categories={categories}
           uploadIcon={uploadIcon}

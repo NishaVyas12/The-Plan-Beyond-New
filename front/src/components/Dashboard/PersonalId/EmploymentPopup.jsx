@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import Select from 'react-select';
 import imageIcon from '../../../assets/images/dash_icon/image.svg';
 import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
@@ -8,6 +9,7 @@ const EmploymentPopup = ({
   handleFileChange,
   handleCloseModal,
   nomineeContacts,
+  allContacts,
   handleSubmit,
   categories,
   uploadIcon,
@@ -18,12 +20,52 @@ const EmploymentPopup = ({
     employmentType: false,
     benefits: false,
   });
-  const [useCustomContact, setUseCustomContact] = useState(false);
   const dropdownRefs = {
     status: useRef(null),
     nominee: useRef(null),
     employmentType: useRef(null),
     benefits: useRef(null),
+  };
+
+  const selectStyles = {
+    control: (provided) => ({
+      ...provided,
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+      boxShadow: 'none',
+      fontSize: '14px',
+      lineHeight: '20px',
+      padding: '5px',
+      backgroundColor: '#fff',
+      '&:hover': {
+        border: '1px solid #aaa',
+      },
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      backgroundColor: '#fff',
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : '#fff',
+      color: '#333',
+      padding: '10px',
+      fontSize: '14px',
+      '&:hover': {
+        backgroundColor: '#e6e6e6',
+      },
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: '#333',
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#999',
+    }),
   };
 
   const isImageFile = (fileName) => {
@@ -51,16 +93,8 @@ const EmploymentPopup = ({
     }
   };
 
-  const handleContactChange = (e) => {
-    const value = e.target.value;
-    if (value === "custom") {
-      setUseCustomContact(true);
-      handleInputChange({ target: { name: "nomineeContact", value: "" } });
-    } else {
-      setUseCustomContact(false);
-      handleInputChange(e);
-    }
-    setDropdownStates((prev) => ({ ...prev, nominee: false }));
+  const handleContactChange = (name, selected) => {
+    handleInputChange({ target: { name, value: selected ? selected.value : "" } });
   };
 
   const handleSelect = (dropdownKey, name, value) => {
@@ -141,54 +175,30 @@ const EmploymentPopup = ({
           </label>
           <label>
             Supervisor and HR manager contact Info
-            <input
-              type="text"
+            <Select
               name="supervisorContact"
-              value={formData.supervisorContact || ""}
-              onChange={handleInputChange}
+              options={allContacts}
+              value={allContacts.find(option => option.value === formData.supervisorContact) || null}
+              onChange={(selected) => handleContactChange("supervisorContact", selected)}
+              placeholder="Select Supervisor/HR Contact"
+              styles={selectStyles}
+              isSearchable
+              aria-label="Supervisor/HR contact"
             />
           </label>
 
           <label>
             Nominee Contact
-            {useCustomContact ? (
-              <input
-                type="text"
-                name="nomineeContact"
-                value={formData.nomineeContact}
-                onChange={handleInputChange}
-              />
-            ) : (
-              <div className="personal-custom-dropdown" ref={dropdownRefs.nominee}>
-                <div
-                  className="personal-dropdown-toggle"
-                  onClick={() => setDropdownStates((prev) => ({ ...prev, nominee: !prev.nominee, status: false, employmentType: false, benefits: false }))}
-                >
-                  {formData.nomineeContact || "Select a nominee"}
-                  <span className="personal-dropdown-arrow">▾</span>
-                </div>
-                {dropdownStates.nominee && (
-                  <ul className="personal-dropdown-menu">
-                    <li
-                      key="custom"
-                      onClick={() => handleContactChange({ target: { name: "nomineeContact", value: "custom" } })}
-                      className="personal-dropdown-option"
-                    >
-                      Custom
-                    </li>
-                    {nomineeContacts.map((contact) => (
-                      <li
-                        key={contact.id}
-                        onClick={() => handleContactChange({ target: { name: "nomineeContact", value: contact.email || contact.name } })}
-                        className="personal-dropdown-option"
-                      >
-                        {contact.name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+            <Select
+              name="nomineeContact"
+              options={nomineeContacts}
+              value={nomineeContacts.find(option => option.value === formData.nomineeContact) || null}
+              onChange={(selected) => handleContactChange("nomineeContact", selected)}
+              placeholder="Select a nominee"
+              styles={selectStyles}
+              isSearchable
+              aria-label="Nominee contact"
+            />
           </label>
 
           {formData.type === "Work for a company" && (
@@ -306,44 +316,16 @@ const EmploymentPopup = ({
           </label>
           <label>
             Nominee Contact
-            {useCustomContact ? (
-              <input
-                type="text"
-                name="nomineeContact"
-                value={formData.nomineeContact}
-                onChange={handleInputChange}
-              />
-            ) : (
-              <div className="personal-custom-dropdown" ref={dropdownRefs.nominee}>
-                <div
-                  className="personal-dropdown-toggle"
-                  onClick={() => setDropdownStates((prev) => ({ ...prev, nominee: !prev.nominee, status: false, employmentType: false, benefits: false }))}
-                >
-                  {formData.nomineeContact || "Select a nominee"}
-                  <span className="personal-dropdown-arrow">▾</span>
-                </div>
-                {dropdownStates.nominee && (
-                  <ul className="personal-dropdown-menu">
-                    <li
-                      key="custom"
-                      onClick={() => handleContactChange({ target: { name: "nomineeContact", value: "custom" } })}
-                      className="personal-dropdown-option"
-                    >
-                      Custom
-                    </li>
-                    {nomineeContacts.map((contact) => (
-                      <li
-                        key={contact.id}
-                        onClick={() => handleContactChange({ target: { name: "nomineeContact", value: contact.email || contact.name } })}
-                        className="personal-dropdown-option"
-                      >
-                        {contact.name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+            <Select
+              name="nomineeContact"
+              options={nomineeContacts}
+              value={nomineeContacts.find(option => option.value === formData.nomineeContact) || null}
+              onChange={(selected) => handleContactChange("nomineeContact", selected)}
+              placeholder="Select a nominee"
+              styles={selectStyles}
+              isSearchable
+              aria-label="Nominee contact"
+            />
           </label>
         </>
       )}
@@ -503,7 +485,7 @@ const EmploymentPopup = ({
   );
 };
 
-// Static handleSubmit for integration with PersonalInfo
+// Static handleSubmit for integration with PersonalInfo (unchanged)
 EmploymentPopup.handleSubmit = async (e, formData, handleCloseModal) => {
   e.preventDefault();
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import Select from 'react-select'; // Add react-select import
 import imageIcon from '../../../assets/images/dash_icon/image.svg';
 import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
@@ -14,12 +15,52 @@ const DegreesPopup = ({
   uploadIcon,
 }) => {
   const [dropdownStates, setDropdownStates] = useState({
-    nominee: false,
     completion_status: false,
+    // Removed nominee from dropdownStates as it uses react-select
   });
   const dropdownRefs = {
-    nominee: useRef(null),
     completion_status: useRef(null),
+  };
+
+  const selectStyles = {
+    control: (provided) => ({
+      ...provided,
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+      boxShadow: 'none',
+      fontSize: '14px',
+      lineHeight: '20px',
+      padding: '5px',
+      backgroundColor: '#fff',
+      '&:hover': {
+        border: '1px solid #aaa',
+      },
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      backgroundColor: '#fff',
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : '#fff',
+      color: '#333',
+      padding: '10px',
+      fontSize: '14px',
+      '&:hover': {
+        backgroundColor: '#e6e6e6',
+      },
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: '#333',
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#999',
+    }),
   };
 
   const isImageFile = (fileName) => {
@@ -31,8 +72,11 @@ const DegreesPopup = ({
   const handleSelect = (name, value, event) => {
     event.stopPropagation();
     handleInputChange({ target: { name, value } });
-    const dropdownKey = name === "nomineeContact" ? "nominee" : name;
-    setDropdownStates((prev) => ({ ...prev, [dropdownKey]: false }));
+    setDropdownStates((prev) => ({ ...prev, [name]: false }));
+  };
+
+  const handleContactChange = (selected) => {
+    handleInputChange({ target: { name: "nomineeContact", value: selected ? selected.value : "" } });
   };
 
   useEffect(() => {
@@ -46,66 +90,6 @@ const DegreesPopup = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Static handleSubmit for integration with PersonalInfo
-  DegreesPopup.handleSubmit = async (e, formData, handleCloseModal) => {
-    e.preventDefault();
-
-    const { id, university_name, degree, degree_field, degree_type, degree_start, degree_end, grade, completion_status, nomineeContact, activities, notes, files, existingFiles = [] } = formData;
-
-    if (!university_name || !degree) {
-      return { success: false, message: "University name and degree are required." };
-    }
-
-    const data = new FormData();
-    data.append("university_name", university_name);
-    data.append("degree", degree);
-    data.append("degree_field", degree_field || "");
-    data.append("degree_type", degree_type || "");
-    data.append("degree_start", degree_start || "");
-    data.append("degree_end", degree_end || "");
-    data.append("grade", grade || "");
-    data.append("completion_status", completion_status || "false");
-    data.append("nomineeContact", nomineeContact || "");
-    data.append("activities", activities || "");
-    data.append("notes", notes || "");
-    if (files) {
-      Array.from(files).forEach((file) => {
-        data.append("degreeFiles", file);
-      });
-    } else if (existingFiles.length === 0) {
-      data.append("removeFile", "true");
-    }
-
-    try {
-      const method = id ? "PUT" : "POST";
-      const url = id
-        ? `${import.meta.env.VITE_API_URL}/api/degrees/${id}`
-        : `${import.meta.env.VITE_API_URL}/api/degrees`;
-
-      const res = await fetch(url, {
-        method,
-        credentials: "include",
-        body: data,
-      });
-
-      const result = await res.json();
-
-      if (res.ok && result.success) {
-        handleCloseModal();
-        return {
-          success: true,
-          message: id ? "Degree details updated successfully." : "Degree information saved successfully!",
-          degreeId: result.degreeId || id,
-        };
-      } else {
-        return { success: false, message: result.message || "Something went wrong!" };
-      }
-    } catch (error) {
-      console.error("Error submitting degree form:", error);
-      return { success: false, message: "Error submitting form. Try again." };
-    }
-  };
 
   return (
     <form onSubmit={(e) => handleSubmit(e, DegreesPopup.handleSubmit)} className="personal-popup-form">
@@ -195,7 +179,7 @@ const DegreesPopup = ({
         <div className="personal-custom-dropdown" ref={dropdownRefs.completion_status}>
           <div
             className="personal-dropdown-toggle"
-            onClick={() => setDropdownStates((prev) => ({ ...prev, completion_status: !prev.completion_status, nominee: false }))}
+            onClick={() => setDropdownStates((prev) => ({ ...prev, completion_status: !prev.completion_status }))}
           >
             {formData.completion_status === "true" ? "Completed" : formData.completion_status === "false" ? "In Progress" : "Select status"}
             <span className="personal-dropdown-arrow">▾</span>
@@ -218,35 +202,16 @@ const DegreesPopup = ({
 
       <label>
         Nominee Contact
-        <div className="personal-custom-dropdown" ref={dropdownRefs.nominee}>
-          <div
-            className="personal-dropdown-toggle"
-            onClick={() => setDropdownStates((prev) => ({ ...prev, nominee: !prev.nominee, completion_status: false }))}
-          >
-            {formData.nomineeContact || "Select a nominee"}
-            <span className="personal-dropdown-arrow">▾</span>
-          </div>
-          {dropdownStates.nominee && (
-            <ul className="personal-dropdown-menu">
-              <li
-                key="default"
-                onClick={(e) => handleSelect("nomineeContact", "", e)}
-                className="personal-dropdown-option"
-              >
-                Select a nominee
-              </li>
-              {nomineeContacts.map((contact) => (
-                <li
-                  key={contact.id}
-                  onClick={(e) => handleSelect("nomineeContact", contact.email || contact.name, e)}
-                  className="personal-dropdown-option"
-                >
-                  {contact.name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <Select
+          name="nomineeContact"
+          options={nomineeContacts}
+          value={nomineeContacts.find(option => option.value === formData.nomineeContact) || null}
+          onChange={handleContactChange}
+          placeholder="Select a nominee"
+          styles={selectStyles}
+          isSearchable
+          aria-label="Nominee contact"
+        />
       </label>
 
       <label>
@@ -360,6 +325,66 @@ const DegreesPopup = ({
       </div>
     </form>
   );
+};
+
+// Static handleSubmit for integration with PersonalInfo (unchanged)
+DegreesPopup.handleSubmit = async (e, formData, handleCloseModal) => {
+  e.preventDefault();
+
+  const { id, university_name, degree, degree_field, degree_type, degree_start, degree_end, grade, completion_status, nomineeContact, activities, notes, files, existingFiles = [] } = formData;
+
+  if (!university_name || !degree) {
+    return { success: false, message: "University name and degree are required." };
+  }
+
+  const data = new FormData();
+  data.append("university_name", university_name);
+  data.append("degree", degree);
+  data.append("degree_field", degree_field || "");
+  data.append("degree_type", degree_type || "");
+  data.append("degree_start", degree_start || "");
+  data.append("degree_end", degree_end || "");
+  data.append("grade", grade || "");
+  data.append("completion_status", completion_status || "false");
+  data.append("nomineeContact", nomineeContact || "");
+  data.append("activities", activities || "");
+  data.append("notes", notes || "");
+  if (files) {
+    Array.from(files).forEach((file) => {
+      data.append("degreeFiles", file);
+    });
+  } else if (existingFiles.length === 0) {
+    data.append("removeFile", "true");
+  }
+
+  try {
+    const method = id ? "PUT" : "POST";
+    const url = id
+      ? `${import.meta.env.VITE_API_URL}/api/degrees/${id}`
+      : `${import.meta.env.VITE_API_URL}/api/degrees`;
+
+    const res = await fetch(url, {
+      method,
+      credentials: "include",
+      body: data,
+    });
+
+    const result = await res.json();
+
+    if (res.ok && result.success) {
+      handleCloseModal();
+      return {
+        success: true,
+        message: id ? "Degree details updated successfully." : "Degree information saved successfully!",
+        degreeId: result.degreeId || id,
+      };
+    } else {
+      return { success: false, message: result.message || "Something went wrong!" };
+    }
+  } catch (error) {
+    console.error("Error submitting degree form:", error);
+    return { success: false, message: "Error submitting form. Try again." };
+  }
 };
 
 export default DegreesPopup;

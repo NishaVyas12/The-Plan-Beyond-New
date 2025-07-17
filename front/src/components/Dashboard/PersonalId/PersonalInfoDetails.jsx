@@ -449,129 +449,187 @@ const PersonalInfoDetails = () => {
     'Other ID',
   ];
 
-  const nomineeContacts = [
-    { id: '1', name: 'John Doe', email: 'john.doe@example.com' },
-    { id: '2', name: 'Jane Smith', email: 'jane.smith@example.com' },
-  ];
+  const [nomineeContacts, setNomineeContacts] = useState([]);
+  const [allContacts, setAllContacts] = useState([]);
 
-  const allContacts = [
-    { id: '1', name: 'Club Admin', phone_number: '+1234567890' },
-    { id: '2', name: 'Event Coordinator', phone_number: '+0987654321' },
-  ];
-
-  const renderPopup = () => {
-    if (categoryId === 'ids') {
-      return (
-        <IdsPopup
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleFileChange={handleFileChange}
-          handleRemoveFile={handleRemoveFile}
-          handleSubmit={(e) => handleSubmit(e, IdsPopup.handleSubmit)}
-          documentTypes={documentTypes}
-          uploadIcon={uploadIcon}
-          handleCloseModal={handleCloseDrawer}
-        />
-      );
-    } else if (categoryId === 'employment') {
-      return (
-        <EmploymentPopup
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleFileChange={handleFileChange}
-          handleRemoveFile={handleRemoveFile}
-          handleSubmit={(e) => handleSubmit(e, EmploymentPopup.handleSubmit)}
-          nomineeContacts={nomineeContacts}
-          handleCloseModal={handleCloseDrawer}
-          categories={categories}
-          uploadIcon={uploadIcon}
-        />
-      );
-    } else if (categoryId === 'religion') {
-      return (
-        <ReligionPopup
-          formData={formData}
-          handleInputChange={handleInputChange}
-          nomineeContacts={nomineeContacts}
-          handleSubmit={(e) => handleSubmit(e, ReligionPopup.handleSubmit)}
-          categories={categories}
-          handleCloseModal={handleCloseDrawer}
-        />
-      );
-    } else if (categoryId === 'charities') {
-      return (
-        <CharitiesPopup
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleFileChange={handleFileChange}
-          handleRemoveFile={handleRemoveFile}
-          handleSubmit={(e) => handleSubmit(e, CharitiesPopup.handleSubmit)}
-          nomineeContacts={nomineeContacts}
-          handleCloseModal={handleCloseDrawer}
-          categories={categories}
-          uploadIcon={uploadIcon}
-        />
-      );
-    } else if (categoryId === 'clubs') {
-      return (
-        <ClubsPopup
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleFileChange={handleFileChange}
-          handleRemoveFile={handleRemoveFile}
-          handleSubmit={(e) => handleSubmit(e, ClubsPopup.handleSubmit)}
-          allContacts={allContacts}
-          nomineeContacts={nomineeContacts}
-          handleCloseModal={handleCloseDrawer}
-          categories={categories}
-          uploadIcon={uploadIcon}
-        />
-      );
-    } else if (categoryId === 'degrees') {
-      return (
-        <DegreesPopup
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleFileChange={handleFileChange}
-          handleRemoveFile={handleRemoveFile}
-          handleSubmit={(e) => handleSubmit(e, DegreesPopup.handleSubmit)}
-          nomineeContacts={nomineeContacts}
-          handleCloseModal={handleCloseDrawer}
-          categories={categories}
-          uploadIcon={uploadIcon}
-        />
-      );
-    } else if (categoryId === 'military') {
-      return (
-        <MilitaryPopup
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleFileChange={handleFileChange}
-          handleRemoveFile={handleRemoveFile}
-          handleSubmit={(e) => handleSubmit(e, MilitaryPopup.handleSubmit)}
-          nomineeContacts={nomineeContacts}
-          handleCloseModal={handleCloseDrawer}
-          categories={categories}
-          uploadIcon={uploadIcon}
-        />
-      );
-    } else if (categoryId === 'miscellaneous') {
-      return (
-        <MiscellaneousPopup
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleFileChange={handleFileChange}
-          handleRemoveFile={handleRemoveFile}
-          handleSubmit={(e) => handleSubmit(e, MiscellaneousPopup.handleSubmit)}
-          nomineeContacts={nomineeContacts}
-          handleCloseModal={handleCloseDrawer}
-          categories={categories}
-          uploadIcon={uploadIcon}
-        />
-      );
+  useEffect(() => {
+  const fetchContacts = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/contacts`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAllContacts(data.contacts.map(contact => ({
+          value: contact.name,
+          label: contact.name,
+        })));
+      } else {
+        toast.error('Failed to fetch contacts.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    } catch (err) {
+      toast.error('Error fetching contacts.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     }
-    return null;
   };
+
+  const fetchNominees = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/nominees`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setNomineeContacts(data.nominees.map(nominee => ({
+          value: nominee.first_name,
+          label: nominee.first_name,
+        })));
+      } else {
+        toast.error('Failed to fetch nominees.', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
+      }
+    } catch (err) {
+      toast.error('Error fetching nominees.', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+  };
+
+  fetchContacts();
+  fetchNominees();
+  if (endpoint) {
+    fetchRecords();
+  }
+}, [endpoint]);
+
+  // Update renderPopup to use the fetched nomineeContacts and allContacts
+const renderPopup = () => {
+  if (categoryId === 'ids') {
+    return (
+      <IdsPopup
+        formData={formData}
+        handleInputChange={handleInputChange}
+        handleFileChange={handleFileChange}
+        handleRemoveFile={handleRemoveFile}
+        handleSubmit={(e) => handleSubmit(e, IdsPopup.handleSubmit)}
+        documentTypes={documentTypes}
+        uploadIcon={uploadIcon}
+        handleCloseModal={handleCloseDrawer}
+        nomineeContacts={nomineeContacts} // Updated to use state
+      />
+    );
+  } else if (categoryId === 'employment') {
+    return (
+      <EmploymentPopup
+      formData={formData}
+      handleInputChange={handleInputChange}
+      handleFileChange={handleFileChange}
+      handleRemoveFile={handleRemoveFile}
+      handleSubmit={(e) => handleSubmit(e, EmploymentPopup.handleSubmit)}
+      nomineeContacts={nomineeContacts}
+      allContacts={allContacts} // Add this line
+      handleCloseModal={handleCloseDrawer}
+      categories={categories}
+      uploadIcon={uploadIcon}
+    />
+    );
+  } else if (categoryId === 'religion') {
+    return (
+      <ReligionPopup
+        formData={formData}
+        handleInputChange={handleInputChange}
+        nomineeContacts={nomineeContacts} // Updated to use state
+        handleSubmit={(e) => handleSubmit(e, ReligionPopup.handleSubmit)}
+        categories={categories}
+        handleCloseModal={handleCloseDrawer}
+      />
+    );
+  } else if (categoryId === 'charities') {
+    return (
+      <CharitiesPopup
+        formData={formData}
+        handleInputChange={handleInputChange}
+        handleFileChange={handleFileChange}
+        handleRemoveFile={handleRemoveFile}
+        handleSubmit={(e) => handleSubmit(e, CharitiesPopup.handleSubmit)}
+        nomineeContacts={nomineeContacts} // Updated to use state
+        handleCloseModal={handleCloseDrawer}
+        categories={categories}
+        uploadIcon={uploadIcon}
+      />
+    );
+  } else if (categoryId === 'clubs') {
+    return (
+      <ClubsPopup
+        formData={formData}
+        handleInputChange={handleInputChange}
+        handleFileChange={handleFileChange}
+        handleRemoveFile={handleRemoveFile}
+        handleSubmit={(e) => handleSubmit(e, ClubsPopup.handleSubmit)}
+        allContacts={allContacts} // Updated to use state
+        nomineeContacts={nomineeContacts} // Updated to use state
+        handleCloseModal={handleCloseDrawer}
+        categories={categories}
+        uploadIcon={uploadIcon}
+      />
+    );
+  } else if (categoryId === 'degrees') {
+    return (
+      <DegreesPopup
+        formData={formData}
+        handleInputChange={handleInputChange}
+        handleFileChange={handleFileChange}
+        handleRemoveFile={handleRemoveFile}
+        handleSubmit={(e) => handleSubmit(e, DegreesPopup.handleSubmit)}
+        nomineeContacts={nomineeContacts} // Updated to use state
+        handleCloseModal={handleCloseDrawer}
+        categories={categories}
+        uploadIcon={uploadIcon}
+      />
+    );
+  } else if (categoryId === 'military') {
+    return (
+      <MilitaryPopup
+        formData={formData}
+        handleInputChange={handleInputChange}
+        handleFileChange={handleFileChange}
+        handleRemoveFile={handleRemoveFile}
+        handleSubmit={(e) => handleSubmit(e, MilitaryPopup.handleSubmit)}
+        nomineeContacts={nomineeContacts} // Updated to use state
+        handleCloseModal={handleCloseDrawer}
+        categories={categories}
+        uploadIcon={uploadIcon}
+      />
+    );
+  } else if (categoryId === 'miscellaneous') {
+    return (
+      <MiscellaneousPopup
+        formData={formData}
+        handleInputChange={handleInputChange}
+        handleFileChange={handleFileChange}
+        handleRemoveFile={handleRemoveFile}
+        handleSubmit={(e) => handleSubmit(e, MiscellaneousPopup.handleSubmit)}
+        nomineeContacts={nomineeContacts} // Updated to use state
+        handleCloseModal={handleCloseDrawer}
+        categories={categories}
+        uploadIcon={uploadIcon}
+      />
+    );
+  }
+  return null;
+};
 
   const isImageFile = (filePath) => {
     if (!filePath) return false;
