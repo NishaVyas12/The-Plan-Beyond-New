@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import Select from 'react-select';
-import imageIcon from '../../../assets/images/dash_icon/image.svg';
 import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
 const MiscellaneousPopup = ({
@@ -16,8 +15,8 @@ const MiscellaneousPopup = ({
 }) => {
   const [dropdownStates, setDropdownStates] = useState({
     status: false,
-
   });
+  
   const dropdownRefs = {
     status: useRef(null),
   };
