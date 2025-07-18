@@ -47,19 +47,17 @@ const storage = multer.diskStorage({
         return cb(new Error("Family ID is required for document uploads"));
       }
       uploadPath = path.join("images", `${userId}`, "family", `${familyId}`);
-    } else if (file.fieldname === "personalIdFiles") {
-      uploadPath = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "employmentFiles") {
-      uploadPath = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "charityFiles") {
-      uploadPath = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "clubFiles") {
-      uploadPath = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "degreeFiles") {
-      uploadPath = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "militaryFiles") {
-      uploadPath = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "miscellaneousFiles") {
+    } else if (file.fieldname === "new_folder_documents") {
+      uploadPath = path.join("images", `${userId}`, "family", `${familyId || "temp"}`, "folders");
+    } else if ([
+      "personalIdFiles",
+      "employmentFiles",
+      "charityFiles",
+      "clubFiles",
+      "degreeFiles",
+      "militaryFiles",
+      "miscellaneousFiles",
+    ].includes(file.fieldname)) {
       uploadPath = path.join("images", `${userId}`, "documents", "personalid");
     } else if (file.fieldname === "additionalFiles") {
       uploadPath = path.join("images", `${userId}`, "sendfile");
@@ -95,21 +93,19 @@ const storage = multer.diskStorage({
       }
     } else if (["insurance_document", "tag_document", "vet_document"].includes(file.fieldname)) {
       destination = path.join("images", `${userId}`, "pet", `${petId}`, "file");
+    } else if (file.fieldname === "new_folder_documents") {
+      destination = path.join("images", `${userId}`, "family", `${familyId || "temp"}`, "folders");
     } else if (file.fieldname === "additionalFiles") {
       destination = path.join("images", `${userId}`, "sendfile");
-    } else if (file.fieldname === "personalIdFiles") {
-      destination = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "employmentFiles") {
-      destination = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "charityFiles") {
-      destination = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "clubFiles") {
-      destination = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "degreeFiles") {
-      destination = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "militaryFiles") {
-      destination = path.join("images", `${userId}`, "documents", "personalid");
-    } else if (file.fieldname === "miscellaneousFiles") {
+    } else if ([
+      "personalIdFiles",
+      "employmentFiles",
+      "charityFiles",
+      "clubFiles",
+      "degreeFiles",
+      "militaryFiles",
+      "miscellaneousFiles",
+    ].includes(file.fieldname)) {
       destination = path.join("images", `${userId}`, "documents", "personalid");
     } else {
       destination = path.join("images", `${userId}`, "family", `${familyId}`);
@@ -201,6 +197,7 @@ const upload = multer({
   { name: "degreeFiles", maxCount: 15 },
   { name: "militaryFiles", maxCount: 15 },
   { name: "miscellaneousFiles", maxCount: 15 },
+  { name: "new_folder_documents", maxCount: 15 },
 ]);
 
 const profileImageUpload = multer({

@@ -30,8 +30,8 @@ const PersonalInfo = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false);
   const [counts, setCounts] = useState({});
-  const [nomineeContacts, setNomineeContacts] = useState([]); // Add state for nomineeContacts
-  const [allContacts, setAllContacts] = useState([]); // Add state for allContacts
+  const [nomineeContacts, setNomineeContacts] = useState([]);
+  const [allContacts, setAllContacts] = useState([]);
   const addDropdownRef = useRef(null);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({

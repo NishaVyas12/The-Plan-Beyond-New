@@ -49,9 +49,9 @@ router.post("/ids", checkAuth, upload, async (req, res) => {
 
     const filePaths = personalIdFiles
       ? personalIdFiles.map(
-          (file) =>
-            `/images/${req.session.userId}/documents/personalid/${file.filename}`
-        )
+        (file) =>
+          `/images/${req.session.userId}/documents/personalid/${file.filename}`
+      )
       : [];
 
     const parsedExpirationDate = expirationDate
@@ -108,13 +108,13 @@ router.get("/ids", checkAuth, async (req, res) => {
       expiration_date: doc.expiration_date || null,
       created_at: doc.created_at
         ? new Date(doc.created_at).toLocaleString("en-US", {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          })
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
         : null,
     }));
 

@@ -6,6 +6,7 @@ const { checkAuth } = require("../middleware/auth");
 const { upload } = require("../middleware/multer");
 const fs = require("fs").promises;
 const path = require("path");
+const sanitize = require("sanitize-filename");
 
 // Validate family member data
 const validateFamilyMember = (member) => {
@@ -73,27 +74,29 @@ router.post("/save", checkAuth, upload, async (req, res) => {
     state: state || "",
     city: city || "",
     zipcode: zipcode || "",
-    profile_image: "", // Initialize as empty, will be updated below
+    profile_image: "",
     birthday: birthday || null,
     anniversary: anniversary || null,
     relation: relation || "",
-    emergency_contact:
-      emergency_contact !== undefined ? emergency_contact : false,
+    emergency_contact: emergency_contact !== undefined ? emergency_contact : false,
+    new_folder_documents: [],
   };
 
   const validationError = validateFamilyMember(familyMember);
   if (validationError) {
-    // Clean up uploaded file if validation fails
-    if (req.files?.profile_image?.[0]?.path) {
-      try {
-        await fs.unlink(req.files.profile_image[0].path);
-        console.log(
-          `Deleted temporary profile image: ${req.files.profile_image[0].path}`
-        );
-      } catch (unlinkErr) {
-        console.warn(
-          `Failed to delete temporary profile image: ${unlinkErr.message}`
-        );
+    // Clean up uploaded files if validation fails
+    if (req.files?.profile_image?.[0]?.path || req.files?.new_folder_documents?.length) {
+      const filesToDelete = [
+        ...(req.files?.profile_image?.[0]?.path ? [req.files.profile_image[0].path] : []),
+        ...(req.files?.new_folder_documents?.map(file => file.path) || []),
+      ];
+      for (const filePath of filesToDelete) {
+        try {
+          await fs.unlink(filePath);
+          console.log(`Deleted temporary file: ${filePath}`);
+        } catch (unlinkErr) {
+          console.warn(`Failed to delete temporary file: ${unlinkErr.message}`);
+        }
       }
     }
     return res.status(400).json({
@@ -145,7 +148,7 @@ router.post("/save", checkAuth, upload, async (req, res) => {
       } else {
         // Check contacts_user_<user_id> table for matching phone number or email
         const tableName = `contacts_user_${req.session.userId}`;
-        await checkTableExists(tableName); // Ensure table exists, assuming createUserContactsTable is available
+        await checkTableExists(tableName);
         const phoneNumbers = [
           familyMember.phone_number,
           familyMember.phone_number1,
@@ -168,8 +171,31 @@ router.post("/save", checkAuth, upload, async (req, res) => {
         if (existingContact.length > 0 && existingContact[0].contact_image) {
           familyMember.profile_image = existingContact[0].contact_image;
         } else {
-          familyMember.profile_image = "/images/default-profile.png"; // Default image if no match
+          familyMember.profile_image = "/images/default-profile.png";
         }
+      }
+
+      // Handle new_folder_documents
+      if (req.files?.new_folder_documents?.length) {
+        const documentPaths = [];
+        for (const file of req.files.new_folder_documents) {
+          const tempPath = file.path;
+          const finalPath = path.join(
+            __dirname,
+            "../images",
+            `${req.session.userId}`,
+            "family",
+            "folders",
+            `${Date.now()}-${file.filename}`
+          );
+          const finalDir = path.dirname(finalPath);
+          await fs.mkdir(finalDir, { recursive: true });
+          await fs.rename(tempPath, finalPath);
+          documentPaths.push(`/${path
+            .relative(path.join(__dirname, ".."), finalPath)
+            .replace(/\\/g, "/")}`);
+        }
+        familyMember.new_folder_documents = JSON.stringify(documentPaths);
       }
 
       const [result] = await connection.query(
@@ -177,8 +203,8 @@ router.post("/save", checkAuth, upload, async (req, res) => {
           user_id, first_name, middle_name, last_name, nickname, email,
           phone_number, phone_number1, phone_number2, phone_number3,
           flat_building_no, street, country, state, city, zipcode, profile_image, 
-          birthday, anniversary, relation, emergency_contact
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          birthday, anniversary, relation, emergency_contact, new_folder_documents
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           req.session.userId,
           familyMember.first_name,
@@ -201,6 +227,7 @@ router.post("/save", checkAuth, upload, async (req, res) => {
           familyMember.anniversary,
           familyMember.relation,
           familyMember.emergency_contact,
+          familyMember.new_folder_documents.length ? familyMember.new_folder_documents : null,
         ]
       );
 
@@ -218,17 +245,17 @@ router.post("/save", checkAuth, upload, async (req, res) => {
       });
     } catch (err) {
       await connection.rollback();
-      // Clean up uploaded file if transaction fails
-      if (req.files?.profile_image?.[0]?.path) {
+      // Clean up uploaded files if transaction fails
+      const filesToDelete = [
+        ...(req.files?.profile_image?.[0]?.path ? [req.files.profile_image[0].path] : []),
+        ...(req.files?.new_folder_documents?.map(file => file.path) || []),
+      ];
+      for (const filePath of filesToDelete) {
         try {
-          await fs.unlink(req.files.profile_image[0].path);
-          console.log(
-            `Deleted temporary profile image: ${req.files.profile_image[0].path}`
-          );
+          await fs.unlink(filePath);
+          console.log(`Deleted temporary file: ${filePath}`);
         } catch (unlinkErr) {
-          console.warn(
-            `Failed to delete temporary profile image: ${unlinkErr.message}`
-          );
+          console.warn(`Failed to delete temporary file: ${unlinkErr.message}`);
         }
       }
       throw err;
@@ -243,6 +270,7 @@ router.post("/save", checkAuth, upload, async (req, res) => {
     });
   }
 });
+
 
 // GET /api/familyinfo
 router.get("/", checkAuth, async (req, res) => {
@@ -307,6 +335,7 @@ router.get("/", checkAuth, async (req, res) => {
         other_document_issued,
         other_document_expiration,
         notes,
+        new_folder_documents,
         created_at
       FROM familyinfo WHERE user_id = ?`,
       [req.session.userId]
@@ -366,6 +395,9 @@ router.get("/", checkAuth, async (req, res) => {
           ? member.other_document_expiration.split(",")
           : [],
         notes: member.notes || "",
+        new_folder_documents: member.new_folder_documents
+          ? JSON.parse(member.new_folder_documents)
+          : [],
         created_at: member.created_at,
       })),
     });
@@ -422,6 +454,7 @@ router.get("/:id", checkAuth, async (req, res) => {
         document_name,
         file_path,
         other_document_number,
+        new_folder_documents,
         DATE_FORMAT(other_document_issued, '%Y-%m-%d') AS other_document_issued,
         DATE_FORMAT(other_document_expiration, '%Y-%m-%d') AS other_document_expiration,
         notes,
@@ -496,6 +529,9 @@ router.get("/:id", checkAuth, async (req, res) => {
           ? member.other_document_expiration.split(",")
           : [],
         notes: member.notes || "",
+        new_folder_documents: member.new_folder_documents
+          ? JSON.parse(member.new_folder_documents)
+          : [],
         other_documents: otherDocuments,
       },
     });
@@ -507,7 +543,7 @@ router.get("/:id", checkAuth, async (req, res) => {
   }
 });
 
-// PUT /api/familyinfo/:id
+// ✅ PUT /api/familyinfo/:id
 router.put("/:id", checkAuth, upload, async (req, res) => {
   const { id } = req.params;
   const {
@@ -530,413 +566,125 @@ router.put("/:id", checkAuth, upload, async (req, res) => {
     anniversary,
   } = req.body;
 
+  const connection = await pool.getConnection();
   try {
-    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [
+    // ✅ Check user exists
+    const [users] = await connection.query("SELECT id FROM users WHERE id = ?", [
       req.session.userId,
     ]);
     if (users.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    const tableExists = await checkTableExists("familyinfo");
-    if (!tableExists) {
-      return res
-        .status(500)
-        .json({ success: false, message: "FamilyInfo table not found." });
-    }
-
-    // Fetch current family member data to preserve existing values
-    const [current] = await pool.query(
-      `SELECT 
-        driver_license_number,
-        driver_license_state_issued,
-        driver_license_expiration,
-        driver_license_document,
-        birth_certificate_document,
-        aadhaar_number,
-        aadhaar_card_document,
-        pan_number,
-        pan_card_document,
-        passport_number,
-        passport_state_issued,
-        passport_expiration,
-        passport_document,
-        emergency_contact,
-        document_type,
-        document_name,
-        file_path,
-        other_document_number,
-        other_document_issued,
-        other_document_expiration,
-        notes,
-        birthday,
-        anniversary
-      FROM familyinfo WHERE id = ? AND user_id = ?`,
+    // ✅ Fetch current family member data
+    const [current] = await connection.query(
+      `SELECT driver_license_number, driver_license_state_issued, driver_license_expiration,
+        driver_license_document, birth_certificate_document, aadhaar_number, aadhaar_card_document,
+        pan_number, pan_card_document, passport_number, passport_state_issued, passport_expiration,
+        passport_document, emergency_contact, document_type, document_name, file_path,
+        other_document_number, other_document_issued, other_document_expiration, notes,
+        birthday, anniversary, new_folder_documents
+       FROM familyinfo WHERE id = ? AND user_id = ?`,
       [id, req.session.userId]
     );
 
     if (!current.length) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Family member not found or unauthorized.",
-        });
+      return res.status(404).json({ success: false, message: "Family member not found or unauthorized." });
     }
 
-    // Use existing values if fields are not provided in the request, nullify expiration if document is deleted
+    const currentMember = current[0];
+
+    // ✅ Update fields (or preserve old values)
     const updatedFields = {
-      driver_license_number:
-        driver_license_number !== undefined
-          ? driver_license_number
-          : current[0].driver_license_number || "",
-      driver_license_state_issued:
-        driver_license_state_issued !== undefined
-          ? driver_license_state_issued
-          : current[0].driver_license_state_issued || "",
+      driver_license_number: driver_license_number || currentMember.driver_license_number || "",
+      driver_license_state_issued: driver_license_state_issued || currentMember.driver_license_state_issued || "",
       driver_license_expiration:
         req.body.driver_license_document === ""
           ? null
-          : driver_license_expiration !== undefined &&
-            driver_license_expiration !== ""
-          ? driver_license_expiration
-          : current[0].driver_license_expiration || null,
-      aadhaar_number:
-        aadhaar_number !== undefined
-          ? aadhaar_number
-          : current[0].aadhaar_number || "",
-      pan_number:
-        pan_number !== undefined ? pan_number : current[0].pan_number || "",
-      passport_number:
-        passport_number !== undefined
-          ? passport_number
-          : current[0].passport_number || "",
-      passport_state_issued:
-        passport_state_issued !== undefined
-          ? passport_state_issued
-          : current[0].passport_state_issued || "",
+          : driver_license_expiration || currentMember.driver_license_expiration || null,
+      aadhaar_number: aadhaar_number || currentMember.aadhaar_number || "",
+      pan_number: pan_number || currentMember.pan_number || "",
+      passport_number: passport_number || currentMember.passport_number || "",
+      passport_state_issued: passport_state_issued || currentMember.passport_state_issued || "",
       passport_expiration:
         req.body.passport_document === ""
           ? null
-          : passport_expiration !== undefined && passport_expiration !== ""
-          ? passport_expiration
-          : current[0].passport_expiration || null,
-      emergency_contact:
-        emergency_contact !== undefined
-          ? emergency_contact
-          : current[0].emergency_contact || false,
-      notes: notes !== undefined ? notes : current[0].notes || "",
-      birthday:
-  birthday !== undefined ? (birthday === "" || birthday === null ? null : birthday) : current[0].birthday || null,
-anniversary:
-  anniversary !== undefined ? (anniversary === "" || anniversary === null ? null : anniversary) : current[0].anniversary || null,
+          : passport_expiration || currentMember.passport_expiration || null,
+      emergency_contact: emergency_contact || currentMember.emergency_contact || false,
+      notes: notes || currentMember.notes || "",
+      birthday: birthday === "" ? null : birthday || currentMember.birthday || null,
+      anniversary: anniversary === "" ? null : anniversary || currentMember.anniversary || null,
     };
 
-    // Use existing paths if no new file is uploaded, or set to empty string for deletion
+    // ✅ Handle single document fields
     const documentFields = {
-      birth_certificate_document:
-        req.files?.birth_certificate_document?.[0]?.path.replace(/\\/g, "/") ||
-        (req.body.birth_certificate_document === ""
-          ? ""
-          : current[0].birth_certificate_document || ""),
-      driver_license_document:
-        req.files?.driver_license_document?.[0]?.path.replace(/\\/g, "/") ||
-        (req.body.driver_license_document === ""
-          ? ""
-          : current[0].driver_license_document || ""),
-      pan_card_document:
-        req.files?.pan_card_document?.[0]?.path.replace(/\\/g, "/") ||
-        (req.body.pan_card_document === ""
-          ? ""
-          : current[0].pan_card_document || ""),
-      passport_document:
-        req.files?.passport_document?.[0]?.path.replace(/\\/g, "/") ||
-        (req.body.passport_document === ""
-          ? ""
-          : current[0].passport_document || ""),
-      aadhaar_card_document:
-        req.files?.aadhaar_card_document?.[0]?.path.replace(/\\/g, "/") ||
-        (req.body.aadhaar_card_document === ""
-          ? ""
-          : current[0].aadhaar_card_document || ""),
+      birth_certificate_document: req.files?.birth_certificate_document?.[0]?.path.replace(/\\/g, "/") ||
+        (req.body.birth_certificate_document === "" ? "" : currentMember.birth_certificate_document || ""),
+      driver_license_document: req.files?.driver_license_document?.[0]?.path.replace(/\\/g, "/") ||
+        (req.body.driver_license_document === "" ? "" : currentMember.driver_license_document || ""),
+      pan_card_document: req.files?.pan_card_document?.[0]?.path.replace(/\\/g, "/") ||
+        (req.body.pan_card_document === "" ? "" : currentMember.pan_card_document || ""),
+      passport_document: req.files?.passport_document?.[0]?.path.replace(/\\/g, "/") ||
+        (req.body.passport_document === "" ? "" : currentMember.passport_document || ""),
+      aadhaar_card_document: req.files?.aadhaar_card_document?.[0]?.path.replace(/\\/g, "/") ||
+        (req.body.aadhaar_card_document === "" ? "" : currentMember.aadhaar_card_document || ""),
     };
 
-    // Delete files from filesystem if their paths are set to empty
+    // ✅ Handle new_folder_documents
+    let folderDocs = [];
+    try {
+      folderDocs = currentMember.new_folder_documents ? JSON.parse(currentMember.new_folder_documents) : [];
+    } catch {
+      folderDocs = [];
+    }
+
+    if (req.files?.new_folder_documents) {
+      const uploadedFiles = req.files.new_folder_documents.map(f => f.path.replace(/\\/g, "/"));
+      folderDocs.push(...uploadedFiles);
+    }
+
+    if (req.body.new_folder_documents === "") {
+      folderDocs = []; // clear all
+    }
+
+    // ✅ Delete files from disk for cleared single docs
     for (const [field, newPath] of Object.entries(documentFields)) {
-      if (newPath === "" && current[0][field]) {
-        const filePath = path.join(__dirname, "..", current[0][field]);
+      if (newPath === "" && currentMember[field]) {
+        const filePath = path.join(__dirname, "..", currentMember[field]);
         try {
-          await fs.access(filePath);
           await fs.unlink(filePath);
-          console.log(`Deleted file: ${filePath}`);
         } catch (err) {
-          if (err.code !== "ENOENT") {
-            console.error(`Error deleting file ${filePath}:`, err);
-          }
+          if (err.code !== "ENOENT") console.error(`Error deleting file: ${filePath}`, err);
         }
       }
     }
 
-    // Handle other document updates or deletions
-    let document_type = current[0].document_type
-      ? current[0].document_type.split(",")
-      : [];
-    let document_name = current[0].document_name
-      ? current[0].document_name.split(",")
-      : [];
-    let file_path = current[0].file_path ? current[0].file_path.split(",") : [];
-    let other_document_number_array = current[0].other_document_number
-      ? current[0].other_document_number.split(",")
-      : [];
-    let other_document_issued_array = current[0].other_document_issued
-      ? current[0].other_document_issued.split(",")
-      : [];
-    let other_document_expiration_array = current[0].other_document_expiration
-      ? current[0].other_document_expiration.split(",")
-      : [];
-
-    if (other_document_index !== undefined) {
-      const index = parseInt(other_document_index, 10);
-      if (index >= 0 && index < document_name.length) {
-        // Check if the request is a deletion (all fields set to null)
-        if (
-          other_document_name === null &&
-          other_document_number === null &&
-          other_document_issued === null &&
-          other_document_expiration === null &&
-          req.body.file_path === null
-        ) {
-          // Delete file from filesystem if it exists
-          if (file_path[index]) {
-            const oldFilePath = path.join(__dirname, "..", file_path[index]);
-            try {
-              await fs.access(oldFilePath);
-              await fs.unlink(oldFilePath);
-              console.log(`Deleted other document file: ${oldFilePath}`);
-            } catch (err) {
-              if (err.code !== "ENOENT") {
-                console.error(
-                  `Error deleting other document file ${oldFilePath}:`,
-                  err
-                );
-              }
-            }
-          }
-          // Remove the document at the specified index
-          document_type.splice(index, 1);
-          document_name.splice(index, 1);
-          file_path.splice(index, 1);
-          other_document_number_array.splice(index, 1);
-          other_document_issued_array.splice(index, 1);
-          other_document_expiration_array.splice(index, 1);
-        } else if (
-          req.files?.other_file?.[0]?.path ||
-          other_document_name ||
-          req.body.file_path === ""
-        ) {
-          // Delete file from filesystem if file_path is set to empty
-          if (req.body.file_path === "" && file_path[index]) {
-            const oldFilePath = path.join(__dirname, "..", file_path[index]);
-            try {
-              await fs.access(oldFilePath);
-              await fs.unlink(oldFilePath);
-              console.log(`Deleted other document file: ${oldFilePath}`);
-            } catch (err) {
-              if (err.code !== "ENOENT") {
-                console.error(
-                  `Error deleting other document file ${oldFilePath}:`,
-                  err
-                );
-              }
-            }
-          }
-          // Update existing other document
-          document_name[index] =
-            other_document_name !== undefined
-              ? other_document_name
-              : document_name[index] || `Other Document ${Date.now()}`;
-          file_path[index] =
-            req.body.file_path === ""
-              ? ""
-              : req.files?.other_file?.[0]?.path.replace(/\\/g, "/") ||
-                file_path[index];
-          other_document_number_array[index] =
-            other_document_number !== undefined
-              ? other_document_number
-              : other_document_number_array[index] || "";
-          other_document_issued_array[index] =
-            other_document_issued !== undefined
-              ? other_document_issued
-              : other_document_issued_array[index] || "";
-          other_document_expiration_array[index] =
-            other_document_expiration !== undefined
-              ? other_document_expiration
-              : other_document_expiration_array[index] || "";
-        }
-      }
-    }
-
-    // Filter out null or empty values to prevent extra commas
-    const cleanedDocumentType = document_type.filter(
-      (item) => item != null && item !== ""
-    );
-    const cleanedDocumentName = document_name.filter(
-      (item) => item != null && item !== ""
-    );
-    const cleanedFilePath = file_path.filter(
-      (item) => item != null && item !== ""
-    );
-    const cleanedOtherDocumentNumber = other_document_number_array.filter(
-      (item) => item != null && item !== ""
-    );
-    const cleanedOtherDocumentIssued = other_document_issued_array.filter(
-      (item) => item != null && item !== ""
-    );
-    const cleanedOtherDocumentExpiration =
-      other_document_expiration_array.filter(
-        (item) => item != null && item !== ""
-      );
-
-    const [result] = await pool.query(
+    // ✅ Update DB
+    await connection.query(
       `UPDATE familyinfo SET
-        driver_license_number = ?,
-        driver_license_document = ?,
-        birth_certificate_document = ?,
-        driver_license_state_issued = ?,
-        driver_license_expiration = ?,
-        aadhaar_number = ?,
-        aadhaar_card_document = ?,
-        pan_number = ?,
-        pan_card_document = ?,
-        passport_number = ?,
-        passport_document = ?,
-        passport_state_issued = ?,
-        passport_expiration = ?,
-        emergency_contact = ?,
-        document_type = ?,
-        document_name = ?,
-        file_path = ?,
-        other_document_number = ?,
-        other_document_issued = ?,
-        other_document_expiration = ?,
-        notes = ?,
-        birthday = ?,
-        anniversary = ?
-      WHERE id = ? AND user_id = ?`,
+        driver_license_number=?, driver_license_document=?, birth_certificate_document=?, driver_license_state_issued=?, driver_license_expiration=?,
+        aadhaar_number=?, aadhaar_card_document=?, pan_number=?, pan_card_document=?, passport_number=?, passport_document=?,
+        passport_state_issued=?, passport_expiration=?, emergency_contact=?, notes=?, birthday=?, anniversary=?, new_folder_documents=?
+      WHERE id=? AND user_id=?`,
       [
-        updatedFields.driver_license_number,
-        documentFields.driver_license_document,
-        documentFields.birth_certificate_document,
-        updatedFields.driver_license_state_issued,
-        updatedFields.driver_license_expiration,
-        updatedFields.aadhaar_number,
-        documentFields.aadhaar_card_document,
-        updatedFields.pan_number,
-        documentFields.pan_card_document,
-        updatedFields.passport_number,
-        documentFields.passport_document,
-        updatedFields.passport_state_issued,
-        updatedFields.passport_expiration,
-        updatedFields.emergency_contact,
-        cleanedDocumentType.length > 0 ? cleanedDocumentType.join(",") : null,
-        cleanedDocumentName.length > 0 ? cleanedDocumentName.join(",") : null,
-        cleanedFilePath.length > 0 ? cleanedFilePath.join(",") : null,
-        cleanedOtherDocumentNumber.length > 0
-          ? cleanedOtherDocumentNumber.join(",")
-          : null,
-        cleanedOtherDocumentIssued.length > 0
-          ? cleanedOtherDocumentIssued.join(",")
-          : null,
-        cleanedOtherDocumentExpiration.length > 0
-          ? cleanedOtherDocumentExpiration.join(",")
-          : null,
-        updatedFields.notes,
-        updatedFields.birthday,
-        updatedFields.anniversary,
-        id,
-        req.session.userId,
+        updatedFields.driver_license_number, documentFields.driver_license_document, documentFields.birth_certificate_document,
+        updatedFields.driver_license_state_issued, updatedFields.driver_license_expiration, updatedFields.aadhaar_number,
+        documentFields.aadhaar_card_document, updatedFields.pan_number, documentFields.pan_card_document,
+        updatedFields.passport_number, documentFields.passport_document, updatedFields.passport_state_issued,
+        updatedFields.passport_expiration, updatedFields.emergency_contact, updatedFields.notes,
+        updatedFields.birthday, updatedFields.anniversary, JSON.stringify(folderDocs), id, req.session.userId
       ]
     );
 
-    if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Family member not found or unauthorized.",
-        });
-    }
-
-    const [updatedRows] = await pool.query(
-      `SELECT 
-        driver_license_number,
-        driver_license_state_issued,
-        DATE_FORMAT(driver_license_expiration, '%Y-%m-%d') AS driver_license_expiration,
-        driver_license_document,
-        birth_certificate_document,
-        aadhaar_card_document,
-        pan_card_document,
-        passport_document,
-        aadhaar_number,
-        pan_number,
-        passport_number,
-        passport_state_issued,
-        DATE_FORMAT(passport_expiration, '%Y-%m-%d') AS passport_expiration,
-        emergency_contact,
-        document_type,
-        document_name,
-        file_path,
-        other_document_number,
-        DATE_FORMAT(other_document_issued, '%Y-%m-%d') AS other_document_issued,
-        DATE_FORMAT(other_document_expiration, '%Y-%m-%d') AS other_document_expiration,
-        notes,
-        DATE_FORMAT(birthday, '%Y-%m-%d') AS birthday,
-        DATE_FORMAT(anniversary, '%Y-%m-%d') AS anniversary
-      FROM familyinfo WHERE id = ? AND user_id = ?`,
-      [id, req.session.userId]
-    );
-
-    const updatedOtherDocuments = (
-      updatedRows[0].document_name
-        ? updatedRows[0].document_name.split(",")
-        : []
-    ).map((name, index) => ({
-      id: `other-${index}-${Date.now()}`,
-      document_name: name || "",
-      number: updatedRows[0].other_document_number
-        ? updatedRows[0].other_document_number.split(",")[index] || ""
-        : "",
-      issued_date: updatedRows[0].other_document_issued
-        ? updatedRows[0].other_document_issued.split(",")[index] || ""
-        : "",
-      expiration_date: updatedRows[0].other_document_expiration
-        ? updatedRows[0].other_document_expiration.split(",")[index] || ""
-        : "",
-      file: updatedRows[0].file_path
-        ? updatedRows[0].file_path.split(",")[index] || ""
-        : "",
-    }));
-
-    res.json({
-      success: true,
-      message: "Family member updated successfully.",
-      familyMember: {
-        ...updatedRows[0],
-        emergency_contact: updatedRows[0].emergency_contact || false,
-        birthday: updatedRows[0].birthday || "",
-        anniversary: updatedRows[0].anniversary || "",
-        other_documents: updatedOtherDocuments,
-      },
-    });
+    res.json({ success: true, message: "Family member updated successfully.", new_folder_documents: folderDocs });
   } catch (err) {
     console.error("Error updating family member:", err);
-    res
-      .status(500)
-      .json({ success: false, message: `Server error: ${err.message}` });
+    res.status(500).json({ success: false, message: `Server error: ${err.message}` });
+  } finally {
+    connection.release();
   }
 });
+
 
 // POST /api/familyinfo/other-document
 router.post("/other-document", checkAuth, upload, async (req, res) => {
@@ -1006,21 +754,21 @@ router.post("/other-document", checkAuth, upload, async (req, res) => {
       : [new_file_path];
     const other_document_number_array = current.other_document_number
       ? [
-          ...current.other_document_number.split(","),
-          other_document_number || "",
-        ]
+        ...current.other_document_number.split(","),
+        other_document_number || "",
+      ]
       : [other_document_number || ""];
     const other_document_issued_array = current.other_document_issued
       ? [
-          ...current.other_document_issued.split(","),
-          other_document_issued || "",
-        ]
+        ...current.other_document_issued.split(","),
+        other_document_issued || "",
+      ]
       : [other_document_issued || ""];
     const other_document_expiration_array = current.other_document_expiration
       ? [
-          ...current.other_document_expiration.split(","),
-          other_document_expiration || "",
-        ]
+        ...current.other_document_expiration.split(","),
+        other_document_expiration || "",
+      ]
       : [other_document_expiration || ""];
 
     // Delete old file from filesystem if file_path is set to empty
@@ -1098,68 +846,85 @@ router.post("/other-document", checkAuth, upload, async (req, res) => {
 
 router.delete("/:id", checkAuth, async (req, res) => {
   const { id } = req.params;
+  const { fieldName, fileIndex } = req.query;
 
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
 
     const [existing] = await connection.query(
-      `SELECT 
-        profile_image,
-        driver_license_document,
-        birth_certificate_document,
-        aadhaar_card_document,
-        pan_card_document,
-        passport_document,
-        file_path
-      FROM familyinfo WHERE id = ? AND user_id = ?`,
+      `SELECT profile_image, driver_license_document, birth_certificate_document,
+              aadhaar_card_document, pan_card_document, passport_document, new_folder_documents
+       FROM familyinfo WHERE id=? AND user_id=?`,
       [id, req.session.userId]
     );
 
     if (!existing.length) {
       await connection.rollback();
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Family member not found or unauthorized.",
-        });
+      return res.status(404).json({ success: false, message: "Family member not found." });
     }
 
-    const existingMember = existing[0];
+    const member = existing[0];
 
-    const fileFields = [
-      "profile_image",
-      "driver_license_document",
-      "birth_certificate_document",
-      "aadhaar_card_document",
-      "pan_card_document",
-      "passport_document",
+    // ✅ Delete a specific file from new_folder_documents
+    if (fieldName === "new_folder_documents" && fileIndex !== undefined) {
+      let files = [];
+      try {
+        files = JSON.parse(member.new_folder_documents || "[]");
+      } catch {
+        files = [];
+      }
+
+      if (fileIndex < 0 || fileIndex >= files.length) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Invalid file index." });
+      }
+
+      const deletedFile = files[fileIndex];
+      files.splice(fileIndex, 1);
+
+      await connection.query(
+        "UPDATE familyinfo SET new_folder_documents=? WHERE id=? AND user_id=?",
+        [JSON.stringify(files), id, req.session.userId]
+      );
+
+      // Remove file physically
+      const absolutePath = path.join(__dirname, "..", deletedFile);
+      if (fs.existsSync(absolutePath)) {
+        fs.unlinkSync(absolutePath);
+      }
+
+      await connection.commit();
+      return res.json({ success: true, message: "File removed successfully.", updatedFiles: files });
+    }
+
+    // ✅ Delete entire member (with files)
+    const filePaths = [
+      member.profile_image,
+      member.driver_license_document,
+      member.birth_certificate_document,
+      member.aadhaar_card_document,
+      member.pan_card_document,
+      member.passport_document,
+      ...(JSON.parse(member.new_folder_documents || "[]"))
     ];
 
-    const [result] = await connection.query(
-      "DELETE FROM familyinfo WHERE id = ? AND user_id = ?",
-      [id, req.session.userId]
-    );
-
-    if (result.affectedRows === 0) {
-      await connection.rollback();
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Family member not found or unauthorized.",
-        });
+    for (const file of filePaths) {
+      if (file) {
+        const absolutePath = path.join(__dirname, "..", file);
+        if (fs.existsSync(absolutePath)) {
+          fs.unlinkSync(absolutePath);
+        }
+      }
     }
 
+    await connection.query("DELETE FROM familyinfo WHERE id=? AND user_id=?", [id, req.session.userId]);
     await connection.commit();
     res.json({ success: true, message: "Family member deleted successfully." });
   } catch (err) {
     await connection.rollback();
     console.error("Error deleting family member:", err);
-    res
-      .status(500)
-      .json({ success: false, message: `Server error: ${err.message}` });
+    res.status(500).json({ success: false, message: `Server error: ${err.message}` });
   } finally {
     connection.release();
   }
@@ -1363,9 +1128,9 @@ router.put("/:id/basic", checkAuth, upload, async (req, res) => {
       zipcode: zipcode !== undefined ? zipcode : current[0].zipcode || "",
       profile_image: profile_image,
       birthday:
-  birthday !== undefined ? (birthday === "" || birthday === null ? null : birthday) : current[0].birthday || null,
-anniversary:
-  anniversary !== undefined ? (anniversary === "" || anniversary === null ? null : anniversary) : current[0].anniversary || null,
+        birthday !== undefined ? (birthday === "" || birthday === null ? null : birthday) : current[0].birthday || null,
+      anniversary:
+        anniversary !== undefined ? (anniversary === "" || anniversary === null ? null : anniversary) : current[0].anniversary || null,
       relation: relation !== undefined ? relation : current[0].relation || "",
       emergency_contact:
         emergency_contact !== undefined
@@ -1495,4 +1260,5 @@ anniversary:
       .json({ success: false, message: `Server error: ${err.message}` });
   }
 });
+
 module.exports = router;

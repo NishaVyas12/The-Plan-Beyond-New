@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import Select from 'react-select'; 
+import Select from 'react-select';
 import imageIcon from '../../../assets/images/dash_icon/image.svg';
 import pdfIcon from '../../../assets/images/dash_icon/pdf.svg';
 
@@ -16,7 +16,7 @@ const MiscellaneousPopup = ({
 }) => {
   const [dropdownStates, setDropdownStates] = useState({
     status: false,
-   
+
   });
   const dropdownRefs = {
     status: useRef(null),
@@ -144,8 +144,8 @@ const MiscellaneousPopup = ({
             {formData.status === "true"
               ? "Active"
               : formData.status === "false"
-              ? "Inactive"
-              : "Select status"}
+                ? "Inactive"
+                : "Select status"}
             <span className="personal-dropdown-arrow">▾</span>
           </div>
           {dropdownStates.status && (
@@ -260,6 +260,26 @@ const MiscellaneousPopup = ({
               ))}
             </div>
           )}
+        </div>
+      </label>
+
+      <label>
+        Folder
+        <div className="family-detail-card-upload">
+
+          <img src={uploadIcon} alt="Upload Icon" className="family-upload-icon" />
+          <div className="upload-text-group">
+            <p>Drag and drop files here</p>
+            <p>OR</p>
+            <p>Browse files</p>
+          </div>
+          <input
+            type="file"
+            // name={fieldName}
+            className="family-detail-card-input"
+          // onChange={handleFileChange}
+          // multiple={'new_folder_documents'}
+          />
         </div>
       </label>
 

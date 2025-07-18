@@ -353,6 +353,8 @@ const createFamilyInfoTable = async () => {
       other_document_expiration TEXT,
       notes TEXT,
       emergency_contact TINYINT(1) DEFAULT 0,
+      new_folder VARCHAR(255) DEFAULT '',
+      new_folder_documents JSON DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
